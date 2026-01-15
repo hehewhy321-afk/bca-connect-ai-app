@@ -99,7 +99,7 @@ lib/
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/hehewhy321-afk/bca-connect-ai-app.git
 cd bca_app
 ```
 
@@ -109,9 +109,14 @@ flutter pub get
 ```
 
 3. **Configure environment**
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` and fill in your credentials:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` file:
 ```env
-SUPABASE_URL=your_supabase_url
+SUPABASE_URL=https://xtpkzqeylypdsxspmbmg.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
@@ -212,10 +217,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Developer
 
-**Developed by:** [Your Name]
-- GitHub: [@yourusername]
-- Email: your.email@example.com
-- LinkedIn: [Your LinkedIn]
+**Developed by:** hehewhy321-afk
+- GitHub: [@hehewhy321-afk](https://github.com/hehewhy321-afk)
+- Repository: [BCA Connect AI App](https://github.com/hehewhy321-afk/bca-connect-ai-app)
 
 ## 🙏 Acknowledgments
 
@@ -226,14 +230,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Support
 
-For support, email your.email@example.com or join our Slack channel.
+For support, create an issue on [GitHub Issues](https://github.com/hehewhy321-afk/bca-connect-ai-app/issues).
 
 ## 🔗 Links
 
-- [Documentation](https://docs.example.com)
-- [API Reference](https://api.example.com)
-- [Issue Tracker](https://github.com/yourusername/bca-app/issues)
-- [Changelog](CHANGELOG.md)
+- [Repository](https://github.com/hehewhy321-afk/bca-connect-ai-app)
+- [Issue Tracker](https://github.com/hehewhy321-afk/bca-connect-ai-app/issues)
+- [Releases](https://github.com/hehewhy321-afk/bca-connect-ai-app/releases)
 
 ---
 
