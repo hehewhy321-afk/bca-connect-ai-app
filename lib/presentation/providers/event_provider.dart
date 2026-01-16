@@ -20,12 +20,21 @@ final eventsProvider = FutureProvider<List<Event>>((ref) async {
   }
 });
 
-// Upcoming Events Provider
+// Upcoming Events Provider - filters out completed events (by status or end date)
 final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
   try {
     final events = await ref.watch(eventRepositoryProvider).getUpcomingEvents();
-    debugPrint('Upcoming Events Provider: Loaded ${events.length} events');
-    return events;
+    final now = DateTime.now();
+    
+    // Filter out completed events by status OR if end date has passed
+    final upcomingOnly = events.where((event) {
+      final isNotCompletedByStatus = event.status.toLowerCase() != 'completed';
+      final isNotCompletedByDate = event.endDate == null || event.endDate!.isAfter(now);
+      return isNotCompletedByStatus && isNotCompletedByDate;
+    }).toList();
+    
+    debugPrint('Upcoming Events Provider: Loaded ${upcomingOnly.length} events (filtered out completed)');
+    return upcomingOnly;
   } catch (e) {
     debugPrint('Upcoming Events Provider Error: $e');
     rethrow;

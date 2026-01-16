@@ -5,6 +5,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../../../data/models/forum_post.dart';
 import '../../../data/repositories/forum_repository.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../../core/config/supabase_config.dart';
 
 final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, postId) async {
   final repo = ForumRepository();
@@ -14,6 +15,46 @@ final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, 
 final forumRepliesProvider = FutureProvider.family<List<ForumComment>, String>((ref, postId) async {
   final repo = ForumRepository();
   return await repo.getPostReplies(postId);
+});
+
+// Provider to track user's vote on a post
+final postVoteProvider = FutureProvider.family<int, String>((ref, postId) async {
+  final user = SupabaseConfig.client.auth.currentUser;
+  if (user == null) return 0;
+
+  try {
+    final response = await SupabaseConfig.client
+        .from('forum_votes')
+        .select('vote_type')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (response == null) return 0;
+    return response['vote_type'] as int;
+  } catch (e) {
+    return 0;
+  }
+});
+
+// Provider to track user's vote on a reply
+final replyVoteProvider = FutureProvider.family<int, String>((ref, replyId) async {
+  final user = SupabaseConfig.client.auth.currentUser;
+  if (user == null) return 0;
+
+  try {
+    final response = await SupabaseConfig.client
+        .from('forum_votes')
+        .select('vote_type')
+        .eq('reply_id', replyId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (response == null) return 0;
+    return response['vote_type'] as int;
+  } catch (e) {
+    return 0;
+  }
 });
 
 class ForumPostDetailScreen extends ConsumerStatefulWidget {
@@ -27,6 +68,8 @@ class ForumPostDetailScreen extends ConsumerStatefulWidget {
 
 class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   final _replyController = TextEditingController();
+  String? _replyingToId;
+  String? _replyingToName;
 
   @override
   void dispose() {
@@ -34,10 +77,191 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
     super.dispose();
   }
 
+  Future<void> _handleVote(String postId, int voteType) async {
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to vote')),
+      );
+      return;
+    }
+
+    try {
+      // Check if user already voted
+      final existingVote = await SupabaseConfig.client
+          .from('forum_votes')
+          .select()
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (existingVote != null) {
+        final currentVote = existingVote['vote_type'] as int;
+        
+        if (currentVote == voteType) {
+          // Remove vote
+          await SupabaseConfig.client
+              .from('forum_votes')
+              .delete()
+              .eq('id', existingVote['id']);
+          
+          // Update post count
+          await SupabaseConfig.client.rpc(
+            'update_post_votes',
+            params: {'post_id': postId, 'vote_change': -voteType},
+          );
+        } else {
+          // Change vote
+          await SupabaseConfig.client
+              .from('forum_votes')
+              .update({'vote_type': voteType})
+              .eq('id', existingVote['id']);
+          
+          // Update post count (remove old, add new)
+          await SupabaseConfig.client.rpc(
+            'update_post_votes',
+            params: {'post_id': postId, 'vote_change': voteType - currentVote},
+          );
+        }
+      } else {
+        // New vote
+        await SupabaseConfig.client.from('forum_votes').insert({
+          'post_id': postId,
+          'user_id': user.id,
+          'vote_type': voteType,
+        });
+        
+        // Update post count
+        await SupabaseConfig.client.rpc(
+          'update_post_votes',
+          params: {'post_id': postId, 'vote_change': voteType},
+        );
+      }
+
+      // Refresh data
+      ref.invalidate(forumPostDetailProvider(postId));
+      ref.invalidate(postVoteProvider(postId));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to vote: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleReplyVote(String replyId, int voteType) async {
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to vote')),
+      );
+      return;
+    }
+
+    try {
+      final existingVote = await SupabaseConfig.client
+          .from('forum_votes')
+          .select()
+          .eq('reply_id', replyId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (existingVote != null) {
+        final currentVote = existingVote['vote_type'] as int;
+        
+        if (currentVote == voteType) {
+          await SupabaseConfig.client
+              .from('forum_votes')
+              .delete()
+              .eq('id', existingVote['id']);
+          
+          await SupabaseConfig.client.rpc(
+            'update_reply_votes',
+            params: {'reply_id': replyId, 'vote_change': -voteType},
+          );
+        } else {
+          await SupabaseConfig.client
+              .from('forum_votes')
+              .update({'vote_type': voteType})
+              .eq('id', existingVote['id']);
+          
+          await SupabaseConfig.client.rpc(
+            'update_reply_votes',
+            params: {'reply_id': replyId, 'vote_change': voteType - currentVote},
+          );
+        }
+      } else {
+        await SupabaseConfig.client.from('forum_votes').insert({
+          'reply_id': replyId,
+          'user_id': user.id,
+          'vote_type': voteType,
+        });
+        
+        await SupabaseConfig.client.rpc(
+          'update_reply_votes',
+          params: {'reply_id': replyId, 'vote_change': voteType},
+        );
+      }
+
+      ref.invalidate(forumRepliesProvider(widget.postId));
+      ref.invalidate(replyVoteProvider(replyId));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to vote: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitReply() async {
+    if (_replyController.text.trim().isEmpty) return;
+
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to reply')),
+      );
+      return;
+    }
+
+    try {
+      await SupabaseConfig.client.from('forum_replies').insert({
+        'post_id': widget.postId,
+        'user_id': user.id,
+        'content': _replyController.text.trim(),
+        'parent_reply_id': _replyingToId,
+      });
+
+      _replyController.clear();
+      setState(() {
+        _replyingToId = null;
+        _replyingToName = null;
+      });
+
+      ref.invalidate(forumRepliesProvider(widget.postId));
+      ref.invalidate(forumPostDetailProvider(widget.postId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reply posted successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post reply: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final postAsync = ref.watch(forumPostDetailProvider(widget.postId));
     final repliesAsync = ref.watch(forumRepliesProvider(widget.postId));
+    final voteAsync = ref.watch(postVoteProvider(widget.postId));
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +270,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           IconButton(
             icon: const Icon(Iconsax.share),
             onPressed: () {
-              // TODO: Implement share
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Share feature coming soon!')),
+              );
             },
           ),
         ],
@@ -139,19 +365,49 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Stats
+                            // Voting and Stats
                             Row(
                               children: [
+                                // Upvote/Downvote
+                                voteAsync.when(
+                                  data: (userVote) => Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
+                                          color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                                        ),
+                                        onPressed: () => _handleVote(post.id, 1),
+                                      ),
+                                      Text(
+                                        '${post.upvotes - post.downvotes}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: userVote == 1
+                                              ? ModernTheme.primaryOrange
+                                              : userVote == -1
+                                                  ? Colors.red
+                                                  : null,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
+                                          color: userVote == -1 ? Colors.red : null,
+                                        ),
+                                        onPressed: () => _handleVote(post.id, -1),
+                                      ),
+                                    ],
+                                  ),
+                                  loading: () => const SizedBox(width: 120, child: Center(child: CircularProgressIndicator())),
+                                  error: (error, stackTrace) => const SizedBox(width: 120),
+                                ),
+                                const Spacer(),
                                 _StatItem(
                                   icon: Iconsax.eye,
                                   value: post.views.toString(),
                                   label: 'Views',
-                                ),
-                                const SizedBox(width: 24),
-                                _StatItem(
-                                  icon: Iconsax.like_1,
-                                  value: post.upvotes.toString(),
-                                  label: 'Upvotes',
                                 ),
                                 const SizedBox(width: 24),
                                 _StatItem(
@@ -205,8 +461,24 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           );
                         }
 
+                        // Build threaded replies
+                        final topLevelReplies = replies.where((r) => r.parentId == null).toList();
+                        
                         return Column(
-                          children: replies.map((reply) => _ReplyCard(reply: reply)).toList(),
+                          children: topLevelReplies.map((reply) {
+                            final childReplies = replies.where((r) => r.parentId == reply.id).toList();
+                            return _ThreadedReplyCard(
+                              reply: reply,
+                              childReplies: childReplies,
+                              onReply: (replyId, authorName) {
+                                setState(() {
+                                  _replyingToId = replyId;
+                                  _replyingToName = authorName;
+                                });
+                              },
+                              onVote: _handleReplyVote,
+                            );
+                          }).toList(),
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
@@ -231,42 +503,78 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _replyController,
-                        decoration: InputDecoration(
-                          hintText: 'Write a reply...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                    if (_replyingToName != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Iconsax.arrow_right_3, size: 16, color: ModernTheme.primaryOrange),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Replying to $_replyingToName',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ModernTheme.primaryOrange,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Iconsax.close_circle, size: 16),
+                              onPressed: () {
+                                setState(() {
+                                  _replyingToId = null;
+                                  _replyingToName = null;
+                                });
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _replyController,
+                            decoration: InputDecoration(
+                              hintText: _replyingToName != null 
+                                  ? 'Write a reply to $_replyingToName...'
+                                  : 'Write a reply...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: null,
                           ),
                         ),
-                        maxLines: null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: ModernTheme.orangeGradient,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Iconsax.send_1, color: Colors.white),
-                        onPressed: () {
-                          // TODO: Implement reply
-                          if (_replyController.text.isNotEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Reply feature coming soon!')),
-                            );
-                            _replyController.clear();
-                          }
-                        },
-                      ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: ModernTheme.orangeGradient,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Iconsax.send_1, color: Colors.white),
+                            onPressed: _submitReply,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -290,76 +598,253 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   }
 }
 
-class _ReplyCard extends StatelessWidget {
+class _ThreadedReplyCard extends ConsumerWidget {
   final ForumComment reply;
+  final List<ForumComment> childReplies;
+  final Function(String, String) onReply;
+  final Function(String, int) onVote;
 
-  const _ReplyCard({required this.reply});
+  const _ThreadedReplyCard({
+    required this.reply,
+    required this.childReplies,
+    required this.onReply,
+    required this.onVote,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final voteAsync = ref.watch(replyVoteProvider(reply.id));
+
+    return Column(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: ModernTheme.accentOrange.withValues(alpha: 0.2),
-                  child: Text(
-                    reply.authorName[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: ModernTheme.accentOrange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reply.authorName,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: ModernTheme.accentOrange.withValues(alpha: 0.2),
+                      child: Text(
+                        reply.authorName[0].toUpperCase(),
                         style: const TextStyle(
+                          color: ModernTheme.accentOrange,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
-                      Text(
-                        timeago.format(reply.createdAt),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 11,
-                        ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            reply.authorName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            timeago.format(reply.createdAt),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Iconsax.like_1, size: 18),
-                  onPressed: () {},
-                ),
+                const SizedBox(height: 12),
                 Text(
-                  reply.upvotes.toString(),
-                  style: const TextStyle(fontSize: 12),
+                  reply.content,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        height: 1.5,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // Voting
+                    voteAsync.when(
+                      data: (userVote) => Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
+                              size: 16,
+                              color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                            ),
+                            onPressed: () => onVote(reply.id, 1),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                          Text(
+                            '${reply.upvotes - reply.downvotes}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: userVote == 1
+                                  ? ModernTheme.primaryOrange
+                                  : userVote == -1
+                                      ? Colors.red
+                                      : null,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
+                              size: 16,
+                              color: userVote == -1 ? Colors.red : null,
+                            ),
+                            onPressed: () => onVote(reply.id, -1),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                        ],
+                      ),
+                      loading: () => const SizedBox(width: 80, height: 32, child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))),
+                      error: (error, stackTrace) => const SizedBox(width: 80),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => onReply(reply.id, reply.authorName),
+                      icon: const Icon(Iconsax.message, size: 14),
+                      label: const Text('Reply', style: TextStyle(fontSize: 12)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              reply.content,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                  ),
-            ),
-          ],
+          ),
         ),
-      ),
+        // Child replies (threaded)
+        if (childReplies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 32, bottom: 12),
+            child: Column(
+              children: childReplies.map((childReply) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Iconsax.arrow_right_3, size: 12, color: ModernTheme.primaryOrange),
+                            const SizedBox(width: 8),
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                              child: Text(
+                                childReply.authorName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: ModernTheme.primaryOrange,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    childReply.authorName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    timeago.format(childReply.createdAt),
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          childReply.content,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                height: 1.4,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final childVoteAsync = ref.watch(replyVoteProvider(childReply.id));
+                            return childVoteAsync.when(
+                              data: (userVote) => Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
+                                      size: 14,
+                                      color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                                    ),
+                                    onPressed: () => onVote(childReply.id, 1),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                  ),
+                                  Text(
+                                    '${childReply.upvotes - childReply.downvotes}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: userVote == 1
+                                          ? ModernTheme.primaryOrange
+                                          : userVote == -1
+                                              ? Colors.red
+                                              : null,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
+                                      size: 14,
+                                      color: userVote == -1 ? Colors.red : null,
+                                    ),
+                                    onPressed: () => onVote(childReply.id, -1),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                  ),
+                                ],
+                              ),
+                              loading: () => const SizedBox(width: 70, height: 28, child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)))),
+                              error: (error, stackTrace) => const SizedBox(width: 70),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+      ],
     );
   }
 }

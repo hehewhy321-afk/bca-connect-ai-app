@@ -20,9 +20,7 @@ class ModernForumScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Iconsax.search_normal),
-            onPressed: () {
-              // TODO: Implement search
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -120,7 +118,6 @@ class ForumPostCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to post detail
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Post detail coming soon!')),
           );

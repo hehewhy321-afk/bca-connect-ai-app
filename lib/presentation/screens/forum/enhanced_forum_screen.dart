@@ -7,6 +7,7 @@ import '../../../data/models/forum_post.dart';
 import '../../../data/repositories/forum_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/skeleton_loader.dart';
 
 // Provider for all forum posts
 final allForumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
@@ -17,15 +18,17 @@ final allForumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
 // State providers for filters
 final forumSearchQueryProvider = StateProvider<String>((ref) => '');
 final forumSelectedCategoryProvider = StateProvider<String>((ref) => 'all');
+final forumSortByProvider = StateProvider<String>((ref) => 'latest'); // latest, views, comments
 
 // Filtered posts provider
 final filteredForumPostsProvider = Provider<AsyncValue<List<ForumPost>>>((ref) {
   final postsAsync = ref.watch(allForumPostsProvider);
   final searchQuery = ref.watch(forumSearchQueryProvider).toLowerCase();
   final selectedCategory = ref.watch(forumSelectedCategoryProvider);
+  final sortBy = ref.watch(forumSortByProvider);
 
   return postsAsync.whenData((posts) {
-    return posts.where((post) {
+    var filtered = posts.where((post) {
       final matchesSearch = post.title.toLowerCase().contains(searchQuery) ||
           post.content.toLowerCase().contains(searchQuery) ||
           post.tags.any((tag) => tag.toLowerCase().contains(searchQuery));
@@ -33,6 +36,22 @@ final filteredForumPostsProvider = Provider<AsyncValue<List<ForumPost>>>((ref) {
           selectedCategory == 'all' || post.category.toLowerCase() == selectedCategory.toLowerCase();
       return matchesSearch && matchesCategory;
     }).toList();
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'views':
+        filtered.sort((a, b) => b.views.compareTo(a.views));
+        break;
+      case 'comments':
+        filtered.sort((a, b) => b.replyCount.compareTo(a.replyCount));
+        break;
+      case 'latest':
+      default:
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+    }
+
+    return filtered;
   });
 });
 
@@ -91,6 +110,7 @@ class EnhancedForumScreen extends ConsumerWidget {
     final filteredPostsAsync = ref.watch(filteredForumPostsProvider);
     final searchQuery = ref.watch(forumSearchQueryProvider);
     final selectedCategory = ref.watch(forumSelectedCategoryProvider);
+    final sortBy = ref.watch(forumSortByProvider);
     final currentUser = SupabaseConfig.client.auth.currentUser;
 
     final categories = [
@@ -103,6 +123,9 @@ class EnhancedForumScreen extends ConsumerWidget {
       'career',
       'exams'
     ];
+
+    // Check if any filter is active
+    final hasActiveFilters = selectedCategory != 'all' || sortBy != 'latest';
 
     return Scaffold(
       appBar: AppBar(
@@ -119,28 +142,71 @@ class EnhancedForumScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search Bar with Filter Button
           Padding(
             padding: const EdgeInsets.all(16),
-            child: TextField(
-              onChanged: (value) => ref.read(forumSearchQueryProvider.notifier).state = value,
-              decoration: InputDecoration(
-                hintText: 'Search discussions...',
-                prefixIcon: const Icon(Iconsax.search_normal_1),
-                suffixIcon: searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Iconsax.close_circle),
-                        onPressed: () => ref.read(forumSearchQueryProvider.notifier).state = '',
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (value) => ref.read(forumSearchQueryProvider.notifier).state = value,
+                    decoration: InputDecoration(
+                      hintText: 'Search discussions...',
+                      prefixIcon: const Icon(Iconsax.search_normal_1),
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Iconsax.close_circle),
+                              onPressed: () => ref.read(forumSearchQueryProvider.notifier).state = '',
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              ),
+                const SizedBox(width: 12),
+                // Filter Button
+                Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: hasActiveFilters
+                            ? const LinearGradient(
+                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                              )
+                            : null,
+                        color: hasActiveFilters ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Iconsax.filter,
+                          color: hasActiveFilters ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                        ),
+                        onPressed: () => _showFilterModal(context, ref),
+                      ),
+                    ),
+                    if (hasActiveFilters)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
 
@@ -246,16 +312,7 @@ class EnhancedForumScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 itemCount: 6,
                 separatorBuilder: (context, error) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                },
+                itemBuilder: (context, index) => const ForumPostSkeleton(),
               ),
               error: (error, stack) => Center(
                 child: Column(
@@ -307,6 +364,221 @@ class EnhancedForumScreen extends ConsumerWidget {
   String _formatCategory(String category) {
     return category[0].toUpperCase() + category.substring(1);
   }
+
+  void _showFilterModal(BuildContext context, WidgetRef ref) {
+    final selectedCategory = ref.read(forumSelectedCategoryProvider);
+    final sortBy = ref.read(forumSortByProvider);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Filter & Sort',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Iconsax.close_circle),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Sort By Section
+                Text(
+                  'Sort By',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                _FilterOption(
+                  icon: Iconsax.clock,
+                  title: 'Latest',
+                  subtitle: 'Most recent posts first',
+                  isSelected: sortBy == 'latest',
+                  onTap: () {
+                    ref.read(forumSortByProvider.notifier).state = 'latest';
+                  },
+                ),
+                const SizedBox(height: 8),
+                _FilterOption(
+                  icon: Iconsax.eye,
+                  title: 'Most Viewed',
+                  subtitle: 'Posts with most views',
+                  isSelected: sortBy == 'views',
+                  onTap: () {
+                    ref.read(forumSortByProvider.notifier).state = 'views';
+                  },
+                ),
+                const SizedBox(height: 8),
+                _FilterOption(
+                  icon: Iconsax.message_text,
+                  title: 'Most Discussed',
+                  subtitle: 'Posts with most comments',
+                  isSelected: sortBy == 'comments',
+                  onTap: () {
+                    ref.read(forumSortByProvider.notifier).state = 'comments';
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // Category Section
+                Text(
+                  'Category',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    'all',
+                    'general',
+                    'programming',
+                    'database',
+                    'networking',
+                    'projects',
+                    'career',
+                    'exams'
+                  ].map((category) {
+                    final isSelected = selectedCategory == category;
+                    return GestureDetector(
+                      onTap: () {
+                        ref.read(forumSelectedCategoryProvider.notifier).state = category;
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                )
+                              : null,
+                          color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.transparent
+                                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          category == 'all' ? 'All Topics' : _formatCategory(category),
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ref.read(forumSelectedCategoryProvider.notifier).state = 'all';
+                          ref.read(forumSortByProvider.notifier).state = 'latest';
+                        },
+                        icon: const Icon(Iconsax.refresh),
+                        label: const Text('Clear Filters'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.pop(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Apply',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ForumPostCard extends StatelessWidget {
@@ -356,212 +628,481 @@ class _ForumPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryColor = _getCategoryColor(post.category);
+    
     return InkWell(
       onTap: () => context.push('/forum/${post.id}'),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           ),
-          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with badges
-            Row(
-              children: [
-                if (post.isPinned)
+            // Header with user info and badges
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // User Avatar with image support
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: categoryColor.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: categoryColor.withValues(alpha: 0.1),
+                      backgroundImage: post.userAvatar != null && post.userAvatar!.isNotEmpty
+                          ? NetworkImage(post.userAvatar!)
+                          : null,
+                      child: post.userAvatar == null || post.userAvatar!.isEmpty
+                          ? Text(
+                              post.authorName.isNotEmpty 
+                                  ? post.authorName.substring(0, 1).toUpperCase() 
+                                  : 'U',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: categoryColor,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // User info and time
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Iconsax.location, size: 12, color: Colors.amber[700]),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Pinned',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber[700],
-                          ),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                post.authorName,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (post.isPinned) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Iconsax.location5,
+                                size: 14,
+                                color: Colors.amber[700],
+                              ),
+                            ],
+                            if (post.isLocked) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Iconsax.lock5,
+                                size: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Iconsax.clock,
+                              size: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatTimeAgo(post.createdAt),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 11,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                if (post.isLocked) ...[
-                  if (post.isPinned) const SizedBox(width: 8),
+                  
+                  // Delete button for own posts
+                  if (currentUserId != null && post.userId == currentUserId)
+                    IconButton(
+                      icon: const Icon(Iconsax.trash, size: 20),
+                      color: Colors.red,
+                      onPressed: onDelete,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.red.withValues(alpha: 0.1),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Category badge
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      categoryColor.withValues(alpha: 0.2),
+                      categoryColor.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: categoryColor.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _getCategoryIcon(post.category),
+                      size: 14,
+                      color: categoryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      post.category.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: categoryColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                post.title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      height: 1.3,
+                    ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Content preview
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                post.content.replaceAll(RegExp(r'[#*`\n]'), ' ').trim(),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Tags
+            if (post.tags.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: post.tags.take(3).map((tag) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Iconsax.hashtag,
+                              size: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                ),
+              ),
+
+            const SizedBox(height: 12),
+
+            // Divider
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(
+                height: 1,
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            ),
+
+            // Footer with stats
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Upvotes
+                  _StatItem(
+                    icon: Iconsax.arrow_up_1,
+                    value: post.upvotes,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Comments
+                  _StatItem(
+                    icon: Iconsax.message_text_1,
+                    value: post.replyCount,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Views
+                  _StatItem(
+                    icon: Iconsax.eye,
+                    value: post.views,
+                    color: Colors.orange,
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // Read more indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.2),
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Iconsax.lock, size: 12, color: Colors.grey[700]),
-                        const SizedBox(width: 4),
                         Text(
-                          'Locked',
+                          'Read',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: ModernTheme.primaryOrange,
                           ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Iconsax.arrow_right_3,
+                          size: 14,
+                          color: ModernTheme.primaryOrange,
                         ),
                       ],
                     ),
                   ),
                 ],
-                const Spacer(),
-                if (currentUserId != null && post.userId == currentUserId)
-                  IconButton(
-                    icon: const Icon(Iconsax.trash, size: 18),
-                    color: Colors.red,
-                    onPressed: onDelete,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-              ],
+              ),
             ),
-            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Title
-            Text(
-              post.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'programming':
+        return Iconsax.code_1;
+      case 'database':
+        return Iconsax.data;
+      case 'networking':
+        return Iconsax.global;
+      case 'projects':
+        return Iconsax.folder_2;
+      case 'career':
+        return Iconsax.briefcase;
+      case 'exams':
+        return Iconsax.book_1;
+      default:
+        return Iconsax.message_text_1;
+    }
+  }
+}
+
+// Stat item widget for footer
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final int value;
+  final Color color;
+
+  const _StatItem({
+    required this.icon,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-            const SizedBox(height: 8),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            // Content preview
-            Text(
-              post.content.replaceAll(RegExp(r'[#*`]'), ''),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+// Filter Option Widget for Modal
+class _FilterOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                  )
+                : null,
+            color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.transparent
+                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
             ),
-            const SizedBox(height: 12),
-
-            // Tags
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getCategoryColor(post.category).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    post.category,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: _getCategoryColor(post.category),
-                    ),
-                  ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                ...post.tags.take(2).map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '#$tag',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    )),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Footer
-            Row(
-              children: [
-                // Author
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                  child: Text(
-                    post.authorName[0].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: ModernTheme.primaryOrange,
-                    ),
-                  ),
+                child: Icon(
+                  icon,
+                  color: isSelected ? Colors.white : ModernTheme.primaryOrange,
+                  size: 20,
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    post.authorName,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Stats
-                Row(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Iconsax.arrow_up, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
                     Text(
-                      '${post.upvotes}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Icon(Iconsax.message, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      '${post.replyCount}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
-                    ),
-                    const SizedBox(width: 12),
-                    Icon(Iconsax.eye, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${post.views}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected
+                            ? Colors.white70
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
-
-                // Time
-                Text(
-                  _formatTimeAgo(post.createdAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 10,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+              ),
+              if (isSelected)
+                const Icon(
+                  Iconsax.tick_circle5,
+                  color: Colors.white,
+                  size: 24,
                 ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

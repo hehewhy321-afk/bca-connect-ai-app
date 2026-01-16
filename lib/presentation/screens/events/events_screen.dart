@@ -18,9 +18,7 @@ class EventsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // TODO: Show filter dialog
-            },
+            onPressed: () {},
           ),
         ],
       ),

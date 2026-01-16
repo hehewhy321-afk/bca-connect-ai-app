@@ -68,11 +68,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Show simple, user-friendly error message
+        String errorMessage = 'Registration failed. Please try again';
+        
+        // Check for specific error types
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('already') || errorString.contains('exists')) {
+          errorMessage = 'This email is already registered';
+        } else if (errorString.contains('network') || errorString.contains('connection')) {
+          errorMessage = 'Network error. Please check your connection';
+        } else if (errorString.contains('email')) {
+          errorMessage = 'Invalid email format';
+        } else if (errorString.contains('password')) {
+          errorMessage = 'Password does not meet requirements';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Registration failed: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

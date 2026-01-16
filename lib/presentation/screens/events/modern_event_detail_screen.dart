@@ -211,7 +211,6 @@ class ModernEventDetailScreen extends ConsumerWidget {
                   text: 'Register Now',
                   icon: Iconsax.tick_circle,
                   onPressed: () {
-                    // TODO: Implement registration
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Registration coming soon!')),
                     );

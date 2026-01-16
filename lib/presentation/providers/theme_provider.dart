@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 // Theme mode notifier
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  ThemeModeNotifier() : super(ThemeMode.dark) {
     _loadThemeMode();
   }
 
@@ -13,7 +13,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   Future<void> _loadThemeMode() async {
     try {
       final box = await Hive.openBox('settings');
-      final savedMode = box.get(_themeModeKey, defaultValue: 'system') as String;
+      final savedMode = box.get(_themeModeKey, defaultValue: 'dark') as String;
       state = _themeModeFromString(savedMode);
     } catch (e) {
       debugPrint('Error loading theme mode: $e');

@@ -1,22 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/announcement_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../../core/services/notification_listener_service.dart';
+import '../../../core/services/permission_service.dart';
 import '../events/enhanced_events_screen.dart';
 import '../forum/enhanced_forum_screen.dart';
 import '../resources/enhanced_resources_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../widgets/skeleton_loader.dart';
 
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
+final lastBackPressProvider = StateProvider<DateTime?>((ref) => null);
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _permissionsRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start listening for notifications
+    NotificationListenerService().startListening();
+    
+    // Request permissions after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestPermissions();
+    });
+  }
+
+  Future<void> _requestPermissions() async {
+    if (_permissionsRequested) return;
+    _permissionsRequested = true;
+    
+    // Request all necessary permissions
+    await PermissionService().requestInitialPermissions(context);
+  }
+
+  @override
+  void dispose() {
+    // Stop listening when screen is disposed
+    NotificationListenerService().stopListening();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedIndex = ref.watch(selectedIndexProvider);
 
     final screens = [
@@ -27,43 +68,74 @@ class HomeScreen extends ConsumerWidget {
       const ProfileScreen(),
     ];
 
-    return Scaffold(
-      body: IndexedStack(
-        index: selectedIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) {
-          ref.read(selectedIndexProvider.notifier).state = index;
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Iconsax.home),
-            selectedIcon: Icon(Iconsax.home5),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Iconsax.calendar),
-            selectedIcon: Icon(Iconsax.calendar5),
-            label: 'Events',
-          ),
-          NavigationDestination(
-            icon: Icon(Iconsax.message_text),
-            selectedIcon: Icon(Iconsax.message_text5),
-            label: 'Forum',
-          ),
-          NavigationDestination(
-            icon: Icon(Iconsax.folder),
-            selectedIcon: Icon(Iconsax.folder5),
-            label: 'Resources',
-          ),
-          NavigationDestination(
-            icon: Icon(Iconsax.user),
-            selectedIcon: Icon(Iconsax.user5),
-            label: 'Profile',
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        
+        // If not on dashboard, go to dashboard first
+        if (selectedIndex != 0) {
+          ref.read(selectedIndexProvider.notifier).state = 0;
+          return;
+        }
+        
+        // If on dashboard, check for double back press
+        final lastBackPress = ref.read(lastBackPressProvider);
+        final now = DateTime.now();
+        
+        if (lastBackPress == null || now.difference(lastBackPress) > const Duration(seconds: 2)) {
+          // First back press or timeout - show toast
+          ref.read(lastBackPressProvider.notifier).state = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          // Second back press within 2 seconds - exit app
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: selectedIndex,
+          children: screens,
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (index) {
+            ref.read(selectedIndexProvider.notifier).state = index;
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Iconsax.home),
+              selectedIcon: Icon(Iconsax.home5),
+              label: 'Dashboard',
+            ),
+            NavigationDestination(
+              icon: Icon(Iconsax.calendar),
+              selectedIcon: Icon(Iconsax.calendar5),
+              label: 'Events',
+            ),
+            NavigationDestination(
+              icon: Icon(Iconsax.message_text),
+              selectedIcon: Icon(Iconsax.message_text5),
+              label: 'Forum',
+            ),
+            NavigationDestination(
+              icon: Icon(Iconsax.folder),
+              selectedIcon: Icon(Iconsax.folder5),
+              label: 'Resources',
+            ),
+            NavigationDestination(
+              icon: Icon(Iconsax.user),
+              selectedIcon: Icon(Iconsax.user5),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -76,14 +148,54 @@ class DashboardTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final upcomingEventsAsync = ref.watch(upcomingEventsProvider);
     final announcementsAsync = ref.watch(activeAnnouncementsProvider);
+    final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(
-            icon: const Icon(Iconsax.notification),
-            onPressed: () => context.push('/notifications'),
+          unreadCountAsync.when(
+            data: (count) => Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Iconsax.notification),
+                  onPressed: () => context.push('/notifications'),
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDA7809),
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : count.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            loading: () => IconButton(
+              icon: const Icon(Iconsax.notification),
+              onPressed: () => context.push('/notifications'),
+            ),
+            error: (_, __) => IconButton(
+              icon: const Icon(Iconsax.notification),
+              onPressed: () => context.push('/notifications'),
+            ),
           ),
         ],
       ),
@@ -152,24 +264,24 @@ class DashboardTab extends ConsumerWidget {
                     ),
               ),
               const SizedBox(height: 12),
-              // Bento Grid Layout (2x2)
+              // Bento Grid Layout (2x3)
               Row(
                 children: [
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.book_1,
-                      label: 'Resources',
-                      color: const Color(0xFF3B82F6),
-                      onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
+                      icon: Iconsax.calendar_2,
+                      label: 'नेपाली पात्रो',
+                      color: const Color(0xFFDC2626),
+                      onTap: () => context.push('/calendar'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.people,
-                      label: 'Community',
-                      color: const Color(0xFF10B981),
-                      onTap: () => context.push('/community'),
+                      icon: Iconsax.timer_1,
+                      label: 'Pomodoro',
+                      color: const Color(0xFF3B82F6),
+                      onTap: () => context.push('/pomodoro'),
                     ),
                   ),
                 ],
@@ -179,19 +291,41 @@ class DashboardTab extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.message_text_1,
-                      label: 'Forum',
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
+                      icon: Iconsax.award,
+                      label: 'Certificates',
+                      color: const Color(0xFF10B981),
+                      onTap: () => context.push('/certificates'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.calendar_1,
-                      label: 'Events',
+                      icon: Iconsax.notification_bing,
+                      label: 'Notices',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => context.push('/notices'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BentoCard(
+                      icon: Iconsax.people,
+                      label: 'Community',
                       color: const Color(0xFFFF9500),
-                      onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
+                      onTap: () => context.push('/community'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _BentoCard(
+                      icon: Iconsax.message_text,
+                      label: 'Forum',
+                      color: const Color(0xFFEC4899),
+                      onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
                     ),
                   ),
                 ],
@@ -260,9 +394,12 @@ class DashboardTab extends ConsumerWidget {
                     children: events.take(2).map((event) => _FullEventCard(event: event)).toList(),
                   );
                 },
-                loading: () => const SizedBox(
-                  height: 150,
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => const Column(
+                  children: [
+                    EventCardSkeleton(),
+                    SizedBox(height: 16),
+                    EventCardSkeleton(),
+                  ],
                 ),
                 error: (err, stack) => Container(
                   padding: const EdgeInsets.all(32),
@@ -276,6 +413,112 @@ class DashboardTab extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Website Promotion Section
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFDA7809).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Iconsax.global,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Visit Our Web Platform',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Access more features on desktop',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Get the full experience with advanced analytics, detailed reports, and enhanced collaboration tools on our web platform.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final url = Uri.parse('https://mmamc-bca.vercel.app');
+                              try {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to open website: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Iconsax.export_1, size: 18),
+                            label: const Text('Open Website'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFDA7809),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -401,17 +644,11 @@ class _FullEventCard extends StatelessWidget {
                     },
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
-                      return Container(
+                      return SkeletonLoader(
                         height: 140,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
                       );
                     },

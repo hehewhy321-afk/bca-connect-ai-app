@@ -101,6 +101,9 @@ dependencies:
   url_launcher: ^6.3.1
   timeago: ^3.7.0
   flutter_dotenv: ^5.2.1
+  nepali_utils: ^3.0.5
+  nepali_date_picker: ^7.0.0
+  table_calendar: ^3.1.2
   
   # Audio (for voice features)
   # record: ^5.1.2  # Temporarily disabled due to compatibility issue
@@ -108,6 +111,7 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.3.1
+  device_info_plus: ^11.2.0
 
 dev_dependencies:
   flutter_test:
@@ -116,6 +120,15 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.14.1
+
+# Flutter Launcher Icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/pwa-512x512.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/pwa-512x512.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

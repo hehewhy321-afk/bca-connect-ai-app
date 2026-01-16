@@ -11,7 +11,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/forum/create_post_screen.dart';
 import '../screens/forum/enhanced_forum_screen.dart';
 import '../screens/forum/enhanced_forum_post_detail_screen.dart';
-import '../screens/certificates/modern_certificates_screen.dart';
+import '../screens/certificates/certificates_screen.dart';
 import '../screens/resources/enhanced_resources_screen.dart';
 import '../screens/resources/resource_detail_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -26,6 +26,9 @@ import '../screens/notifications/notifications_screen.dart';
 import '../screens/debug/event_debug_screen.dart';
 import '../screens/events/enhanced_events_screen.dart';
 import '../screens/events/enhanced_event_detail_screen.dart';
+import '../screens/events/my_events_screen.dart';
+import '../screens/calendar/nepali_calendar_screen.dart';
+import '../screens/pomodoro/pomodoro_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -93,6 +96,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       
+      // My Events
+      GoRoute(
+        path: '/my-events',
+        builder: (context, state) => const MyEventsScreen(),
+      ),
+      
       // Forum
       GoRoute(
         path: '/forum',
@@ -113,7 +122,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Certificates
       GoRoute(
         path: '/certificates',
-        builder: (context, state) => const ModernCertificatesScreen(),
+        builder: (context, state) => const CertificatesScreen(),
       ),
       
       // Resources
@@ -181,6 +190,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      
+      // Nepali Calendar
+      GoRoute(
+        path: '/calendar',
+        builder: (context, state) => const NepaliCalendarScreen(),
+      ),
+      
+      // Pomodoro Timer
+      GoRoute(
+        path: '/pomodoro',
+        builder: (context, state) => const PomodoroScreen(),
       ),
       
       // Debug

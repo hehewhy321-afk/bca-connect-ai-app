@@ -65,48 +65,89 @@ class ProfileScreen extends ConsumerWidget {
           'Profile',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Iconsax.edit,
-              color: ModernTheme.primaryOrange,
-            ),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
       ),
       body: userProfileAsync.when(
         data: (profile) => SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Profile Header
+              // Profile Header - Ultra Compact
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A1A1A), Color(0xFF2D2D2D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    // Avatar
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: ModernTheme.orangeGradient,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: profile?.avatarUrl != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Image.network(
-                                profile!.avatarUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Center(
+                    const SizedBox(height: 24),
+                    // Avatar with Glow Effect
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Glow effect
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Avatar Container
+                        Container(
+                          width: 75,
+                          height: 75,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              width: 2,
+                            ),
+                          ),
+                          child: profile?.avatarUrl != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.network(
+                                    profile!.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Text(
+                                        _getInitials(profile.fullName),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Center(
                                   child: Text(
-                                    _getInitials(profile.fullName),
+                                    _getInitials(profile?.fullName ?? user?.email ?? 'User'),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 28,
@@ -114,68 +155,126 @@ class ProfileScreen extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(
-                                _getInitials(profile?.fullName ?? user?.email ?? 'User'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     
-                    // Name
-                    Text(
-                      profile?.fullName ?? user?.email?.split('@').first ?? 'User',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    
-                    // Email
-                    Text(
-                      user?.email ?? '',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                    
-                    if (profile != null) ...[
-                      const SizedBox(height: 20),
-                      // Stats Row
-                      Row(
+                    // Name with Edit Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _StatItem(
-                            icon: Iconsax.award,
-                            label: 'Level',
-                            value: '${profile.level}',
-                            color: ModernTheme.primaryOrange,
-                          ),
-                          _StatItem(
-                            icon: Iconsax.star5,
-                            label: 'XP Points',
-                            value: '${profile.xpPoints}',
-                            color: ModernTheme.accentOrange,
-                          ),
-                          if (profile.isAlumni == true)
-                            _StatItem(
-                              icon: Iconsax.medal_star5,
-                              label: 'Alumni',
-                              value: '${profile.graduationYear}',
-                              color: Colors.purple,
+                          Flexible(
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Colors.white, Color(0xFFCCCCCC)],
+                              ).createShader(bounds),
+                              child: Text(
+                                profile?.fullName ?? user?.email?.split('@').first ?? 'User',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: -0.3,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => context.push('/settings'),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: const Icon(
+                                Iconsax.edit_2,
+                                color: ModernTheme.primaryOrange,
+                                size: 14,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 6),
+                    
+                    // Email with Icon
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Iconsax.sms,
+                            size: 10,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            user?.email ?? '',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 11,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Stats Row - Ultra Compact
+                    if (profile != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            _ModernStatCard(
+                              icon: Iconsax.award5,
+                              label: 'Level',
+                              value: '${profile.level}',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2D2D2D), Color(0xFF3D3D3D)],
+                              ),
+                              iconColor: ModernTheme.primaryOrange,
+                            ),
+                            const SizedBox(width: 10),
+                            _ModernStatCard(
+                              icon: Iconsax.star5,
+                              label: 'XP Points',
+                              value: '${profile.xpPoints}',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2D2D2D), Color(0xFF3D3D3D)],
+                              ),
+                              iconColor: const Color(0xFFFFD700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 20),
                   ],
                 ),
-              ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
+              ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.95, 0.95)),
               
               const SizedBox(height: 32),
 
@@ -192,7 +291,7 @@ class ProfileScreen extends ConsumerWidget {
                   _ModernMenuItem(
                     icon: Iconsax.calendar_1,
                     title: 'My Events',
-                    onTap: () => context.push('/events'),
+                    onTap: () => context.push('/my-events'),
                   ),
                   _ModernMenuItem(
                     icon: Iconsax.bookmark,
@@ -467,54 +566,74 @@ class _MenuGroup extends StatelessWidget {
   }
 }
 
-class _StatItem extends StatelessWidget {
+class _ModernStatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color color;
+  final Gradient gradient;
+  final Color iconColor;
 
-  const _StatItem({
+  const _ModernStatCard({
     required this.icon,
     required this.label,
     required this.value,
-    required this.color,
+    required this.gradient,
+    required this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 18,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.white.withValues(alpha: 0.6),
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

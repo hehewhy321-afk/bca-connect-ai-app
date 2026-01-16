@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../../core/services/permission_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
@@ -136,6 +137,72 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.95, 0.95)),
+
+          const SizedBox(height: 24),
+
+          // Permission Check Button
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Iconsax.shield_tick,
+                      color: ModernTheme.primaryOrange,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Notification Permission',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Make sure notification permission is enabled to receive alerts.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () async {
+                    final hasPermission = await PermissionService().hasNotificationPermission();
+                    if (hasPermission) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notification permission is already enabled!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } else {
+                      if (mounted) {
+                        await PermissionService().requestNotificationPermission(context);
+                      }
+                    }
+                  },
+                  icon: const Icon(Iconsax.notification_bing),
+                  label: const Text('Check Permission'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ModernTheme.primaryOrange,
+                    minimumSize: const Size(double.infinity, 48),
                   ),
                 ),
               ],

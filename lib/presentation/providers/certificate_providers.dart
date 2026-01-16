@@ -11,12 +11,14 @@ final allCertificatesProvider = FutureProvider<List<Certificate>>((ref) async {
 // State providers for search and filters
 final certificateSearchQueryProvider = StateProvider<String>((ref) => '');
 final certificateSelectedYearProvider = StateProvider<String>((ref) => 'all');
+final certificateSelectedCategoryProvider = StateProvider<String>((ref) => 'all');
 
 // Filtered certificates provider
 final filteredCertificatesProvider = Provider<AsyncValue<List<Certificate>>>((ref) {
   final certificatesAsync = ref.watch(allCertificatesProvider);
   final searchQuery = ref.watch(certificateSearchQueryProvider).toLowerCase();
   final selectedYear = ref.watch(certificateSelectedYearProvider);
+  final selectedCategory = ref.watch(certificateSelectedCategoryProvider);
 
   return certificatesAsync.whenData((certificates) {
     return certificates.where((certificate) {
@@ -27,8 +29,12 @@ final filteredCertificatesProvider = Provider<AsyncValue<List<Certificate>>>((re
       final matchesYear = selectedYear == 'all' ||
           certificate.issueDate.year.toString() == selectedYear;
       
-      return matchesSearch && matchesYear;
+      // Category matching - use the categoryName from the joined data
+      final certificateCategory = certificate.categoryName?.toLowerCase() ?? '';
+      final matchesCategory = selectedCategory == 'all' ||
+          certificateCategory == selectedCategory;
+      
+      return matchesSearch && matchesYear && matchesCategory;
     }).toList();
   });
 });
-

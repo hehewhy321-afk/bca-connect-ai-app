@@ -2,10 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/modern_theme.dart';
+import 'core/services/cache_service.dart';
+import 'core/services/notification_service.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/providers/theme_provider.dart';
+
+// Background message handler must be top-level
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('Handling background message: ${message.messageId}');
+  
+  // Show notification
+  final notification = message.notification;
+  if (notification != null) {
+    await NotificationService().showNotification(
+      title: notification.title ?? 'New Notification',
+      body: notification.body ?? '',
+      payload: message.data['route'],
+    );
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +38,25 @@ void main() async {
     // Initialize Hive for local storage
     await Hive.initFlutter();
     
+    // Initialize Cache Service
+    await CacheService.init();
+    
     // Initialize Supabase
     await SupabaseConfig.initialize();
     
-    // TODO: Initialize Firebase for push notifications
-    // await Firebase.initializeApp();
+    // Initialize Firebase for push notifications (optional)
+    try {
+      await Firebase.initializeApp();
+      
+      // Set background message handler
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      
+      // Initialize Notification Service
+      await NotificationService().initialize();
+    } catch (e) {
+      debugPrint('Firebase initialization skipped: $e');
+      // App will work without push notifications
+    }
     
     runApp(const ProviderScope(child: MyApp()));
   } catch (e) {

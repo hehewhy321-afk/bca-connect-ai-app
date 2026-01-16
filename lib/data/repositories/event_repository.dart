@@ -1,17 +1,56 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/services/cache_service.dart';
+import '../../core/services/connectivity_service.dart';
 import '../models/event.dart';
+import 'dart:convert';
 
 class EventRepository {
   final SupabaseClient _client = SupabaseConfig.client;
+  final ConnectivityService _connectivity = ConnectivityService();
 
-  // Get all events
+  // Get all events with caching
   Future<List<Event>> getEvents({
     String? status,
     int limit = 50,
     int offset = 0,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = '${CacheKeys.events}_${status ?? 'all'}';
+    
+    // Check cache first if not forcing refresh
+    if (!forceRefresh && CacheService.has(cacheKey)) {
+      try {
+        final cached = CacheService.get<String>(cacheKey);
+        if (cached != null) {
+          final List<dynamic> jsonList = jsonDecode(cached);
+          debugPrint('Loaded ${jsonList.length} events from cache');
+          return jsonList.map((e) => Event.fromJson(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('Error loading from cache: $e');
+      }
+    }
+
+    // Check connectivity
+    final isOnline = await _connectivity.isOnline();
+    if (!isOnline) {
+      // Return cached data if offline
+      try {
+        final cached = CacheService.get<String>(cacheKey);
+        if (cached != null) {
+          final List<dynamic> jsonList = jsonDecode(cached);
+          debugPrint('Offline: Loaded ${jsonList.length} events from cache');
+          return jsonList.map((e) => Event.fromJson(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('Error loading from cache while offline: $e');
+      }
+      throw Exception('No internet connection and no cached data available');
+    }
+
+    // Fetch from network
     try {
       dynamic query = _client
           .from('events')
@@ -30,9 +69,32 @@ class EventRepository {
       }
       
       debugPrint('Fetched ${response.length} events from database');
-      return (response as List).map((e) => Event.fromJson(e)).toList();
+      final events = (response as List).map((e) => Event.fromJson(e)).toList();
+      
+      // Cache the results
+      final jsonList = events.map((e) => e.toJson()).toList();
+      await CacheService.set(
+        cacheKey,
+        jsonEncode(jsonList),
+        duration: CacheKeys.mediumCache,
+      );
+      
+      return events;
     } catch (e) {
       debugPrint('Error fetching events: $e');
+      
+      // Try to return cached data on error
+      try {
+        final cached = CacheService.get<String>(cacheKey);
+        if (cached != null) {
+          final List<dynamic> jsonList = jsonDecode(cached);
+          debugPrint('Error: Loaded ${jsonList.length} events from cache');
+          return jsonList.map((e) => Event.fromJson(e)).toList();
+        }
+      } catch (cacheError) {
+        debugPrint('Error loading from cache after network error: $cacheError');
+      }
+      
       rethrow;
     }
   }

@@ -15,7 +15,7 @@ class ForumRepository {
     try {
       dynamic query = _client
           .from('forum_posts')
-          .select()
+          .select('*, comments_count:forum_replies(count)')
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
@@ -29,6 +29,14 @@ class ForumRepository {
       final posts = <ForumPost>[];
       for (var postData in response as List) {
         final data = Map<String, dynamic>.from(postData);
+        
+        // Extract comment count from the nested response
+        if (data['comments_count'] != null && data['comments_count'] is List) {
+          final countList = data['comments_count'] as List;
+          data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
+        } else {
+          data['comments_count'] = 0;
+        }
         
         // Try to fetch user profile
         try {
@@ -62,13 +70,21 @@ class ForumRepository {
     try {
       final response = await _client
           .from('forum_posts')
-          .select()
+          .select('*, comments_count:forum_replies(count)')
           .eq('id', id)
           .maybeSingle();
 
       if (response == null) return null;
       
       final data = Map<String, dynamic>.from(response);
+      
+      // Extract comment count from the nested response
+      if (data['comments_count'] != null && data['comments_count'] is List) {
+        final countList = data['comments_count'] as List;
+        data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
+      } else {
+        data['comments_count'] = 0;
+      }
       
       // Fetch user profile separately
       try {
@@ -84,6 +100,16 @@ class ForumRepository {
         }
       } catch (e) {
         debugPrint('Error fetching profile for post: $e');
+      }
+      
+      // Increment view count
+      try {
+        await _client
+            .from('forum_posts')
+            .update({'views': (data['views'] ?? 0) + 1})
+            .eq('id', id);
+      } catch (e) {
+        debugPrint('Error incrementing view count: $e');
       }
       
       return ForumPost.fromJson(data);
@@ -179,6 +205,70 @@ class ForumRepository {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('User not authenticated');
 
-    await _client.rpc('upvote_post', params: {'post_id_param': postId});
+    try {
+      // Check if user already voted
+      final existingVote = await _client
+          .from('forum_votes')
+          .select()
+          .eq('user_id', userId)
+          .eq('post_id', postId)
+          .maybeSingle();
+
+      if (existingVote != null) {
+        // Remove vote
+        await _client
+            .from('forum_votes')
+            .delete()
+            .eq('user_id', userId)
+            .eq('post_id', postId);
+        
+        // Decrement upvote count
+        await _client.rpc('decrement_post_upvotes', params: {'post_id_param': postId});
+      } else {
+        // Add vote
+        await _client.from('forum_votes').insert({
+          'user_id': userId,
+          'post_id': postId,
+          'vote_type': 1,
+        });
+        
+        // Increment upvote count
+        await _client.rpc('increment_post_upvotes', params: {'post_id_param': postId});
+      }
+    } catch (e) {
+      debugPrint('Error upvoting post: $e');
+      // Fallback: try direct update
+      try {
+        final post = await getPostById(postId);
+        if (post != null) {
+          await _client
+              .from('forum_posts')
+              .update({'upvotes': post.upvotes + 1})
+              .eq('id', postId);
+        }
+      } catch (e2) {
+        debugPrint('Fallback upvote also failed: $e2');
+      }
+    }
+  }
+
+  // Check if user has upvoted a post
+  Future<bool> hasUserUpvoted(String postId) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    try {
+      final vote = await _client
+          .from('forum_votes')
+          .select()
+          .eq('user_id', userId)
+          .eq('post_id', postId)
+          .maybeSingle();
+      
+      return vote != null;
+    } catch (e) {
+      debugPrint('Error checking upvote status: $e');
+      return false;
+    }
   }
 }

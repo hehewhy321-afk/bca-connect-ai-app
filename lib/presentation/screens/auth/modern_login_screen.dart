@@ -44,12 +44,26 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Show simple, user-friendly error message
+        String errorMessage = 'Invalid email or password';
+        
+        // Check for specific error types
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('network') || errorString.contains('connection')) {
+          errorMessage = 'Network error. Please check your connection';
+        } else if (errorString.contains('email')) {
+          errorMessage = 'Invalid email format';
+        } else if (errorString.contains('banned') || errorString.contains('suspended')) {
+          errorMessage = 'Your account has been suspended';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -62,11 +76,17 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: ModernTheme.orangeGradient,
-        ),
+        decoration: isDark
+            ? BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+              )
+            : const BoxDecoration(
+                gradient: ModernTheme.orangeGradient,
+              ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -81,7 +101,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark 
+                            ? Theme.of(context).colorScheme.surfaceContainerHighest
+                            : Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -91,7 +113,7 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Iconsax.book,
                         size: 50,
                         color: ModernTheme.primaryOrange,
@@ -104,7 +126,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                     Text(
                       'Welcome Back!',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
+                        color: isDark 
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
@@ -114,7 +138,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                     Text(
                       'Sign in to continue',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: isDark
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                            : Colors.white.withValues(alpha: 0.8),
                       ),
                     ).animate().fadeIn(delay: 300.ms),
                     
@@ -124,7 +150,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: isDark
+                            ? Theme.of(context).colorScheme.surfaceContainerHighest
+                            : Colors.white.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -140,12 +168,17 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Email',
                               hintText: 'Enter your email',
                               prefixIcon: const Icon(Iconsax.sms),
                               filled: true,
-                              fillColor: Colors.grey[100],
+                              fillColor: isDark
+                                  ? Theme.of(context).colorScheme.surface
+                                  : Colors.grey[100],
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -168,6 +201,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               hintText: 'Enter your password',
@@ -181,7 +217,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                                 },
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
+                              fillColor: isDark
+                                  ? Theme.of(context).colorScheme.surface
+                                  : Colors.grey[100],
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -257,10 +295,19 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                     // Guest Access
                     TextButton.icon(
                       onPressed: () => context.go('/home'),
-                      icon: const Icon(Iconsax.user, color: Colors.white),
-                      label: const Text(
+                      icon: Icon(
+                        Iconsax.user,
+                        color: isDark
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Colors.white,
+                      ),
+                      label: Text(
                         'Continue as Guest',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: isDark
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Colors.white,
+                        ),
                       ),
                     ).animate().fadeIn(delay: 900.ms),
                   ],

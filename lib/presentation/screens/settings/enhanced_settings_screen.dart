@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/skeleton_loader.dart';
 import 'dart:io';
 
 class EnhancedSettingsScreen extends ConsumerStatefulWidget {
@@ -15,12 +16,13 @@ class EnhancedSettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<EnhancedSettingsScreen> createState() => _EnhancedSettingsScreenState();
 }
 
-class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen> {
+class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   bool _loading = true;
   bool _saving = false;
   bool _uploadingAvatar = false;
   bool _changingPassword = false;
+  late TabController _tabController;
   
   // Form fields
   final _fullNameController = TextEditingController();
@@ -47,11 +49,13 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _fetchProfile();
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
     _batchController.dispose();
@@ -148,16 +152,12 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
           _avatarUrl = publicUrl;
           _uploadingAvatar = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Avatar updated successfully!')),
-        );
+        _showSuccessSnackbar('Avatar updated successfully!');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _uploadingAvatar = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading avatar: $e')),
-        );
+        _showErrorSnackbar('Error uploading avatar: $e');
       }
     }
   }
@@ -198,39 +198,29 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
-        );
+        _showSuccessSnackbar('Profile updated successfully!');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
-        );
+        _showErrorSnackbar('Error updating profile: $e');
       }
     }
   }
 
   Future<void> _changePassword() async {
     if (_newPasswordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all password fields')),
-      );
+      _showErrorSnackbar('Please fill in all password fields');
       return;
     }
 
     if (_newPasswordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 6 characters')),
-      );
+      _showErrorSnackbar('Password must be at least 6 characters');
       return;
     }
 
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      _showErrorSnackbar('Passwords do not match');
       return;
     }
 
@@ -251,27 +241,57 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
           _newPasswordController.clear();
           _confirmPasswordController.clear();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully!')),
-        );
+        _showSuccessSnackbar('Password changed successfully!');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _changingPassword = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error changing password: $e')),
-        );
+        _showErrorSnackbar('Error changing password: $e');
       }
     }
   }
 
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Iconsax.tick_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Iconsax.close_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   String _getInitials(String name) {
-    return name
-        .split(' ')
-        .map((n) => n.isNotEmpty ? n[0] : '')
-        .join('')
-        .toUpperCase()
-        .substring(0, 2.clamp(0, name.length));
+    if (name.isEmpty) return 'U';
+    final parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, 1).toUpperCase();
   }
 
   @override
@@ -279,62 +299,229 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
     if (_loading) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text(
-            'Edit Profile',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 200,
+              floating: false,
+              pinned: true,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    ListItemSkeleton(),
+                    SizedBox(height: 16),
+                    ListItemSkeleton(),
+                    SizedBox(height: 16),
+                    ListItemSkeleton(),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Iconsax.refresh,
-              color: ModernTheme.primaryOrange,
+      body: CustomScrollView(
+        slivers: [
+          // Modern AppBar with Profile Header
+          SliverAppBar(
+            expandedHeight: 280,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const SizedBox(height: 40),
+                      // Profile Picture
+                      Stack(
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: _avatarUrl != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(30),
+                                    child: Image.network(
+                                      _avatarUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Center(
+                                        child: Text(
+                                          _getInitials(_fullNameController.text),
+                                          style: TextStyle(
+                                            color: ModernTheme.primaryOrange,
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      _getInitials(_fullNameController.text),
+                                      style: TextStyle(
+                                        color: ModernTheme.primaryOrange,
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          if (_uploadingAvatar)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Iconsax.camera5,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Name and Email
+                      Text(
+                        _fullNameController.text.isNotEmpty ? _fullNameController.text : 'Your Name',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (_email != null)
+                        Text(
+                          _email!,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            onPressed: () {
-              setState(() => _loading = true);
-              _fetchProfile();
-            },
+          ),
+
+          // Tab Bar
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverTabBarDelegate(
+              TabBar(
+                controller: _tabController,
+                labelColor: ModernTheme.primaryOrange,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                indicatorColor: ModernTheme.primaryOrange,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(icon: Icon(Iconsax.user), text: 'Personal'),
+                  Tab(icon: Icon(Iconsax.book), text: 'Academic'),
+                  Tab(icon: Icon(Iconsax.lock), text: 'Security'),
+                ],
+              ),
+            ),
+          ),
+
+          // Tab Content
+          SliverFillRemaining(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildPersonalTab(),
+                _buildAcademicTab(),
+                _buildSecurityTab(),
+              ],
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Profile Picture Section
-              _ProfilePictureSection(
-                avatarUrl: _avatarUrl,
-                fullName: _fullNameController.text,
-                email: _email,
-                uploadingAvatar: _uploadingAvatar,
-                onPickImage: _pickAndUploadAvatar,
-                getInitials: _getInitials,
-              ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
-              
-              const SizedBox(height: 32),
+    );
+  }
 
-              // Personal Information
-              _SectionHeader(title: 'Personal Information'),
-              const SizedBox(height: 12),
-              _FormSection(
+  Widget _buildPersonalTab() {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ModernCard(
+              child: Column(
                 children: [
                   _ModernTextField(
                     controller: _fullNameController,
@@ -363,107 +550,37 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                     enabled: false,
                   ),
                 ],
-              ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideX(begin: 0.2),
+              ),
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
 
-              const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-              // Academic Information
-              _SectionHeader(title: 'Academic Information'),
-              const SizedBox(height: 12),
-              _FormSection(
-                children: [
-                  // Alumni Toggle
-                  _AlumniToggle(
-                    isAlumni: _isAlumni,
-                    onChanged: (value) {
-                      setState(() {
-                        _isAlumni = value;
-                        if (!value) {
-                          _graduationYear = null;
-                          _currentCompanyController.clear();
-                          _jobTitleController.clear();
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  if (_isAlumni) ...[
-                    _ModernDropdown<int>(
-                      value: _graduationYear,
-                      label: 'Graduation Year',
-                      icon: Iconsax.calendar,
-                      items: List.generate(20, (index) {
-                        final year = DateTime.now().year - index;
-                        return DropdownMenuItem(
-                          value: year,
-                          child: Text(year.toString()),
-                        );
-                      }),
-                      onChanged: (value) => setState(() => _graduationYear = value),
-                    ),
-                    const SizedBox(height: 20),
-                    _ModernTextField(
-                      controller: _jobTitleController,
-                      label: 'Job Title',
-                      icon: Iconsax.briefcase,
-                    ),
-                    const SizedBox(height: 20),
-                    _ModernTextField(
-                      controller: _currentCompanyController,
-                      label: 'Current Company',
-                      icon: Iconsax.building,
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  _ModernTextField(
-                    controller: _batchController,
-                    label: 'Batch',
-                    icon: Iconsax.calendar_1,
-                    hintText: 'e.g., 2023-2027',
-                  ),
-                  if (!_isAlumni) ...[
-                    const SizedBox(height: 20),
-                    _ModernDropdown<int>(
-                      value: _semester,
-                      label: 'Semester',
-                      icon: Iconsax.book,
-                      items: List.generate(8, (index) {
-                        final sem = index + 1;
-                        return DropdownMenuItem(
-                          value: sem,
-                          child: Text('Semester $sem'),
-                        );
-                      }),
-                      onChanged: (value) => setState(() => _semester = value),
-                    ),
-                  ],
-                ],
-              ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideX(begin: 0.2),
-
-              const SizedBox(height: 24),
-
-              // Additional Information
-              _SectionHeader(title: 'Additional Information'),
-              const SizedBox(height: 12),
-              _FormSection(
+            _ModernCard(
+              child: Column(
                 children: [
                   _ModernTextField(
                     controller: _bioController,
                     label: 'Bio',
                     icon: Iconsax.document_text,
                     hintText: 'Tell us about yourself...',
-                    maxLines: 3,
+                    maxLines: 4,
                   ),
                   const SizedBox(height: 20),
                   _ModernTextField(
                     controller: _skillsController,
                     label: 'Skills',
                     icon: Iconsax.code,
-                    hintText: 'e.g., Flutter, Java, Python',
+                    hintText: 'Flutter, Java, Python',
                   ),
-                  const SizedBox(height: 20),
+                ],
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
+
+            const SizedBox(height: 20),
+
+            _ModernCard(
+              child: Column(
+                children: [
                   _ModernTextField(
                     controller: _githubController,
                     label: 'GitHub URL',
@@ -478,243 +595,423 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                     hintText: 'https://linkedin.com/in/username',
                   ),
                 ],
-              ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideX(begin: 0.2),
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
 
-              const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-              // Save Profile Button
-              SizedBox(
-                width: double.infinity,
-                child: _ModernButton(
-                  text: 'Save Profile',
-                  icon: Iconsax.tick_circle,
-                  onPressed: _saving ? null : _saveProfile,
-                  isLoading: _saving,
-                  isPrimary: true,
-                ),
-              ).animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(begin: 0.2),
-
-              const SizedBox(height: 32),
-
-              // Security Section
-              _SectionHeader(title: 'Security'),
-              const SizedBox(height: 12),
-              _FormSection(
-                children: [
-                  _ModernTextField(
-                    controller: _newPasswordController,
-                    label: 'New Password',
-                    icon: Iconsax.lock,
-                    obscureText: !_showNewPassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(_showNewPassword ? Iconsax.eye_slash : Iconsax.eye),
-                      onPressed: () => setState(() => _showNewPassword = !_showNewPassword),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
                     ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _saving ? null : _saveProfile,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Center(
+                      child: _saving
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Save Changes',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideY(begin: 0.1),
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAcademicTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AlumniToggle(
+            isAlumni: _isAlumni,
+            onChanged: (value) {
+              setState(() {
+                _isAlumni = value;
+                if (!value) {
+                  _graduationYear = null;
+                  _currentCompanyController.clear();
+                  _jobTitleController.clear();
+                }
+              });
+            },
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 20),
+
+          if (_isAlumni) ...[
+            _ModernCard(
+              child: Column(
+                children: [
+                  _ModernDropdown<int>(
+                    value: _graduationYear,
+                    label: 'Graduation Year',
+                    icon: Iconsax.calendar,
+                    items: List.generate(20, (index) {
+                      final year = DateTime.now().year - index;
+                      return DropdownMenuItem(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    }),
+                    onChanged: (value) => setState(() => _graduationYear = value),
                   ),
                   const SizedBox(height: 20),
                   _ModernTextField(
-                    controller: _confirmPasswordController,
-                    label: 'Confirm Password',
-                    icon: Iconsax.lock,
-                    obscureText: !_showConfirmPassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(_showConfirmPassword ? Iconsax.eye_slash : Iconsax.eye),
-                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                    ),
+                    controller: _jobTitleController,
+                    label: 'Job Title',
+                    icon: Iconsax.briefcase,
+                    hintText: 'Software Engineer',
+                  ),
+                  const SizedBox(height: 20),
+                  _ModernTextField(
+                    controller: _currentCompanyController,
+                    label: 'Current Company',
+                    icon: Iconsax.building,
+                    hintText: 'Company Name',
                   ),
                 ],
-              ).animate().fadeIn(duration: 500.ms, delay: 500.ms).slideX(begin: 0.2),
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
+            const SizedBox(height: 20),
+          ],
 
-              const SizedBox(height: 32),
-
-              // Change Password Button
-              SizedBox(
-                width: double.infinity,
-                child: _ModernButton(
-                  text: 'Change Password',
-                  icon: Iconsax.security_safe,
-                  onPressed: _changingPassword ? null : _changePassword,
-                  isLoading: _changingPassword,
-                  isPrimary: false,
+          _ModernCard(
+            child: Column(
+              children: [
+                _ModernTextField(
+                  controller: _batchController,
+                  label: 'Batch',
+                  icon: Iconsax.calendar_1,
+                  hintText: '2023-2027',
                 ),
-              ).animate().fadeIn(duration: 500.ms, delay: 600.ms).slideY(begin: 0.2),
+                if (!_isAlumni) ...[
+                  const SizedBox(height: 20),
+                  _ModernDropdown<int>(
+                    value: _semester,
+                    label: 'Semester',
+                    icon: Iconsax.book,
+                    items: List.generate(8, (index) {
+                      final sem = index + 1;
+                      return DropdownMenuItem(
+                        value: sem,
+                        child: Text('Semester $sem'),
+                      );
+                    }),
+                    onChanged: (value) => setState(() => _semester = value),
+                  ),
+                ],
+              ],
+            ),
+          ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
 
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
+          const SizedBox(height: 32),
+
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _saving ? null : _saveProfile,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: _saving
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                              SizedBox(width: 12),
+                              Text(
+                                'Save Changes',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.red.withValues(alpha: 0.1),
+                  Colors.orange.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.orange.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Iconsax.security_safe,
+                    color: Colors.orange,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Change Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Keep your account secure',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 24),
+
+          _ModernCard(
+            child: Column(
+              children: [
+                _ModernTextField(
+                  controller: _newPasswordController,
+                  label: 'New Password',
+                  icon: Iconsax.lock,
+                  obscureText: !_showNewPassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(_showNewPassword ? Iconsax.eye_slash : Iconsax.eye),
+                    onPressed: () => setState(() => _showNewPassword = !_showNewPassword),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _ModernTextField(
+                  controller: _confirmPasswordController,
+                  label: 'Confirm Password',
+                  icon: Iconsax.lock,
+                  obscureText: !_showConfirmPassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(_showConfirmPassword ? Iconsax.eye_slash : Iconsax.eye),
+                    onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 32),
+
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.red, Colors.orange],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _changingPassword ? null : _changePassword,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: _changingPassword
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Iconsax.security_safe, color: Colors.white, size: 20),
+                              SizedBox(width: 12),
+                              Text(
+                                'Update Password',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
 }
 
 // Modern UI Components
-class _SectionHeader extends StatelessWidget {
-  final String title;
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
 
-  const _SectionHeader({required this.title});
+  _SliverTabBarDelegate(this.tabBar);
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Divider(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
-          ),
-        ),
-      ],
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: tabBar,
     );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return false;
   }
 }
 
-class _FormSection extends StatelessWidget {
-  final List<Widget> children;
+class _ModernCard extends StatelessWidget {
+  final Widget child;
 
-  const _FormSection({required this.children});
+  const _ModernCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: children,
-      ),
-    );
-  }
-}
-
-class _ProfilePictureSection extends StatelessWidget {
-  final String? avatarUrl;
-  final String fullName;
-  final String? email;
-  final bool uploadingAvatar;
-  final VoidCallback onPickImage;
-  final String Function(String) getInitials;
-
-  const _ProfilePictureSection({
-    required this.avatarUrl,
-    required this.fullName,
-    required this.email,
-    required this.uploadingAvatar,
-    required this.onPickImage,
-    required this.getInitials,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: ModernTheme.orangeGradient,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: avatarUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: Image.network(
-                          avatarUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Center(
-                            child: Text(
-                              getInitials(fullName),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Text(
-                          getInitials(fullName),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-              ),
-              if (uploadingAvatar)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  ),
-                ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: InkWell(
-                  onTap: uploadingAvatar ? null : onPickImage,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: ModernTheme.orangeGradient,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(
-                      Iconsax.camera,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(height: 16),
-          Text(
-            fullName.isNotEmpty ? fullName : 'Your Name',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          if (email != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              email!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ],
         ],
       ),
+      child: child,
     );
   }
 }
@@ -756,27 +1053,45 @@ class _ModernTextField extends StatelessWidget {
       maxLines: maxLines,
       enabled: enabled,
       validator: validator,
+      style: const TextStyle(fontSize: 15),
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
-        prefixIcon: Icon(icon),
+        prefixIcon: Icon(icon, size: 20),
         suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
             color: ModernTheme.primaryOrange,
             width: 2,
           ),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Colors.red,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Colors.red,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -800,26 +1115,30 @@ class _ModernDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      initialValue: value,
+      value: value,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        prefixIcon: Icon(icon, size: 20),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
             color: ModernTheme.primaryOrange,
             width: 2,
           ),
         ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       items: items,
       onChanged: onChanged,
@@ -839,10 +1158,15 @@ class _AlumniToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            ModernTheme.primaryOrange.withValues(alpha: 0.1),
+            const Color(0xFFFF9A3C).withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
         ),
@@ -850,31 +1174,36 @@ class _AlumniToggle extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
+              gradient: const LinearGradient(
+                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Iconsax.medal_star,
-              color: ModernTheme.primaryOrange,
-              size: 20,
+            child: const Icon(
+              Iconsax.medal_star5,
+              color: Colors.white,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'I am an Alumni',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   'Mark if you have graduated',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
@@ -882,76 +1211,10 @@ class _AlumniToggle extends StatelessWidget {
           Switch(
             value: isAlumni,
             onChanged: onChanged,
-            activeTrackColor: ModernTheme.primaryOrange,
+            activeColor: ModernTheme.primaryOrange,
           ),
         ],
       ),
     );
-  }
-}
-
-class _ModernButton extends StatelessWidget {
-  final String text;
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final bool isPrimary;
-
-  const _ModernButton({
-    required this.text,
-    required this.icon,
-    required this.onPressed,
-    this.isLoading = false,
-    this.isPrimary = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isPrimary) {
-      return FilledButton.icon(
-        onPressed: onPressed,
-        icon: isLoading
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : Icon(icon),
-        label: Text(text),
-        style: FilledButton.styleFrom(
-          backgroundColor: ModernTheme.primaryOrange,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } else {
-      return OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: isLoading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: ModernTheme.primaryOrange,
-                ),
-              )
-            : Icon(icon),
-        label: Text(text),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: ModernTheme.primaryOrange,
-          side: BorderSide(color: ModernTheme.primaryOrange),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    }
   }
 }

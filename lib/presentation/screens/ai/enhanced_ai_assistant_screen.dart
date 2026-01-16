@@ -101,7 +101,19 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
 
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body);
-        throw Exception(errorData['error'] ?? 'Failed to get response');
+        final errorCode = errorData['code'];
+        
+        String errorMessage = errorData['error'] ?? 'Failed to get response';
+        
+        if (errorCode == 'RATE_LIMITED') {
+          errorMessage = 'Rate Limited: Too many requests. Please wait a moment and try again.';
+        } else if (errorCode == 'CREDITS_EXHAUSTED') {
+          errorMessage = 'Credits Exhausted: AI credits exhausted. Please contact admin.';
+        } else if (errorCode == 'INVALID_API_KEY') {
+          errorMessage = 'Invalid API Key: Please check AI settings.';
+        }
+        
+        throw Exception(errorMessage);
       }
 
       // Check if it's an image response
@@ -178,22 +190,52 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       ));
     });
 
-    // For now, just use the full response (streaming would require SSE support)
-    final responseText = response.body;
-    
-    // Simulate streaming by adding text gradually
-    for (int i = 0; i < responseText.length; i += 5) {
-      if (!mounted) break;
+    try {
+      // Parse SSE stream
+      final lines = response.body.split('\n');
+      String fullText = '';
       
-      final chunk = responseText.substring(0, i + 5 > responseText.length ? responseText.length : i + 5);
+      for (final line in lines) {
+        if (!mounted) break;
+        
+        if (line.startsWith('data: ')) {
+          final data = line.substring(6);
+          if (data == '[DONE]') break;
+          
+          try {
+            final json = jsonDecode(data);
+            final content = json['choices']?[0]?['delta']?['content'];
+            
+            if (content != null) {
+              fullText += content;
+              
+              setState(() {
+                final index = _messages.indexWhere((m) => m.id == assistantId);
+                if (index != -1) {
+                  _messages[index] = _messages[index].copyWith(text: fullText);
+                  _streamingStatus = _streamingStatus?.copyWith(
+                    tokensReceived: (_streamingStatus?.tokensReceived ?? 0) + 1,
+                  );
+                }
+              });
+              
+              _scrollToBottom();
+              await Future.delayed(const Duration(milliseconds: 10));
+            }
+          } catch (e) {
+            debugPrint('Error parsing SSE data: $e');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling streaming response: $e');
+      // Fallback: use full response body
       setState(() {
         final index = _messages.indexWhere((m) => m.id == assistantId);
         if (index != -1) {
-          _messages[index] = _messages[index].copyWith(text: chunk);
+          _messages[index] = _messages[index].copyWith(text: response.body);
         }
       });
-      
-      await Future.delayed(const Duration(milliseconds: 10));
     }
 
     if (mounted) {

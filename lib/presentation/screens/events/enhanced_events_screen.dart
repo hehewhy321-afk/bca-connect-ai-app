@@ -4,31 +4,30 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/event.dart';
-import '../../../data/repositories/event_repository.dart';
 import '../../../core/theme/modern_theme.dart';
-
-// Provider for all events
-final allEventsProvider = FutureProvider<List<Event>>((ref) async {
-  final repo = EventRepository();
-  return await repo.getEvents();
-});
+import '../../providers/event_provider.dart';
+import '../../widgets/skeleton_loader.dart';
 
 // State providers for filters
 final searchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoryProvider = StateProvider<String>((ref) => 'all');
 
-// Filtered events provider
+// Filtered events provider - uses upcomingEventsProvider (same as home screen)
 final filteredEventsProvider = Provider<AsyncValue<List<Event>>>((ref) {
-  final eventsAsync = ref.watch(allEventsProvider);
+  final eventsAsync = ref.watch(upcomingEventsProvider);
   final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
   final selectedCategory = ref.watch(selectedCategoryProvider);
 
   return eventsAsync.whenData((events) {
     return events.where((event) {
+      // Search filter
       final matchesSearch = event.title.toLowerCase().contains(searchQuery) ||
           (event.description?.toLowerCase().contains(searchQuery) ?? false);
+      
+      // Category filter
       final matchesCategory =
           selectedCategory == 'all' || event.category.toLowerCase() == selectedCategory.toLowerCase();
+      
       return matchesSearch && matchesCategory;
     }).toList();
   });
@@ -157,39 +156,23 @@ class EnhancedEventsScreen extends ConsumerWidget {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(allEventsProvider);
+                    ref.invalidate(upcomingEventsProvider);
                   },
-                  child: GridView.builder(
+                  child: ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 1,
-                      childAspectRatio: 1.4,
-                      mainAxisSpacing: 16,
-                    ),
                     itemCount: events.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       return _EventCard(event: events[index]);
                     },
                   ),
                 );
               },
-              loading: () => GridView.builder(
+              loading: () => ListView.separated(
                 padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 1,
-                  childAspectRatio: 1.4,
-                  mainAxisSpacing: 16,
-                ),
                 itemCount: 6,
-                itemBuilder: (context, index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                },
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) => const EventCardSkeleton(),
               ),
               error: (error, stack) => Center(
                 child: Column(
@@ -218,7 +201,7 @@ class EnhancedEventsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
                     FilledButton.icon(
-                      onPressed: () => ref.invalidate(allEventsProvider),
+                      onPressed: () => ref.invalidate(upcomingEventsProvider),
                       icon: const Icon(Iconsax.refresh),
                       label: const Text('Retry'),
                     ),
@@ -268,10 +251,6 @@ class _EventCard extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return DateFormat('EEE, MMM dd, hh:mm a').format(date);
-  }
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -306,22 +285,49 @@ class _EventCard extends StatelessWidget {
                   child: event.imageUrl != null
                       ? Image.network(
                           event.imageUrl!,
-                          height: 160,
+                          height: 180,
                           width: double.infinity,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(context),
                         )
                       : _buildPlaceholderImage(context),
                 ),
+                // Gradient overlay for better badge visibility
+                Container(
+                  height: 180,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.3),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.5),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
                 // Category Badge
                 Positioned(
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _getCategoryColor(event.category),
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getCategoryColor(event.category).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Text(
                       event.category,
@@ -338,36 +344,66 @@ class _EventCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(event.status).withValues(alpha: 0.9),
+                      color: _getStatusColor(event.status).withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getStatusColor(event.status).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      event.status,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          event.status,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 // Featured Badge
                 if (event.isFeatured)
                   Positioned(
-                    top: 48,
+                    bottom: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.amber,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Iconsax.star1, size: 12, color: Colors.white),
+                          Icon(Iconsax.star5, size: 12, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
                             'Featured',
@@ -386,67 +422,187 @@ class _EventCard extends StatelessWidget {
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title
                   Text(
                     event.title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          height: 1.3,
                         ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
 
-                  // Date
-                  Row(
-                    children: [
-                      Icon(
-                        Iconsax.clock,
-                        size: 14,
-                        color: ModernTheme.primaryOrange,
+                  // Date & Time Info
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _formatDate(event.startDate),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 12,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Iconsax.calendar_1,
+                              size: 14,
+                              color: ModernTheme.primaryOrange,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Start',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('MMM dd, yyyy • hh:mm a').format(event.startDate),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        if (event.endDate != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Iconsax.calendar_tick,
+                                size: 14,
+                                color: ModernTheme.primaryOrange,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'End',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat('MMM dd, yyyy • hh:mm a').format(event.endDate!),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
 
                   // Location
                   if (event.location != null)
-                    Row(
-                      children: [
-                        Icon(
-                          Iconsax.location,
-                          size: 14,
-                          color: ModernTheme.primaryOrange,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            event.location!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 12,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Iconsax.location,
+                            size: 14,
+                            color: ModernTheme.primaryOrange,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              event.location!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 12,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Additional Info Row
+                  Row(
+                    children: [
+                      // Team Type
+                      if (event.teamType == 'team')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Colors.blue.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Iconsax.people, size: 11, color: Colors.blue),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Team ${event.teamSizeMin}-${event.teamSizeMax}',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue,
                                 ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      const Spacer(),
+                      // Registration Fee
+                      if (event.registrationFee != null && event.registrationFee! > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: ModernTheme.orangeGradient,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Iconsax.wallet, size: 11, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                'NPR ${event.registrationFee!.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -458,7 +614,7 @@ class _EventCard extends StatelessWidget {
 
   Widget _buildPlaceholderImage(BuildContext context) {
     return Container(
-      height: 160,
+      height: 180,
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -470,7 +626,7 @@ class _EventCard extends StatelessWidget {
       child: Center(
         child: Icon(
           Iconsax.calendar_1,
-          size: 48,
+          size: 64,
           color: Colors.white.withValues(alpha: 0.9),
         ),
       ),

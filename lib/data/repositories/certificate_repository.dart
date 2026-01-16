@@ -9,18 +9,39 @@ class CertificateRepository {
   // Get user certificates
   Future<List<Certificate>> getUserCertificates() async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) return [];
+    debugPrint('🔐 Current user ID: $userId');
+    
+    if (userId == null) {
+      debugPrint('❌ No user logged in!');
+      return [];
+    }
 
     try {
+      debugPrint('📡 Fetching certificates for user: $userId');
+      
       final response = await _client
           .from('certificates')
-          .select()
+          .select('''
+            *,
+            category:certificate_categories(id, name, description, icon)
+          ''')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      return (response as List).map((e) => Certificate.fromJson(e)).toList();
-    } catch (e) {
-      debugPrint('Error fetching certificates: $e');
+      debugPrint('✅ Raw response: $response');
+      debugPrint('📊 Response type: ${response.runtimeType}');
+      debugPrint('📊 Response length: ${(response as List).length}');
+      
+      final certificates = (response as List).map((e) {
+        debugPrint('   Certificate: ${e['title']} - Category: ${e['category']?['name']}');
+        return Certificate.fromJson(e);
+      }).toList();
+      
+      debugPrint('✅ Parsed ${certificates.length} certificates');
+      return certificates;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error fetching certificates: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
