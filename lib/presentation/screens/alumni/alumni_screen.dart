@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/cached_image.dart';
 
 class AlumniScreen extends ConsumerStatefulWidget {
   const AlumniScreen({super.key});
@@ -249,13 +250,13 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(50),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           gradient: selected ? ModernTheme.orangeGradient : null,
           color: selected ? null : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: selected ? Colors.transparent : Theme.of(context).dividerColor,
           ),
@@ -365,19 +366,19 @@ class _AlumniCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: avatarUrl != null
-                    ? ClipRRect(
+                    ? CachedImage(
+                        imageUrl: avatarUrl,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Center(
-                            child: Text(
-                              getInitials(fullName),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
+                        errorWidget: Center(
+                          child: Text(
+                            getInitials(fullName),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                           ),
                         ),

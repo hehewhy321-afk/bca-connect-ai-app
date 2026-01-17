@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/cached_image.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -31,7 +32,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     try {
       final response = await SupabaseConfig.client
           .from('profiles')
-          .select()
+          .select('*, graduation_year, current_company, job_title')
           .order('xp_points', ascending: false);
 
       if (mounted) {
@@ -90,12 +91,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   String _getInitials(String name) {
-    return name
+    if (name.isEmpty) return 'U';
+    
+    final initials = name
         .split(' ')
-        .map((n) => n.isNotEmpty ? n[0] : '')
+        .where((n) => n.isNotEmpty)
+        .map((n) => n[0])
         .join('')
-        .toUpperCase()
-        .substring(0, 2.clamp(0, name.length));
+        .toUpperCase();
+    
+    if (initials.isEmpty) return name[0].toUpperCase();
+    if (initials.length == 1) return initials;
+    return initials.substring(0, 2);
   }
 
   @override
@@ -353,7 +360,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
               )
             : null,
           color: selected ? null : const Color(0xFF1F1F1F),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: selected 
               ? Colors.transparent 
@@ -493,15 +500,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Widget _buildMembersGrid() {
-    return GridView.builder(
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
-      ),
       itemCount: _filteredMembers.length,
       itemBuilder: (context, index) {
         final member = _filteredMembers[index];
@@ -526,332 +527,27 @@ class _MemberCard extends StatelessWidget {
     required this.index,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final isAlumni = member['is_alumni'] == true;
-    final avatarUrl = member['avatar_url'];
-    final fullName = member['full_name'] ?? 'Unknown';
-    final batch = member['batch'];
-    final semester = member['semester'];
-    final bio = member['bio'];
-    final level = member['level'] ?? 1;
-    final xpPoints = member['xp_points'] ?? 0;
-    final githubUrl = member['github_url'];
-    final linkedinUrl = member['linkedin_url'];
-    final skills = member['skills'] is List 
-        ? (member['skills'] as List).map((s) => s.toString()).toList()
-        : <String>[];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.15),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with Avatar and Level
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFDA7809).withValues(alpha: 0.1),
-                  const Color(0xFFFF9500).withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                // Avatar
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: avatarUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            avatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Center(
-                              child: Text(
-                                getInitials(fullName),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Text(
-                            getInitials(fullName),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                ),
-                const Spacer(),
-                // Level Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Iconsax.award,
-                        size: 12,
-                        color: Color(0xFFDA7809),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$level',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFDA7809),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name
-                  Text(
-                    fullName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Alumni Badge or Batch/Semester
-                  if (isAlumni)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Alumni',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    )
-                  else
-                    Row(
-                      children: [
-                        if (batch != null)
-                          Flexible(
-                            child: Text(
-                              batch,
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 10,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        if (semester != null) ...[
-                          if (batch != null)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: Container(
-                                width: 2,
-                                height: 2,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[600],
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          Text(
-                            'S$semester',
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                  // Bio
-                  if (bio != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      bio,
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 10,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-
-                  // Skills
-                  if (skills.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: skills.take(2).map((skill) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          skill,
-                          style: TextStyle(
-                            fontSize: 8,
-                            color: Colors.grey[300],
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )).toList(),
-                    ),
-                  ],
-
-                  const Spacer(),
-
-                  // Footer - XP and Social
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // XP
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2A2A2A),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Iconsax.star,
-                                size: 10,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(width: 3),
-                              Flexible(
-                                child: Text(
-                                  '$xpPoints',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.grey[300],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      // Social Icons
-                      if (githubUrl != null && githubUrl.isNotEmpty) ...[
-                        const SizedBox(width: 4),
-                        _SocialIconButton(
-                          icon: Iconsax.code,
-                          url: githubUrl,
-                        ),
-                      ],
-                      if (linkedinUrl != null && linkedinUrl.isNotEmpty) ...[
-                        const SizedBox(width: 4),
-                        _SocialIconButton(
-                          icon: Iconsax.link,
-                          url: linkedinUrl,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).scale(begin: const Offset(0.95, 0.95));
-  }
-}
-
-class _SocialIconButton extends StatelessWidget {
-  final IconData icon;
-  final String url;
-
-  const _SocialIconButton({
-    required this.icon,
-    required this.url,
-  });
-
-  Future<void> _launchUrl(BuildContext context) async {
+  Future<void> _launchUrl(BuildContext context, String url) async {
     try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch $url';
+      // Add https:// if protocol is missing
+      String urlString = url.trim();
+      if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+        urlString = 'https://$urlString';
       }
+      
+      final uri = Uri.parse(urlString);
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to open link: $e')),
+          SnackBar(
+            content: Text('Failed to open link: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -859,21 +555,562 @@ class _SocialIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _launchUrl(context),
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(6),
+    final isAlumni = member['is_alumni'] == true;
+    final avatarUrl = member['avatar_url'] as String?;
+    final fullName = (member['full_name'] ?? 'Unknown').toString();
+    final email = (member['email'] ?? '').toString();
+    final batch = member['batch']?.toString();
+    final semester = member['semester'];
+    final bio = member['bio']?.toString();
+    final level = member['level'] ?? 1;
+    final xpPoints = member['xp_points'] ?? 0;
+    final githubUrl = member['github_url']?.toString();
+    final linkedinUrl = member['linkedin_url']?.toString();
+    final skills = member['skills'] is List 
+        ? (member['skills'] as List).map((s) => s.toString()).toList()
+        : <String>[];
+    
+    // Alumni-specific fields
+    final graduationYear = member['graduation_year'];
+    final currentCompany = member['current_company']?.toString();
+    final jobTitle = member['job_title']?.toString();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A1A1A),
+            const Color(0xFF0F0F0F),
+          ],
         ),
-        child: Icon(
-          icon,
-          size: 12,
-          color: Colors.grey[400],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFDA7809).withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Section with Avatar and Info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFFDA7809).withValues(alpha: 0.08),
+                    const Color(0xFFFF9500).withValues(alpha: 0.03),
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Avatar with glow effect
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFDA7809).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: avatarUrl != null
+                          ? CachedImage(
+                              imageUrl: avatarUrl,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                              borderRadius: BorderRadius.circular(16),
+                              errorWidget: Center(
+                                child: Text(
+                                  getInitials(fullName),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                getInitials(fullName),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Name and Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            if (batch != null && batch.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  batch,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[300],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (isAlumni) const SizedBox(width: 6),
+                            ],
+                            if (isAlumni)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Alumni',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Level Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFDA7809).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Iconsax.award5,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$level',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Semester (for students only)
+                  if (!isAlumni && semester != null) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Iconsax.book_1,
+                          size: 14,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Semester $semester',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Alumni-specific information
+                  if (isAlumni) ...[
+                    // Job Title
+                    if (jobTitle != null && jobTitle.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Iconsax.briefcase,
+                            size: 14,
+                            color: const Color(0xFF8B5CF6),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              jobTitle,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF8B5CF6),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    
+                    // Current Company
+                    if (currentCompany != null && currentCompany.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Iconsax.building,
+                            size: 14,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              currentCompany,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[300],
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    
+                    // Graduation Year
+                    if (graduationYear != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Iconsax.medal_star,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Class of $graduationYear',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+
+                  // Bio
+                  if (bio != null && bio.isNotEmpty) ...[
+                    Text(
+                      bio,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[300],
+                        height: 1.5,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // XP Points
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Iconsax.star5,
+                          size: 16,
+                          color: Colors.amber[400],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$xpPoints XP',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[300],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Skills
+                  if (skills.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ...skills.take(3).map((skill) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFDA7809).withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                skill,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[300],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )),
+                        if (skills.length > 3)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '+${skills.length - 3}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+
+                  // Social Links
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      if (githubUrl != null && githubUrl.trim().isNotEmpty)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _launchUrl(context, githubUrl),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Iconsax.code_circle,
+                                    size: 18,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'GitHub',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[300],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (githubUrl != null && githubUrl.trim().isNotEmpty && 
+                          linkedinUrl != null && linkedinUrl.trim().isNotEmpty)
+                        const SizedBox(width: 8),
+                      if (linkedinUrl != null && linkedinUrl.trim().isNotEmpty)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _launchUrl(context, linkedinUrl),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Iconsax.profile_2user,
+                                    size: 18,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'LinkedIn',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[300],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      if ((githubUrl != null && githubUrl.trim().isNotEmpty) || 
+                          (linkedinUrl != null && linkedinUrl.trim().isNotEmpty))
+                        const SizedBox(width: 8),
+                      if (email.isNotEmpty)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _launchUrl(context, 'mailto:$email'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Iconsax.sms,
+                                    size: 18,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Email',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[300],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).slideY(begin: 0.1, end: 0);
   }
 }

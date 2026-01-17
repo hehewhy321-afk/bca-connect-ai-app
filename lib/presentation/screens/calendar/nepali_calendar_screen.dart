@@ -19,6 +19,12 @@ String getNepaliDayName(DateTime adDate) {
   return nepaliDays[dayIndex];
 }
 
+// Helper function to get English month name
+String _getEnglishMonthName(int month) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return months[month - 1];
+}
+
 class NepaliCalendarScreen extends ConsumerStatefulWidget {
   const NepaliCalendarScreen({super.key});
 
@@ -28,7 +34,7 @@ class NepaliCalendarScreen extends ConsumerStatefulWidget {
 
 class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
   late PageController _pageController;
-  int _currentPageIndex = 1200; // Start from middle to allow backward navigation
+  final int _currentPageIndex = 1200; // Start from middle to allow backward navigation
 
   @override
   void initState() {
@@ -53,6 +59,7 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
         slivers: [
           // App Bar with Gradient
           SliverAppBar(
+            automaticallyImplyLeading: false,
             expandedHeight: 200,
             floating: false,
             pinned: true,
@@ -145,6 +152,14 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                     style: TextStyle(
                                       color: Colors.white.withValues(alpha: 0.9),
                                       fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${today.toDateTime().day} ${_getEnglishMonthName(today.toDateTime().month)} ${today.toDateTime().year}',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ],

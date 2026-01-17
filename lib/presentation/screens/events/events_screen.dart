@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../providers/event_provider.dart';
 import '../../../data/models/event.dart';
+import '../../widgets/cached_image.dart';
 
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
@@ -118,14 +119,12 @@ class EventCard extends StatelessWidget {
           children: [
             // Event Image
             if (event.imageUrl != null)
-              Image.network(
-                event.imageUrl!,
+              CachedImage(
+                imageUrl: event.imageUrl!,
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildPlaceholderImage(context);
-                },
+                errorWidget: _buildPlaceholderImage(context),
               )
             else
               _buildPlaceholderImage(context),

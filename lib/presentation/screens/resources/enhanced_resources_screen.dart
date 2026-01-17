@@ -94,6 +94,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
         await _openInBrowser(url);
       } else {
         // It's a file - download it
+        if (!context.mounted) return;
         await _downloadFile(context, resource, url);
       }
 
@@ -383,198 +384,94 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
     final semesters = ['all', '1', '2', '3', '4', '5', '6', '7', '8'];
 
+    // Check if any filter is active
+    final hasActiveFilters = selectedType != 'all' || selectedSemester != 'all';
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Resource Hub', style: TextStyle(fontSize: 20)),
+            Text(
+              'Study materials & resources',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
-          // Modern AppBar with Gradient
-          SliverAppBar(
-            expandedHeight: 140,
-            floating: false,
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Iconsax.folder_open,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Resource Hub',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Study materials & resources',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Search Bar
+          // Search Bar with Filter Button
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: TextField(
-                onChanged: (value) => ref.read(resourceSearchQueryProvider.notifier).state = value,
-                decoration: InputDecoration(
-                  hintText: 'Search resources...',
-                  prefixIcon: const Icon(Iconsax.search_normal_1, color: Color(0xFFDA7809)),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Iconsax.close_circle),
-                          onPressed: () => ref.read(resourceSearchQueryProvider.notifier).state = '',
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: (value) => ref.read(resourceSearchQueryProvider.notifier).state = value,
+                      decoration: InputDecoration(
+                        hintText: 'Search resources...',
+                        prefixIcon: const Icon(Iconsax.search_normal_1),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Iconsax.close_circle),
+                                onPressed: () => ref.read(resourceSearchQueryProvider.notifier).state = '',
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      ),
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                ),
-              ),
-            ),
-          ),
-
-          // Type Filter Pills
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 50,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: types.length,
-                separatorBuilder: (context, error) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final type = types[index];
-                  final isSelected = selectedType == type;
-                  return GestureDetector(
-                    onTap: () => ref.read(resourceSelectedTypeProvider.notifier).state = type,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? const LinearGradient(
-                                colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-                              )
-                            : null,
-                        color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.transparent
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  const SizedBox(width: 12),
+                  // Filter Button
+                  Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: hasActiveFilters
+                              ? const LinearGradient(
+                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                )
+                              : null,
+                          color: hasActiveFilters ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Iconsax.filter,
+                            color: hasActiveFilters ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                          ),
+                          onPressed: () => _showFilterModal(context, ref, types, semesters),
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          _formatType(type),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 13,
+                      if (hasActiveFilters)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // Semester Filter Pills
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 50,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: semesters.length,
-                separatorBuilder: (context, error) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final semester = semesters[index];
-                  final isSelected = selectedSemester == semester;
-                  return GestureDetector(
-                    onTap: () => ref.read(resourceSelectedSemesterProvider.notifier).state = semester,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? const LinearGradient(
-                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                              )
-                            : null,
-                        color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.transparent
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          semester == 'all' ? 'All Semesters' : 'Sem $semester',
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
           // Resources List
           filteredResourcesAsync.when(
@@ -687,6 +584,238 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
     if (type == 'all') return 'All Types';
     return type.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
   }
+
+  void _showFilterModal(BuildContext context, WidgetRef ref, List<String> types, List<String> semesters) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        // Use local state variables
+        String localType = ref.read(resourceSelectedTypeProvider);
+        String localSemester = ref.read(resourceSelectedSemesterProvider);
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Filter Resources',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Iconsax.close_circle),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Resource Type Section
+                      Text(
+                        'Resource Type',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: types.map((type) {
+                          final isSelected = localType == type;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                localType = type;
+                              });
+                              ref.read(resourceSelectedTypeProvider.notifier).state = type;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                      )
+                                    : null,
+                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(50),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                _formatType(type),
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Semester Section
+                      Text(
+                        'Semester',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: semesters.map((semester) {
+                          final isSelected = localSemester == semester;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                localSemester = semester;
+                              });
+                              ref.read(resourceSelectedSemesterProvider.notifier).state = semester;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                      )
+                                    : null,
+                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(50),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                semester == 'all' ? 'All Semesters' : 'Sem $semester',
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  localType = 'all';
+                                  localSemester = 'all';
+                                });
+                                ref.read(resourceSelectedTypeProvider.notifier).state = 'all';
+                                ref.read(resourceSelectedSemesterProvider.notifier).state = 'all';
+                              },
+                              icon: const Icon(Iconsax.refresh),
+                              label: const Text('Clear Filters'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.pop(context),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Apply',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 // Resource Card Widget - Completely Redesigned
@@ -721,9 +850,9 @@ class _ResourceCard extends StatelessWidget {
   Color _getColorForType(String type) {
     switch (type.toLowerCase()) {
       case 'study_material':
-        return ModernTheme.primaryOrange;
+        return const Color(0xFF0A6B62);
       case 'past_paper':
-        return const Color(0xFFDA7809);
+        return const Color(0xFF0A6B62);
       case 'project':
         return const Color(0xFF3B82F6);
       case 'interview_prep':
@@ -739,11 +868,11 @@ class _ResourceCard extends StatelessWidget {
     switch (type.toLowerCase()) {
       case 'study_material':
         return const LinearGradient(
-          colors: [Color(0xFFDA7809), Color(0xFFFF9A3C)],
+          colors: [Color.fromARGB(255, 6, 53, 49), Color.fromARGB(255, 36, 34, 7)],
         );
       case 'past_paper':
         return const LinearGradient(
-          colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+          colors: [Color.fromARGB(255, 7, 54, 50), Color.fromARGB(255, 65, 79, 9)],
         );
       case 'project':
         return const LinearGradient(
@@ -816,8 +945,8 @@ class _ResourceCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.black.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(50),
                       ),
                       child: Icon(
                         _getIconForType(resource.type),
@@ -834,7 +963,7 @@ class _ResourceCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(50),
                             ),
                             child: Text(
                               _formatType(resource.type),
@@ -912,7 +1041,7 @@ class _ResourceCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(50),
                               border: Border.all(color: color.withValues(alpha: 0.3)),
                             ),
                             child: Row(
@@ -936,7 +1065,7 @@ class _ResourceCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(50),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -1033,11 +1162,13 @@ class _ResourceCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: gradient,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                              ),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: color.withValues(alpha: 0.3),
+                                  color: const Color(0xFFDA7809).withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),

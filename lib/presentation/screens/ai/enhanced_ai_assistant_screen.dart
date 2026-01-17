@@ -1,12 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/cached_image.dart';
+import 'image_gallery_screen.dart';
 
 enum AIMode { chat, image }
 
@@ -24,11 +32,113 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   bool _isLoading = false;
   AIMode _mode = AIMode.chat;
   StreamingStatus? _streamingStatus;
+  
+  // Voice input
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _interimTranscript = '';
+  bool _speechAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    _speech = stt.SpeechToText();
+    try {
+      final status = await Permission.microphone.request();
+      if (status.isGranted) {
+        _speechAvailable = await _speech.initialize(
+          onError: (error) => debugPrint('Speech error: $error'),
+          onStatus: (status) => debugPrint('Speech status: $status'),
+        );
+        if (mounted) setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Speech init error: $e');
+    }
+  }
+
+  Future<void> _saveImageToDatabase({
+    required String prompt,
+    required String imageUrl,
+    String? provider,
+    String? model,
+  }) async {
+    try {
+      final user = SupabaseConfig.client.auth.currentUser;
+      if (user == null) return;
+
+      final modelUsed = provider != null && model != null ? '$provider:$model' : null;
+
+      // Save generated image to database (like web version)
+      await SupabaseConfig.client.from('ai_generated_images').insert({
+        'user_id': user.id,
+        'prompt': prompt,
+        'image_url': imageUrl,
+        'model_used': modelUsed,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      debugPrint('Image saved to database successfully');
+    } catch (e) {
+      debugPrint('Error saving image to database: $e');
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_speechAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Speech recognition not available on this device'),
+        ),
+      );
+      return;
+    }
+
+    if (_isListening) {
+      await _speech.stop();
+      setState(() {
+        _isListening = false;
+        _interimTranscript = '';
+      });
+    } else {
+      setState(() => _isListening = true);
+      
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            if (result.finalResult) {
+              // Add final result to input
+              final newText = _messageController.text.isEmpty
+                  ? result.recognizedWords
+                  : '${_messageController.text} ${result.recognizedWords}';
+              _messageController.text = newText;
+              _interimTranscript = '';
+            } else {
+              // Show interim results
+              _interimTranscript = result.recognizedWords;
+            }
+          });
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: true,
+          listenMode: stt.ListenMode.confirmation,
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _speech.cancel();
     super.dispose();
   }
 
@@ -133,6 +243,16 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
           }
           
           if (mounted) {
+            // Save image to database
+            if (imageUrl != null) {
+              _saveImageToDatabase(
+                prompt: jsonData['prompt'] ?? userMessage.text,
+                imageUrl: imageUrl,
+                provider: jsonData['provider'],
+                model: jsonData['model'],
+              );
+            }
+            
             setState(() {
               _messages.add(ChatMessage(
                 id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -266,6 +386,296 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     );
   }
 
+  Future<void> _downloadChat() async {
+    if (_messages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No messages to download')),
+      );
+      return;
+    }
+
+    try {
+      // Create HTML content
+      final html = _generateChatHTML();
+      
+      // Get temporary directory
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/ai-chat-${DateTime.now().millisecondsSinceEpoch}.html');
+      
+      // Write HTML to file
+      await file.writeAsString(html);
+      
+      // Share the file
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chat exported successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to export chat: $e')),
+        );
+      }
+    }
+  }
+
+  String _generateChatHTML() {
+    final user = SupabaseConfig.client.auth.currentUser;
+    final userName = user?.email?.split('@')[0] ?? 'User';
+    
+    final messagesHtml = _messages.map((message) {
+      final isUser = message.isUser;
+      final avatar = isUser ? '👤' : '🤖';
+      final role = isUser ? 'user' : 'assistant';
+      
+      String contentHtml = message.text
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('\n', '<br>');
+      
+      // Format code blocks
+      contentHtml = contentHtml.replaceAllMapped(
+        RegExp(r'```(\w+)?\n(.*?)```', multiLine: true, dotAll: true),
+        (match) => '<pre class="code-block"><code>${match.group(2)}</code></pre>',
+      );
+      
+      // Format inline code
+      contentHtml = contentHtml.replaceAllMapped(
+        RegExp(r'`([^`]+)`'),
+        (match) => '<code class="inline-code">${match.group(1)}</code>',
+      );
+      
+      // Format bold
+      contentHtml = contentHtml.replaceAllMapped(
+        RegExp(r'\*\*([^*]+)\*\*'),
+        (match) => '<strong>${match.group(1)}</strong>',
+      );
+      
+      String imageHtml = '';
+      if (message.type == MessageType.image && message.imageUrl != null) {
+        imageHtml = '<img src="${message.imageUrl}" alt="Generated image" class="message-image" />';
+      }
+      
+      String metaHtml = '';
+      if (!isUser && message.provider != null) {
+        metaHtml = '<div class="message-meta"><span class="badge provider">${message.provider}:${message.model}</span></div>';
+      }
+      
+      return '''
+        <div class="message $role">
+          <div class="avatar $role">$avatar</div>
+          <div class="message-content">
+            <div class="message-bubble">
+              $contentHtml
+              $imageHtml
+            </div>
+            $metaHtml
+          </div>
+        </div>
+      ''';
+    }).join('\n');
+    
+    return '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat - ${DateFormat('MMM d, y').format(DateTime.now())}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #DA7809 0%, #FF9500 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      display: block;
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+      text-transform: uppercase;
+    }
+    .messages {
+      padding: 40px;
+    }
+    .message {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .message.user {
+      flex-direction: row-reverse;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .avatar.user {
+      background: linear-gradient(135deg, #DA7809 0%, #FF9500 100%);
+    }
+    .avatar.assistant {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .message-content {
+      flex: 1;
+      max-width: 70%;
+    }
+    .message.user .message-content {
+      text-align: right;
+    }
+    .message-bubble {
+      padding: 16px 20px;
+      border-radius: 16px;
+      display: inline-block;
+      max-width: 100%;
+      word-wrap: break-word;
+      text-align: left;
+    }
+    .message.user .message-bubble {
+      background: linear-gradient(135deg, #DA7809 0%, #FF9500 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.assistant .message-bubble {
+      background: #f7f7f8;
+      color: #1a1a1a;
+      border-bottom-left-radius: 4px;
+    }
+    .inline-code {
+      background: rgba(0, 0, 0, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.9em;
+    }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 13px;
+    }
+    .message-image {
+      margin-top: 12px;
+      border-radius: 12px;
+      max-width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .message-meta {
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.6;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #f0fdf4;
+      color: #15803d;
+    }
+    .footer {
+      background: #f7f7f8;
+      padding: 32px 40px;
+      text-align: center;
+      border-top: 1px solid #e5e5e5;
+    }
+    .footer .logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #DA7809 0%, #FF9500 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 AI Chat Conversation</h1>
+      <p>Exported on ${DateFormat('MMM d, y • h:mm a').format(DateTime.now())}</p>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value">${_messages.length}</span>
+          <span class="stat-label">Messages</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">${_messages.where((m) => m.type == MessageType.image).length}</span>
+          <span class="stat-label">Images</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">$userName</span>
+          <span class="stat-label">Account</span>
+        </div>
+      </div>
+    </div>
+    <div class="messages">
+      $messagesHtml
+    </div>
+    <div class="footer">
+      <p class="logo">BCA AI Study Assistant</p>
+      <p>Powered by AI • MMAMC College</p>
+    </div>
+  </div>
+</body>
+</html>
+    ''';
+  }
+
   @override
   Widget build(BuildContext context) {
     final suggestedQuestions = _mode == AIMode.image
@@ -311,6 +721,24 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Iconsax.gallery),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ImageGalleryScreen(),
+                ),
+              );
+            },
+            tooltip: 'Image Gallery',
+          ),
+          if (_messages.isNotEmpty)
+            IconButton(
+              icon: const Icon(Iconsax.document_download),
+              onPressed: _downloadChat,
+              tooltip: 'Download Chat',
+            ),
           if (_messages.isNotEmpty)
             IconButton(
               icon: const Icon(Iconsax.trash),
@@ -370,6 +798,19 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
               children: [
                 Row(
                   children: [
+                    // Voice Button
+                    if (_speechAvailable)
+                      IconButton(
+                        icon: Icon(
+                          _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
+                          color: _isListening
+                              ? Colors.red
+                              : ModernTheme.primaryOrange,
+                        ),
+                        onPressed: _isLoading ? null : _toggleListening,
+                        tooltip: _isListening ? 'Stop Listening' : 'Voice Input',
+                      ),
+                    
                     // Mode Toggle
                     IconButton(
                       icon: Icon(
@@ -388,27 +829,46 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                     
                     // Input Field
                     Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: InputDecoration(
-                          hintText: _mode == AIMode.image
-                              ? 'Describe the image you want...'
-                              : 'Ask anything about your studies...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
+                      child: Stack(
+                        children: [
+                          TextField(
+                            controller: _messageController,
+                            decoration: InputDecoration(
+                              hintText: _isListening
+                                  ? 'Listening... Speak now!'
+                                  : _mode == AIMode.image
+                                      ? 'Describe the image you want...'
+                                      : 'Ask anything about your studies...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _sendMessage(),
+                            enabled: !_isLoading,
                           ),
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _sendMessage(),
-                        enabled: !_isLoading,
+                          // Interim transcript overlay
+                          if (_interimTranscript.isNotEmpty)
+                            Positioned(
+                              left: 20,
+                              top: 12,
+                              child: Text(
+                                _interimTranscript,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     
@@ -429,11 +889,15 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _mode == AIMode.image
-                      ? '🎨 IMAGE MODE ON • Describe any image to generate'
-                      : '💬 Chat Mode • Ask anything about BCA studies',
+                  _isListening
+                      ? '🎤 LISTENING... Speak now!'
+                      : _mode == AIMode.image
+                          ? '🎨 IMAGE MODE ON • Describe any image to generate'
+                          : '💬 Chat Mode • Ask anything about BCA studies${_speechAvailable ? ' • 🎤 Voice available' : ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: _isListening
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 10,
                       ),
                   textAlign: TextAlign.center,
@@ -585,6 +1049,63 @@ class _MessageBubble extends StatelessWidget {
 
   const _MessageBubble({required this.message});
 
+  Widget _buildImageWidget(String imageUrl) {
+    // Check if it's a base64 image
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        // Extract base64 data
+        final base64Data = imageUrl.split(',')[1];
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          width: 250,
+          height: 250,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 250,
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              color: Colors.grey[200],
+              child: const Center(
+                child: Text('Failed to load image'),
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        debugPrint('Error decoding base64 image: $e');
+        return Container(
+          width: 250,
+          height: 250,
+          padding: const EdgeInsets.all(16),
+          color: Colors.grey[200],
+          child: const Center(
+            child: Text('Invalid image format'),
+          ),
+        );
+      }
+    }
+    
+    // It's a URL, use CachedImage
+    return CachedImage(
+      imageUrl: imageUrl,
+      width: 250,
+      height: 250,
+      fit: BoxFit.cover,
+      borderRadius: BorderRadius.circular(12),
+      errorWidget: Container(
+        width: 250,
+        height: 250,
+        padding: const EdgeInsets.all(16),
+        color: Colors.grey[200],
+        child: const Center(
+          child: Text('Failed to load image'),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -639,17 +1160,10 @@ class _MessageBubble extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
+                            // Handle both base64 and URL images
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                message.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  padding: const EdgeInsets.all(16),
-                                  color: Colors.grey[200],
-                                  child: const Text('Failed to load image'),
-                                ),
-                              ),
+                              child: _buildImageWidget(message.imageUrl!),
                             ),
                           ],
                         )
@@ -814,12 +1328,12 @@ class _SuggestionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(50),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
@@ -843,3 +1357,4 @@ class _SuggestionChip extends StatelessWidget {
     );
   }
 }
+

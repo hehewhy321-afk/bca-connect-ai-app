@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/modern_theme.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -67,8 +67,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
-    final box = await Hive.openBox('app_settings');
-    await box.put('onboarding_completed', true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
     if (mounted) {
       context.go('/auth/login');
     }
@@ -214,10 +214,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ],
             ),
-            child: Icon(
-              page.icon,
-              size: 100,
-              color: Colors.white,
+            child: Center(
+              child: Icon(
+                page.icon,
+                size: 100,
+                color: Colors.white,
+              ),
             ),
           )
               .animate()

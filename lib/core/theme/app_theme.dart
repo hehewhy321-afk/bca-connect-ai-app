@@ -128,13 +128,32 @@ class AppTheme {
         ),
       ),
       
-      // Navigation Bar Theme
+      // Navigation Bar Theme (Light)
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
         height: 80,
-        labelTextStyle: WidgetStateProperty.all(
-          GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-        ),
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFFDA7809).withValues(alpha: 0.15),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: Color(0xFFFFFFFF), size: 24);
+          }
+          return const IconThemeData(color: Color(0xFF79747E), size: 24);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFDA7809),
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF79747E),
+          );
+        }),
       ),
       
       // Bottom Sheet Theme
@@ -295,13 +314,32 @@ class AppTheme {
         ),
       ),
       
-      // Navigation Bar Theme
+      // Navigation Bar Theme (Dark)
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
         height: 80,
-        labelTextStyle: WidgetStateProperty.all(
-          GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-        ),
+        backgroundColor: const Color(0xFF1A1A1A),
+        indicatorColor: const Color(0xFFDA7809).withValues(alpha: 0.15),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: Color(0xFFFFFFFF), size: 24);
+          }
+          return const IconThemeData(color: Color(0xFF938F99), size: 24);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFDA7809),
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF938F99),
+          );
+        }),
       ),
       
       // Bottom Sheet Theme

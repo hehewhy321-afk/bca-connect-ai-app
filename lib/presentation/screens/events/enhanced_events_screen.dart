@@ -7,6 +7,7 @@ import '../../../data/models/event.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../providers/event_provider.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/cached_image.dart';
 
 // State providers for filters
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -107,6 +108,14 @@ class EnhancedEventsScreen extends ConsumerWidget {
                     color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    side: BorderSide(
+                      color: isSelected
+                          ? ModernTheme.primaryOrange
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
                   ),
                   side: BorderSide(
                     color: isSelected
@@ -283,12 +292,16 @@ class _EventCard extends StatelessWidget {
                     topRight: Radius.circular(20),
                   ),
                   child: event.imageUrl != null
-                      ? Image.network(
-                          event.imageUrl!,
+                      ? CachedImage(
+                          imageUrl: event.imageUrl!,
                           height: 180,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(context),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
+                          errorWidget: _buildPlaceholderImage(context),
                         )
                       : _buildPlaceholderImage(context),
                 ),

@@ -851,175 +851,180 @@ class PomodoroScreen extends ConsumerWidget {
   }
 
   void _showSettingsModal(BuildContext context, WidgetRef ref) {
-    final settings = ref.read(pomodoroSettingsProvider);
-    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final settings = ref.watch(pomodoroSettingsProvider);
+          
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
-            
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDA7809).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Iconsax.setting_2,
-                      color: Color(0xFFDA7809),
-                      size: 20,
-                    ),
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Timer Settings',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Iconsax.close_circle, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            
-            const Divider(height: 1, color: Color(0xFF2A2A2A)),
-            
-            // Settings Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSettingSlider(
-                      context,
-                      ref,
-                      label: 'Work Duration',
-                      value: settings.workDuration.toDouble(),
-                      min: 5,
-                      max: 60,
-                      divisions: 11,
-                      unit: 'min',
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(workDuration: value.toInt());
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    _buildSettingSlider(
-                      context,
-                      ref,
-                      label: 'Short Break',
-                      value: settings.shortBreakDuration.toDouble(),
-                      min: 3,
-                      max: 15,
-                      divisions: 12,
-                      unit: 'min',
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(shortBreakDuration: value.toInt());
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    _buildSettingSlider(
-                      context,
-                      ref,
-                      label: 'Long Break',
-                      value: settings.longBreakDuration.toDouble(),
-                      min: 10,
-                      max: 45,
-                      divisions: 7,
-                      unit: 'min',
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(longBreakDuration: value.toInt());
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    _buildSettingSlider(
-                      context,
-                      ref,
-                      label: 'Sessions Until Long Break',
-                      value: settings.sessionsUntilLongBreak.toDouble(),
-                      min: 2,
-                      max: 8,
-                      divisions: 6,
-                      unit: 'sessions',
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(sessionsUntilLongBreak: value.toInt());
-                      },
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Toggle Settings
-                    _buildSettingToggle(
-                      context,
-                      ref,
-                      label: 'Sound Notifications',
-                      subtitle: 'Play sound when timer completes',
-                      value: settings.soundEnabled,
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(soundEnabled: value);
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    _buildSettingToggle(
-                      context,
-                      ref,
-                      label: 'Vibration',
-                      subtitle: 'Vibrate when timer completes',
-                      value: settings.vibrationEnabled,
-                      onChanged: (value) {
-                        ref.read(pomodoroSettingsProvider.notifier).state = 
-                          settings.copyWith(vibrationEnabled: value);
-                      },
-                    ),
-                  ],
                 ),
-              ),
+                
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDA7809).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Iconsax.setting_2,
+                          color: Color(0xFFDA7809),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Timer Settings',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Iconsax.close_circle, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const Divider(height: 1, color: Color(0xFF2A2A2A)),
+                
+                // Settings Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSettingSlider(
+                          context,
+                          ref,
+                          label: 'Work Duration',
+                          value: settings.workDuration.toDouble(),
+                          min: 5,
+                          max: 60,
+                          divisions: 11,
+                          unit: 'min',
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(workDuration: value.toInt());
+                            ref.read(pomodoroSessionProvider.notifier).reset();
+                          },
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        _buildSettingSlider(
+                          context,
+                          ref,
+                          label: 'Short Break',
+                          value: settings.shortBreakDuration.toDouble(),
+                          min: 3,
+                          max: 15,
+                          divisions: 12,
+                          unit: 'min',
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(shortBreakDuration: value.toInt());
+                          },
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        _buildSettingSlider(
+                          context,
+                          ref,
+                          label: 'Long Break',
+                          value: settings.longBreakDuration.toDouble(),
+                          min: 10,
+                          max: 45,
+                          divisions: 7,
+                          unit: 'min',
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(longBreakDuration: value.toInt());
+                          },
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        _buildSettingSlider(
+                          context,
+                          ref,
+                          label: 'Sessions Until Long Break',
+                          value: settings.sessionsUntilLongBreak.toDouble(),
+                          min: 2,
+                          max: 8,
+                          divisions: 6,
+                          unit: 'sessions',
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(sessionsUntilLongBreak: value.toInt());
+                          },
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Toggle Settings
+                        _buildSettingToggle(
+                          context,
+                          ref,
+                          label: 'Sound Notifications',
+                          subtitle: 'Play sound when timer completes',
+                          value: settings.soundEnabled,
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(soundEnabled: value);
+                          },
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        _buildSettingToggle(
+                          context,
+                          ref,
+                          label: 'Vibration',
+                          subtitle: 'Vibrate when timer completes',
+                          value: settings.vibrationEnabled,
+                          onChanged: (value) {
+                            ref.read(pomodoroSettingsProvider.notifier).state = 
+                              settings.copyWith(vibrationEnabled: value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1129,7 +1134,7 @@ class PomodoroScreen extends ConsumerWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFFDA7809),
+            activeThumbColor: const Color(0xFFDA7809),
           ),
         ],
       ),

@@ -15,6 +15,12 @@ final allForumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
   return await repo.getPosts();
 });
 
+// Provider to check if user has upvoted a specific post
+final hasUserUpvotedForumPostProvider = FutureProvider.family<bool, String>((ref, postId) async {
+  final repo = ForumRepository();
+  return await repo.hasUserUpvoted(postId);
+});
+
 // State providers for filters
 final forumSearchQueryProvider = StateProvider<String>((ref) => '');
 final forumSelectedCategoryProvider = StateProvider<String>((ref) => 'all');
@@ -234,6 +240,14 @@ class EnhancedForumScreen extends ConsumerWidget {
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    side: BorderSide(
+                      color: isSelected
+                          ? ModernTheme.primaryOrange
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                  ),
                   side: BorderSide(
                     color: isSelected
                         ? ModernTheme.primaryOrange
@@ -353,6 +367,7 @@ class EnhancedForumScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'forum_create_fab',
         onPressed: () => context.push('/forum/create'),
         icon: const Icon(Iconsax.add),
         label: const Text('New Discussion'),
@@ -366,217 +381,240 @@ class EnhancedForumScreen extends ConsumerWidget {
   }
 
   void _showFilterModal(BuildContext context, WidgetRef ref) {
-    final selectedCategory = ref.read(forumSelectedCategoryProvider);
-    final sortBy = ref.read(forumSortByProvider);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Filter & Sort',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+      builder: (context) {
+        // Use local state variables
+        String localCategory = ref.read(forumSelectedCategoryProvider);
+        String localSortBy = ref.read(forumSortByProvider);
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
                           ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Iconsax.close_circle),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Sort By Section
-                Text(
-                  'Sort By',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                _FilterOption(
-                  icon: Iconsax.clock,
-                  title: 'Latest',
-                  subtitle: 'Most recent posts first',
-                  isSelected: sortBy == 'latest',
-                  onTap: () {
-                    ref.read(forumSortByProvider.notifier).state = 'latest';
-                  },
-                ),
-                const SizedBox(height: 8),
-                _FilterOption(
-                  icon: Iconsax.eye,
-                  title: 'Most Viewed',
-                  subtitle: 'Posts with most views',
-                  isSelected: sortBy == 'views',
-                  onTap: () {
-                    ref.read(forumSortByProvider.notifier).state = 'views';
-                  },
-                ),
-                const SizedBox(height: 8),
-                _FilterOption(
-                  icon: Iconsax.message_text,
-                  title: 'Most Discussed',
-                  subtitle: 'Posts with most comments',
-                  isSelected: sortBy == 'comments',
-                  onTap: () {
-                    ref.read(forumSortByProvider.notifier).state = 'comments';
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Category Section
-                Text(
-                  'Category',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    'all',
-                    'general',
-                    'programming',
-                    'database',
-                    'networking',
-                    'projects',
-                    'career',
-                    'exams'
-                  ].map((category) {
-                    final isSelected = selectedCategory == category;
-                    return GestureDetector(
-                      onTap: () {
-                        ref.read(forumSelectedCategoryProvider.notifier).state = category;
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          gradient: isSelected
-                              ? const LinearGradient(
-                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                                )
-                              : null,
-                          color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.transparent
-                                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Filter & Sort',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
-                        ),
-                        child: Text(
-                          category == 'all' ? 'All Topics' : _formatCategory(category),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 13,
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Iconsax.close_circle),
+                            onPressed: () => Navigator.pop(context),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }).toList(),
-                ),
+                      const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ref.read(forumSelectedCategoryProvider.notifier).state = 'all';
+                      // Sort By Section
+                      Text(
+                        'Sort By',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      _FilterOption(
+                        icon: Iconsax.clock,
+                        title: 'Latest',
+                        subtitle: 'Most recent posts first',
+                        isSelected: localSortBy == 'latest',
+                        onTap: () {
+                          setState(() {
+                            localSortBy = 'latest';
+                          });
                           ref.read(forumSortByProvider.notifier).state = 'latest';
                         },
-                        icon: const Icon(Iconsax.refresh),
-                        label: const Text('Clear Filters'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Apply',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
+                      const SizedBox(height: 8),
+                      _FilterOption(
+                        icon: Iconsax.eye,
+                        title: 'Most Viewed',
+                        subtitle: 'Posts with most views',
+                        isSelected: localSortBy == 'views',
+                        onTap: () {
+                          setState(() {
+                            localSortBy = 'views';
+                          });
+                          ref.read(forumSortByProvider.notifier).state = 'views';
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _FilterOption(
+                        icon: Iconsax.message_text,
+                        title: 'Most Discussed',
+                        subtitle: 'Posts with most comments',
+                        isSelected: localSortBy == 'comments',
+                        onTap: () {
+                          setState(() {
+                            localSortBy = 'comments';
+                          });
+                          ref.read(forumSortByProvider.notifier).state = 'comments';
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Category Section
+                      Text(
+                        'Category',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          'all',
+                          'general',
+                          'programming',
+                          'database',
+                          'networking',
+                          'projects',
+                          'career',
+                          'exams'
+                        ].map((category) {
+                          final isSelected = localCategory == category;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                localCategory = category;
+                              });
+                              ref.read(forumSelectedCategoryProvider.notifier).state = category;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                      )
+                                    : null,
+                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                category == 'all' ? 'All Topics' : _formatCategory(category),
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  localCategory = 'all';
+                                  localSortBy = 'latest';
+                                });
+                                ref.read(forumSelectedCategoryProvider.notifier).state = 'all';
+                                ref.read(forumSortByProvider.notifier).state = 'latest';
+                              },
+                              icon: const Icon(Iconsax.refresh),
+                              label: const Text('Clear Filters'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.pop(context),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Apply',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -889,13 +927,15 @@ class _ForumPostCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Upvotes
+                  // Upvotes - Interactive
                   _StatItem(
                     icon: Iconsax.arrow_up_1,
                     value: post.upvotes,
                     color: Colors.green,
+                    isUpvote: true,
+                    postId: post.id,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   
                   // Comments
                   _StatItem(
@@ -903,7 +943,7 @@ class _ForumPostCard extends StatelessWidget {
                     value: post.replyCount,
                     color: Colors.blue,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   
                   // Views
                   _StatItem(
@@ -916,10 +956,10 @@ class _ForumPostCard extends StatelessWidget {
                   
                   // Read more indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -927,15 +967,15 @@ class _ForumPostCard extends StatelessWidget {
                         Text(
                           'Read',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: ModernTheme.primaryOrange,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 6),
                         Icon(
                           Iconsax.arrow_right_3,
-                          size: 14,
+                          size: 16,
                           color: ModernTheme.primaryOrange,
                         ),
                       ],
@@ -970,39 +1010,158 @@ class _ForumPostCard extends StatelessWidget {
   }
 }
 
-// Stat item widget for footer
-class _StatItem extends StatelessWidget {
+// Stat item widget for footer - Improved UI with compact spacing
+class _StatItem extends ConsumerWidget {
   final IconData icon;
   final int value;
   final Color color;
+  final bool isUpvote;
+  final String? postId;
 
   const _StatItem({
     required this.icon,
     required this.value,
     required this.color,
+    this.isUpvote = false,
+    this.postId,
   });
 
+  Future<void> _handleUpvote(BuildContext context, WidgetRef ref) async {
+    if (postId == null) return;
+    
+    try {
+      final repo = ForumRepository();
+      await repo.upvotePost(postId!);
+      
+      // Refresh the posts list and upvote status
+      ref.invalidate(allForumPostsProvider);
+      ref.invalidate(hasUserUpvotedForumPostProvider(postId!));
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vote updated!'),
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update vote: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (isUpvote && postId != null) {
+      final hasUpvoted = ref.watch(hasUserUpvotedForumPostProvider(postId!));
+      
+      return hasUpvoted.when(
+        data: (upvoted) => InkWell(
+          onTap: () => _handleUpvote(context, ref),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: upvoted ? Colors.green : color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  upvoted ? Iconsax.arrow_up_15 : icon,
+                  size: 18,
+                  color: upvoted ? Colors.white : color,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: upvoted ? Colors.white : color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        loading: () => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 4),
+              Text(
+                value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+        error: (error, stackTrace) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 4),
+              Text(
+                value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Non-interactive stat item
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 16,
+            size: 18,
             color: color,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Text(
             value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: color,
             ),

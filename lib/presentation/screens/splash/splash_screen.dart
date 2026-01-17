@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/supabase_config.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,31 +37,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkAuthAndNavigate() async {
+    // Wait for splash animation
     await Future.delayed(const Duration(seconds: 2));
     
     if (!mounted) return;
     
-    // Check if onboarding is completed
-    final box = await Hive.openBox('app_settings');
-    
-    if (!mounted) return;
-    
-    final onboardingCompleted = box.get('onboarding_completed', defaultValue: false);
-    
-    if (!onboardingCompleted) {
+    try {
+      // Use SharedPreferences instead of Hive (clears on uninstall)
+      final prefs = await SharedPreferences.getInstance();
+      
+      if (!mounted) return;
+      
+      final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+      
+      // If onboarding not completed, show onboarding
+      if (!onboardingCompleted) {
+        if (!mounted) return;
+        context.go('/onboarding');
+        return;
+      }
+      
+      // Check authentication status
+      final isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
+      
+      if (!mounted) return;
+      
+      // Navigate based on authentication
+      if (isAuthenticated) {
+        context.go('/home');
+      } else {
+        context.go('/auth/login');
+      }
+    } catch (e) {
+      // If any error occurs, go to onboarding (safe default for first install)
       if (!mounted) return;
       context.go('/onboarding');
-      return;
-    }
-    
-    final isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
-    
-    if (!mounted) return;
-    
-    if (isAuthenticated) {
-      context.go('/home');
-    } else {
-      context.go('/auth/login');
     }
   }
 
@@ -108,13 +118,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
                       child: Image.asset(
                         'assets/images/pwa-512x512.png',
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),

@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/event.dart';
 import '../../../data/repositories/event_repository.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../widgets/cached_image.dart';
 
 final eventDetailProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
   final repo = EventRepository();
@@ -460,26 +461,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: ModernTheme.primaryOrange,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: ModernTheme.primaryOrange.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Iconsax.arrow_left, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
       ),
       body: eventAsync.when(
         data: (event) {
@@ -964,10 +948,13 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
                                     child: imageUrl != null
-                                        ? Image.network(
-                                            imageUrl,
+                                        ? CachedImage(
+                                            imageUrl: imageUrl,
+                                            width: 200,
+                                            height: 200,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => Container(
+                                            borderRadius: BorderRadius.circular(20),
+                                            errorWidget: Container(
                                               decoration: const BoxDecoration(
                                                 gradient: ModernTheme.orangeGradient,
                                               ),
@@ -1124,12 +1111,13 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(8),
+                                  width: 36,
+                                  height: 36,
                                   decoration: const BoxDecoration(
                                     color: Colors.green,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Iconsax.tick_circle5, color: Colors.white, size: 20),
+                                  child: const Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(

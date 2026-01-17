@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:iconsax/iconsax.dart';
-import '../../widgets/gradient_button.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 
@@ -44,10 +43,8 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // Show simple, user-friendly error message
         String errorMessage = 'Invalid email or password';
         
-        // Check for specific error types
         final errorString = e.toString().toLowerCase();
         if (errorString.contains('network') || errorString.contains('connection')) {
           errorMessage = 'Network error. Please check your connection';
@@ -76,112 +73,128 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      body: Container(
-        decoration: isDark
-            ? BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-              )
-            : const BoxDecoration(
-                gradient: ModernTheme.orangeGradient,
-              ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+      backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: SizedBox(
+            height: size.height - MediaQuery.of(context).padding.top,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo/Icon
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: isDark 
-                            ? Theme.of(context).colorScheme.surfaceContainerHighest
-                            : Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                    const Spacer(flex: 2),
+                    
+                    // Logo Section
+                    Column(
+                      children: [
+                        // Logo Image
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? const Color(0xFF1A1A1A)
+                                : const Color(0xFFFFF5F0),
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                blurRadius: 30,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        Iconsax.book,
-                        size: 50,
-                        color: ModernTheme.primaryOrange,
-                      ),
-                    ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Title
-                    Text(
-                      'Welcome Back!',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: isDark 
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
-                    
-                    const SizedBox(height: 8),
-                    
-                    Text(
-                      'Sign in to continue',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: isDark
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ).animate().fadeIn(delay: 300.ms),
-                    
-                    const SizedBox(height: 48),
-                    
-                    // Login Card
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Theme.of(context).colorScheme.surfaceContainerHighest
-                            : Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 30,
-                            offset: const Offset(0, 15),
+                          padding: const EdgeInsets.all(20),
+                          child: Image.asset(
+                            'assets/images/pwa-512x512.png',
+                            fit: BoxFit.contain,
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Email Field
-                          TextFormField(
+                        ).animate().scale(
+                          duration: 800.ms,
+                          curve: Curves.elasticOut,
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Title
+                        Text(
+                          'Welcome Back',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                            letterSpacing: -0.5,
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.3, end: 0),
+                        
+                        const SizedBox(height: 8),
+                        
+                        Text(
+                          'Sign in to access your account',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark 
+                                ? Colors.grey[400]
+                                : Colors.grey[600],
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ).animate().fadeIn(delay: 300.ms),
+                      ],
+                    ),
+                    
+                    const Spacer(flex: 2),
+                    
+                    // Form Fields
+                    Column(
+                      children: [
+                        // Email Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? const Color(0xFF1A1A1A)
+                                : const Color(0xFFF8F9FA),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : Colors.grey[200]!,
+                            ),
+                          ),
+                          child: TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 15,
+                              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                              fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Email',
-                              hintText: 'Enter your email',
-                              prefixIcon: const Icon(Iconsax.sms),
-                              filled: true,
-                              fillColor: isDark
-                                  ? Theme.of(context).colorScheme.surface
-                                  : Colors.grey[100],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
+                              hintText: 'Email address',
+                              hintStyle: TextStyle(
+                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                fontWeight: FontWeight.w400,
+                              ),
+                              prefixIcon: Icon(
+                                Iconsax.sms,
+                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                size: 20,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 18,
                               ),
                             ),
                             validator: (value) {
@@ -193,36 +206,57 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                               }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Password Field
-                          TextFormField(
+                          ),
+                        ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Password Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? const Color(0xFF1A1A1A)
+                                : const Color(0xFFF8F9FA),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : Colors.grey[200]!,
+                            ),
+                          ),
+                          child: TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 15,
+                              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                              fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Password',
-                              hintText: 'Enter your password',
-                              prefixIcon: const Icon(Iconsax.lock),
+                              hintText: 'Password',
+                              hintStyle: TextStyle(
+                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                fontWeight: FontWeight.w400,
+                              ),
+                              prefixIcon: Icon(
+                                Iconsax.lock,
+                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Iconsax.eye_slash : Iconsax.eye,
+                                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                  size: 20,
                                 ),
                                 onPressed: () {
                                   setState(() => _obscurePassword = !_obscurePassword);
                                 },
                               ),
-                              filled: true,
-                              fillColor: isDark
-                                  ? Theme.of(context).colorScheme.surface
-                                  : Colors.grey[100],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 18,
                               ),
                             ),
                             validator: (value) {
@@ -234,82 +268,142 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                               }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.2, end: 0),
-                          
-                          const SizedBox(height: 12),
-                          
-                          // Forgot Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => context.push('/auth/forgot-password'),
-                              child: const Text('Forgot Password?'),
+                          ),
+                        ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.2, end: 0),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Forgot Password
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => context.push('/auth/forgot-password'),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             ),
-                          ).animate().fadeIn(delay: 600.ms),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Login Button
-                          GradientButton(
-                            text: 'Sign In',
-                            onPressed: _handleLogin,
-                            isLoading: _isLoading,
-                            width: double.infinity,
-                            icon: Iconsax.login,
-                          ).animate().fadeIn(delay: 700.ms).scale(begin: const Offset(0.8, 0.8)),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Contact Admin Note
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.blue.withValues(alpha: 0.3),
+                            child: Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                color: ModernTheme.primaryOrange,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Iconsax.info_circle, size: 20, color: Colors.blue[700]),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'New user? Contact admin for account creation',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue[700],
-                                    ),
+                          ),
+                        ).animate().fadeIn(delay: 600.ms),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Sign In Button
+                        Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: ModernTheme.orangeGradient,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _isLoading ? null : _handleLogin,
+                              borderRadius: BorderRadius.circular(16),
+                              child: Center(
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Text(
+                                            'Sign In',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Icon(
+                                            Iconsax.arrow_right_3,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 700.ms).scale(begin: const Offset(0.95, 0.95)),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Info Note
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1A1A1A)
+                                : const Color(0xFFF0F9FF),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : const Color(0xFFBAE6FD),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF0EA5E9).withValues(alpha: 0.1)
+                                      : const Color(0xFFE0F2FE),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Iconsax.info_circle,
+                                  size: 18,
+                                  color: isDark
+                                      ? const Color(0xFF38BDF8)
+                                      : const Color(0xFF0284C7),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'New user? Contact admin for account creation',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : const Color(0xFF0369A1),
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.4,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ).animate().fadeIn(delay: 800.ms),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0),
+                              ),
+                            ],
+                          ),
+                        ).animate().fadeIn(delay: 800.ms),
+                      ],
+                    ),
                     
-                    const SizedBox(height: 24),
-                    
-                    // Guest Access
-                    TextButton.icon(
-                      onPressed: () => context.go('/home'),
-                      icon: Icon(
-                        Iconsax.user,
-                        color: isDark
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Colors.white,
-                      ),
-                      label: Text(
-                        'Continue as Guest',
-                        style: TextStyle(
-                          color: isDark
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Colors.white,
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 900.ms),
+                    const Spacer(flex: 3),
                   ],
                 ),
               ),

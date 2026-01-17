@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
 class NotificationService {
@@ -98,7 +99,7 @@ class NotificationService {
       await showNotification(
         title: notification.title ?? 'New Notification',
         body: notification.body ?? '',
-        payload: data['route'],
+        payload: data['link'] ?? data['route'],
       );
     }
   }
@@ -155,12 +156,23 @@ class NotificationService {
     }
   }
 
-  void _onNotificationTapped(NotificationResponse response) {
+  void _onNotificationTapped(NotificationResponse response) async {
     final payload = response.payload;
     debugPrint('Notification tapped with payload: $payload');
-    if (payload != null) {
-      // Handle navigation based on payload
-      // You can use a global navigator key or event bus here
+    if (payload != null && payload.isNotEmpty) {
+      // Add https:// if protocol is missing
+      String urlString = payload.trim();
+      if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+        urlString = 'https://$urlString';
+      }
+      
+      // Try to open as URL
+      try {
+        final uri = Uri.parse(urlString);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (e) {
+        debugPrint('Error launching URL: $e');
+      }
     }
   }
 
@@ -191,7 +203,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await NotificationService().showNotification(
       title: notification.title ?? 'New Notification',
       body: notification.body ?? '',
-      payload: message.data['route'],
+      payload: message.data['link'] ?? message.data['route'],
     );
   }
 }

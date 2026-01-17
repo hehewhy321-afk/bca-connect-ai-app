@@ -87,6 +87,7 @@ class EnhancedNoticesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -149,6 +150,14 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    side: BorderSide(
+                      color: isSelected
+                          ? _getPriorityColor(type)
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                  ),
                   side: BorderSide(
                     color: isSelected
                         ? _getPriorityColor(type)
@@ -185,6 +194,14 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                     color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF8B5CF6)
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
                   ),
                   side: BorderSide(
                     color: isSelected

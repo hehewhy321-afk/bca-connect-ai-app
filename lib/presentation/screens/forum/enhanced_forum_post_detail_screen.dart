@@ -67,12 +67,27 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     try {
       final repo = ForumRepository();
       await repo.upvotePost(widget.postId);
+      
+      // Refresh both the post data and upvote status
       ref.invalidate(enhancedForumPostDetailProvider(widget.postId));
       ref.invalidate(hasUserUpvotedPostProvider(widget.postId));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vote updated!'),
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upvote: $e')),
+          SnackBar(
+            content: Text('Failed to update vote: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -678,7 +693,7 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

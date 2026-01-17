@@ -30,6 +30,15 @@ class ForumRepository {
       for (var postData in response as List) {
         final data = Map<String, dynamic>.from(postData);
         
+        // Debug: Print upvotes value
+        debugPrint('Post ${data['id']}: upvotes = ${data['upvotes']} (type: ${data['upvotes'].runtimeType})');
+        
+        // Ensure upvotes is not null
+        if (data['upvotes'] == null) {
+          data['upvotes'] = 0;
+          debugPrint('  -> Fixed null upvotes to 0');
+        }
+        
         // Extract comment count from the nested response
         if (data['comments_count'] != null && data['comments_count'] is List) {
           final countList = data['comments_count'] as List;
@@ -200,12 +209,14 @@ class ForumRepository {
     });
   }
 
-  // Upvote post
+  // Upvote post - Toggle mechanism using secure RPC functions
   Future<void> upvotePost(String postId) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('User not authenticated');
 
     try {
+      debugPrint('Upvote: Checking existing vote for user $userId on post $postId');
+      
       // Check if user already voted
       final existingVote = await _client
           .from('forum_votes')
@@ -215,6 +226,8 @@ class ForumRepository {
           .maybeSingle();
 
       if (existingVote != null) {
+        debugPrint('Upvote: Removing existing vote');
+        
         // Remove vote
         await _client
             .from('forum_votes')
@@ -222,9 +235,20 @@ class ForumRepository {
             .eq('user_id', userId)
             .eq('post_id', postId);
         
-        // Decrement upvote count
-        await _client.rpc('decrement_post_upvotes', params: {'post_id_param': postId});
+        // Decrement upvote count using secure RPC function
+        try {
+          await _client.rpc('decrement_post_upvotes_secure', params: {'post_id_param': postId});
+          debugPrint('Upvote: Vote removed via RPC');
+        } catch (e) {
+          debugPrint('RPC failed, trying direct update: $e');
+          // Fallback: try direct update (will work if RLS policy allows)
+          final post = await _client.from('forum_posts').select('upvotes').eq('id', postId).single();
+          final currentUpvotes = post['upvotes'] as int? ?? 0;
+          await _client.from('forum_posts').update({'upvotes': (currentUpvotes - 1).clamp(0, 999999)}).eq('id', postId);
+        }
       } else {
+        debugPrint('Upvote: Adding new vote');
+        
         // Add vote
         await _client.from('forum_votes').insert({
           'user_id': userId,
@@ -232,23 +256,30 @@ class ForumRepository {
           'vote_type': 1,
         });
         
-        // Increment upvote count
-        await _client.rpc('increment_post_upvotes', params: {'post_id_param': postId});
-      }
-    } catch (e) {
-      debugPrint('Error upvoting post: $e');
-      // Fallback: try direct update
-      try {
-        final post = await getPostById(postId);
-        if (post != null) {
-          await _client
-              .from('forum_posts')
-              .update({'upvotes': post.upvotes + 1})
-              .eq('id', postId);
+        // Increment upvote count using secure RPC function
+        try {
+          await _client.rpc('increment_post_upvotes_secure', params: {'post_id_param': postId});
+          debugPrint('Upvote: Vote added via RPC');
+        } catch (e) {
+          debugPrint('RPC failed, trying direct update: $e');
+          // Fallback: try direct update (will work if RLS policy allows)
+          final post = await _client.from('forum_posts').select('upvotes').eq('id', postId).single();
+          final currentUpvotes = post['upvotes'] as int? ?? 0;
+          await _client.from('forum_posts').update({'upvotes': currentUpvotes + 1}).eq('id', postId);
         }
-      } catch (e2) {
-        debugPrint('Fallback upvote also failed: $e2');
       }
+      
+      // Verify the upvote count after the operation
+      final post = await _client
+          .from('forum_posts')
+          .select('upvotes')
+          .eq('id', postId)
+          .single();
+      debugPrint('Upvote: Post now has ${post['upvotes']} upvotes');
+      
+    } catch (e) {
+      debugPrint('Error toggling upvote: $e');
+      rethrow;
     }
   }
 

@@ -95,6 +95,7 @@ class ModernForumScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'modern_forum_create_fab',
         onPressed: () {
           context.push('/forum/create');
         },

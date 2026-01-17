@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/event.dart';
 import '../../../data/repositories/event_repository.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../widgets/cached_image.dart';
 
 // Provider for user's registered events with full event details
 final myEventsProvider = FutureProvider<List<Event>>((ref) async {
@@ -340,12 +341,12 @@ class _MyEventCard extends StatelessWidget {
                                   Colors.transparent,
                                   BlendMode.multiply,
                                 ),
-                          child: Image.network(
-                            event.imageUrl!,
+                          child: CachedImage(
+                            imageUrl: event.imageUrl!,
                             height: 160,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(context),
+                            errorWidget: _buildPlaceholderImage(context),
                           ),
                         )
                       : _buildPlaceholderImage(context),

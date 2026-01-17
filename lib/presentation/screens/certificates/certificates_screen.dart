@@ -212,7 +212,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                       );
                     },
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (e, stack) => const SizedBox.shrink(),
                   );
                 },
               ),
@@ -274,7 +274,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
               )
             : null,
           color: isSelected ? null : const Color(0xFF1F1F1F),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: isSelected 
               ? Colors.transparent 
@@ -320,8 +320,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFDA7809).withValues(alpha: 0.1),
-                  const Color(0xFFFF9500).withValues(alpha: 0.05),
+                  const Color(0xFF14B8A6).withValues(alpha: 0.1),
+                  const Color(0xFF06B6D4).withValues(alpha: 0.05),
                 ],
               ),
               shape: BoxShape.circle,
@@ -329,7 +329,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             child: Icon(
               Iconsax.award,
               size: 80,
-              color: const Color(0xFFDA7809).withValues(alpha: 0.5),
+              color: const Color(0xFF14B8A6).withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
@@ -399,7 +399,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             icon: const Icon(Iconsax.refresh),
             label: const Text('Retry'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDA7809),
+              backgroundColor: const Color(0xFF14B8A6),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -431,8 +431,8 @@ class _CertificateCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFDA7809),
-            Color(0xFFFF9500),
+            Color.fromARGB(255, 1, 30, 26), // Teal
+            Color.fromARGB(255, 17, 33, 36), // Cyan
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -560,7 +560,7 @@ class _CertificateCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Iconsax.calendar,
-                            color: Color(0xFFDA7809),
+                            color: Color(0xFF14B8A6),
                             size: 14,
                           ),
                           const SizedBox(width: 6),
@@ -590,7 +590,7 @@ class _CertificateCard extends StatelessWidget {
                           children: [
                             const Icon(
                               Iconsax.shield_tick,
-                              color: Color(0xFFDA7809),
+                              color: Color(0xFF14B8A6),
                               size: 14,
                             ),
                             const SizedBox(width: 6),

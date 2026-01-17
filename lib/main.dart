@@ -10,6 +10,7 @@ import 'core/services/cache_service.dart';
 import 'core/services/notification_service.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/providers/theme_provider.dart';
+import 'presentation/widgets/offline_indicator.dart';
 
 // Background message handler must be top-level
 @pragma('vm:entry-point')
@@ -39,7 +40,7 @@ void main() async {
     await Hive.initFlutter();
     
     // Initialize Cache Service
-    await CacheService.init();
+    await CacheService().initialize();
     
     // Initialize Supabase
     await SupabaseConfig.initialize();
@@ -73,13 +74,15 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     
-    return MaterialApp.router(
-      title: 'BCA MMAMC',
-      debugShowCheckedModeBanner: false,
-      theme: ModernTheme.lightTheme,
-      darkTheme: ModernTheme.darkTheme,
-      themeMode: themeMode,
-      routerConfig: router,
+    return ConnectivitySnackbar(
+      child: MaterialApp.router(
+        title: 'BCA MMAMC',
+        debugShowCheckedModeBanner: false,
+        theme: ModernTheme.lightTheme,
+        darkTheme: ModernTheme.darkTheme,
+        themeMode: themeMode,
+        routerConfig: router,
+      ),
     );
   }
 }

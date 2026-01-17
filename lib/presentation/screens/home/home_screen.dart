@@ -15,6 +15,8 @@ import '../forum/enhanced_forum_screen.dart';
 import '../resources/enhanced_resources_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/cached_image.dart';
+import '../../widgets/offline_indicator.dart';
 
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
 final lastBackPressProvider = StateProvider<DateTime?>((ref) => null);
@@ -131,7 +133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             NavigationDestination(
               icon: Icon(Iconsax.user),
-              selectedIcon: Icon(Iconsax.user5),
+              selectedIcon: Icon(Iconsax.profile_circle),
               label: 'Profile',
             ),
           ],
@@ -154,6 +156,8 @@ class DashboardTab extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          // Offline Indicator in AppBar
+          const OfflineIndicatorCompact(),
           unreadCountAsync.when(
             data: (count) => Stack(
               children: [
@@ -192,7 +196,7 @@ class DashboardTab extends ConsumerWidget {
               icon: const Icon(Iconsax.notification),
               onPressed: () => context.push('/notifications'),
             ),
-            error: (_, __) => IconButton(
+            error: (error, stackTrace) => IconButton(
               icon: const Icon(Iconsax.notification),
               onPressed: () => context.push('/notifications'),
             ),
@@ -200,6 +204,7 @@ class DashboardTab extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'home_ai_fab',
         onPressed: () => context.push('/ai-assistant'),
         backgroundColor: const Color(0xFFDA7809),
         child: const Icon(Iconsax.message_programming, color: Colors.white),
@@ -291,19 +296,19 @@ class DashboardTab extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.award,
-                      label: 'Certificates',
-                      color: const Color(0xFF10B981),
-                      onTap: () => context.push('/certificates'),
+                      icon: Iconsax.book_1,
+                      label: 'Study Planner',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => context.push('/study'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.notification_bing,
-                      label: 'Notices',
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () => context.push('/notices'),
+                      icon: Iconsax.wallet_money,
+                      label: 'Finance',
+                      color: const Color(0xFFEC4899),
+                      onTap: () => context.push('/finance'),
                     ),
                   ),
                 ],
@@ -322,10 +327,10 @@ class DashboardTab extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _BentoCard(
-                      icon: Iconsax.message_text,
-                      label: 'Forum',
-                      color: const Color(0xFFEC4899),
-                      onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
+                      icon: Iconsax.document_text,
+                      label: 'Notices',
+                      color: const Color(0xFF10B981),
+                      onTap: () => context.push('/notices'),
                     ),
                   ),
                 ],
@@ -609,49 +614,35 @@ class _FullEventCard extends StatelessWidget {
             children: [
               // Event Image or Gradient Placeholder
               if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
-                ClipRRect(
+                CachedImage(
+                  imageUrl: event.imageUrl!,
+                  height: 140,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
                   ),
-                  child: Image.network(
-                    event.imageUrl!,
+                  errorWidget: Container(
                     height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 140,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Iconsax.calendar_1,
-                            size: 48,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return SkeletonLoader(
-                        height: 140,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                      );
-                    },
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Iconsax.calendar_1,
+                        size: 48,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
                   ),
                 )
               else

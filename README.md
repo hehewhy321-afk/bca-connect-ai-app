@@ -1,245 +1,353 @@
-# BCA Connect - College Association Management App
+# BCA Association - Mobile App
 
-A modern Flutter application for managing college association activities, events, resources, and community engagement.
+**Version:** 1.2.0  
+**Build:** 4  
+**Platform:** Android  
+**Framework:** Flutter 3.10.4
+
+A comprehensive mobile application for BCA students at MMAMC College, featuring AI-powered study assistance, event management, forum discussions, resource hub, study planner, finance tracker, and more.
+
+---
 
 ## 📱 Features
 
 ### Core Features
-- **Dashboard**: Clean home screen with notices, quick actions, and upcoming events
-- **Events Management**: Browse, register, and manage college events with detailed information
-- **AI Assistant**: Integrated AI chatbot for student queries and support
-- **Forum**: Discussion platform for students with categories and threading
-- **Resources**: Access and download study materials and documents
-- **Certificates**: View and download event participation certificates
-- **Notices**: Important announcements and updates
-- **Profile Management**: User profiles with achievements and XP system
+- 📅 **Event Management** - Browse, register, and manage college events with real-time updates
+- 📚 **Resource Hub** - Access and download study materials, past papers, and educational resources
+- 💬 **Discussion Forum** - Create posts, comment, upvote, and engage with the community
+- 📢 **Announcements & Notices** - Stay updated with college announcements and important notices
+- 🎓 **Certificate Management** - View, manage, and showcase your certificates
+- 📊 **Study Planner** - Organize your study schedule, subjects, and tasks
+- 💰 **Finance Tracker** - Track income, expenses, and manage your budget
+- ⏱️ **Pomodoro Timer** - Focus timer with customizable work/break sessions
+- 🗓️ **Nepali Calendar** - Traditional calendar with events and A.D. date display
+- 🤖 **AI Assistant** - Chat with AI, generate images, voice input, download conversations
+- 👤 **User Profiles** - Manage your profile, skills, and academic information
+- 📱 **Home Screen Widgets** - Quick access to app features from home screen
 
-### Key Highlights
-- 🎨 Modern Material Design 3 UI
-- 🌙 Dark mode support
-- 🔔 Push notifications
-- 📱 Responsive design
-- 🔐 Secure authentication
-- 💾 Offline support
-- 🎯 Gamification (XP & Levels)
+### AI Assistant Features
+- ✅ **Image Generation** - Create AI images with text prompts
+- ✅ **Image Gallery** - View, search, filter, and download generated images
+- ✅ **Chat Export** - Download conversations as beautiful HTML files
+- ✅ **Dual Mode** - Switch between Chat and Image generation
+- ✅ **Streaming Responses** - See AI responses in real-time
+- ✅ **Provider Info** - Know which AI model answered your question
 
-## 🛠️ Tech Stack
+### Study Planner Features
+- 📚 **Subject Management** - Add subjects with codes, teachers, and credits
+- ✅ **Task Tracking** - Create and manage study tasks with priorities
+- 📝 **Notes** - Take and organize study notes
+- 🎯 **Progress Tracking** - Monitor your study progress and completion
+- 🔔 **Reminders** - Set reminders for tasks and deadlines
 
-### Frontend
-- **Flutter** - Cross-platform mobile framework
-- **Dart** - Programming language
-- **Riverpod** - State management
-- **Go Router** - Navigation
-- **Google Fonts** - Typography (Inter font)
+### Finance Tracker Features
+- 💵 **Income Tracking** - Record salary, freelance, investments, and gifts
+- 💸 **Expense Tracking** - Track spending across multiple categories
+- 📊 **Visual Analytics** - Charts and graphs for financial insights
+- 📈 **Budget Management** - Set and monitor budgets
+- 📤 **Export Data** - Share financial reports
 
-### Backend & Services
-- **Supabase** - Backend as a Service
-  - PostgreSQL database
-  - Authentication
-  - Real-time subscriptions
-  - Storage
-- **Firebase** - Push notifications
+### Resource Hub Features
+- 📖 **Study Materials** - Access course materials and notes
+- 📄 **Past Papers** - Download previous exam papers
+- 💻 **Projects** - Browse project resources and examples
+- 🎯 **Interview Prep** - Preparation materials for interviews
+- 📰 **Articles** - Educational articles and guides
+- 🔍 **Advanced Filters** - Filter by type, semester, and subject
+- ⬇️ **Download Support** - Download resources for offline access
 
-### UI/UX
-- **Material Design 3** - Design system
-- **Iconsax** - Modern icon pack
-- **Custom orange theme** (#DA7809)
+### Profile Features
+- ✏️ **Edit Profile** - Update personal information, skills, and bio
+- 🎨 **Avatar Upload** - Customize your profile picture
+- 🏆 **Level & XP System** - Earn points and level up
+- 📱 **Quick Actions** - Access certificates, events, and AI gallery
+- 🌓 **Theme Toggle** - Switch between Light and Dark mode
+- 🔐 **Privacy & Security** - Manage account settings
+- 📞 **Contact Us** - Send messages and feedback to support
+- 💡 **Request Features** - Submit feature requests and feedback
+- 👨‍💻 **Developer Credits** - View developer information and social links
 
-### Key Packages
-```yaml
-- flutter_riverpod: ^2.6.1
-- go_router: ^14.8.1
-- supabase_flutter: ^2.9.5
-- google_fonts: ^6.3.3
-- iconsax: ^0.0.8
-- intl: ^0.19.0
-- cached_network_image: ^3.4.1
-- flutter_markdown: ^0.7.7+1
-- image_picker: ^1.1.2
-- share_plus: ^10.1.4
-```
+### Technical Features
+- 🌓 **Dark/Light Theme** - Automatic and manual theme switching
+- 📴 **Offline Functionality** - Access cached content without internet
+- 🔄 **Real-time Sync** - Instant updates with Supabase backend
+- 🎨 **Modern Material Design 3** - Beautiful, intuitive UI
+- ⚡ **Optimized Performance** - Fast loading and smooth animations
+- 🔒 **Secure Authentication** - Protected user accounts and data
+- 🔔 **Local Notifications** - Reminders and alerts
+- 📱 **Responsive Design** - Works on all screen sizes
 
-## 📁 Project Structure
+---
 
-```
-lib/
-├── core/
-│   ├── config/          # App configuration
-│   ├── theme/           # Theme and styling
-│   └── utils/           # Utility functions
-├── data/
-│   ├── models/          # Data models
-│   └── repositories/    # Data repositories
-├── presentation/
-│   ├── providers/       # Riverpod providers
-│   ├── routes/          # Navigation routes
-│   ├── screens/         # App screens
-│   │   ├── home/
-│   │   ├── events/
-│   │   ├── forum/
-│   │   ├── resources/
-│   │   ├── certificates/
-│   │   ├── ai/
-│   │   ├── auth/
-│   │   ├── profile/
-│   │   └── settings/
-│   └── widgets/         # Reusable widgets
-└── main.dart           # App entry point
-```
+## 🚀 Installation
 
-## 🚀 Getting Started
+### Requirements
+- Android 7.0 (API 24) or higher
+- Internet connection
+- ~75 MB storage space
 
-### Prerequisites
-- Flutter SDK (>=3.5.0)
-- Dart SDK (>=3.5.0)
-- Android Studio / VS Code
-- Android SDK / Xcode (for iOS)
+### Install APK
+1. Download `BCA-Connect-AI-v1.1.0.apk`
+2. Enable "Install from Unknown Sources" in Settings
+3. Open the APK file and install
+4. Launch the app
 
-### Installation
+---
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/hehewhy321-afk/bca-connect-ai-app.git
-cd bca_app
-```
+## 🔧 Setup & Configuration
 
-2. **Install dependencies**
-```bash
-flutter pub get
-```
+### Environment Variables
+Create a `.env` file in the root directory:
 
-3. **Configure environment**
-Copy `.env.example` to `.env` and fill in your credentials:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` file:
 ```env
-SUPABASE_URL=https://xtpkzqeylypdsxspmbmg.supabase.co
+SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
-GEMINI_API_KEY=your_gemini_api_key
 ```
 
-4. **Run the app**
+### Permissions
+The app requires the following permissions:
+- **Internet** - Required for all features
+- **Microphone** - Optional, for voice input in AI Assistant
+- **Storage** - Optional, for downloading images and chat exports
+- **Notifications** - Optional, for event and forum updates
+
+---
+
+## 📖 User Guide
+
+### Getting Started
+1. **Sign Up/Login** - Create an account or sign in
+2. **Complete Profile** - Add your information
+3. **Explore Features** - Navigate using bottom navigation bar
+
+### AI Assistant
+1. Tap the AI icon on home screen or bottom nav
+2. **Chat Mode**: Ask questions about BCA studies
+3. **Image Mode**: Toggle to generate images
+4. **Voice Input**: Tap microphone to speak
+5. **Gallery**: View all generated images
+6. **Download**: Export chat as HTML
+
+### Events
+1. Browse upcoming events
+2. Tap to view details
+3. Register for events
+4. View "My Events" for registered events
+
+### Forum
+1. Browse discussions
+2. Create new posts
+3. Comment and upvote
+4. Filter by category
+
+---
+
+## 🏗️ Development
+
+### Tech Stack
+- **Framework**: Flutter 3.10.4
+- **Language**: Dart
+- **State Management**: Riverpod
+- **Backend**: Supabase
+- **UI**: Material Design 3
+- **Animations**: Flutter Animate
+- **Icons**: Iconsax
+
+### Key Dependencies
+```yaml
+flutter_riverpod: ^2.6.1
+supabase_flutter: ^2.9.1
+go_router: ^14.6.2
+speech_to_text: ^7.3.0
+permission_handler: ^11.3.1
+device_info_plus: ^11.2.0
+cached_network_image: ^3.4.1
+flutter_markdown: ^0.7.4+1
+```
+
+### Build Commands
+
+**Development Build:**
 ```bash
 flutter run
 ```
 
-### Build for Production
-
-**Android APK**
+**Production Build:**
 ```bash
 flutter build apk --release
 ```
 
-**Android App Bundle**
+**Build App Bundle (for Play Store):**
 ```bash
 flutter build appbundle --release
 ```
 
-**iOS**
-```bash
-flutter build ios --release
-```
+---
 
-## 🗄️ Database Setup
+## 🐛 Troubleshooting
 
-The app uses Supabase as the backend. Required tables:
+### Common Issues
 
-- `profiles` - User profiles
-- `events` - College events
-- `event_registrations` - Event registrations
-- `forum_posts` - Forum discussions
-- `forum_replies` - Forum replies
-- `resources` - Study materials
-- `certificates` - Event certificates
-- `announcements` - Notices and announcements
+**App won't install:**
+- Enable "Install from Unknown Sources"
+- Check Android version (7.0+)
+- Ensure sufficient storage
 
-Refer to `supabase/` directory for SQL schemas.
+**AI Assistant not working:**
+- Check internet connection
+- Verify Supabase credentials
+- Ensure you're logged in
 
-## 🎨 Design System
+**Voice input not working:**
+- Grant microphone permission
+- Check Google Speech Services (Android)
+- Ensure internet connection
 
-### Colors
-- **Primary**: Orange (#DA7809)
-- **Secondary**: Dark Orange (#FF9500)
-- **Background**: Dynamic (Light/Dark mode)
+**Images not loading:**
+- Check internet connection
+- Pull to refresh
+- Clear app cache
 
-### Typography
-- **Font Family**: Inter (Google Fonts)
-- **Weights**: 400, 500, 600, 700, 900
-
-### Components
-- Material Design 3 components
-- Custom gradient buttons
-- Bento grid layouts
-- Card-based UI
-
-## 📋 To-Do / Roadmap
-
-### High Priority
-- [ ] Implement actual event registration flow
-- [ ] Add file upload for resources
-
-### Medium Priority
-- [ ] Add calendar integration
-- [ ] Implement event reminders
-- [ ] Add social sharing features
-- [ ] Create admin dashboard
-- [ ] Add analytics and reporting
-
-### Low Priority
-- [ ] Add multiple language support
-- [ ] Implement voice search
-- [ ] Add AR features for campus navigation
-- [ ] Create widget for home screen
-- [ ] Add biometric authentication
-
-## 🐛 Known Issues
-
-- Hero widget tag conflict warning (non-critical)
-- Some analyzer warnings for unused imports
-- Certificate screen needs enhancement
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👨‍💻 Developer
-
-**Developed by:** hehewhy321-afk
-- GitHub: [@hehewhy321-afk](https://github.com/hehewhy321-afk)
-- Repository: [BCA Connect AI App](https://github.com/hehewhy321-afk/bca-connect-ai-app)
-
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Supabase for the backend infrastructure
-- Material Design team for design guidelines
-- All open-source contributors
-
-## 📞 Support
-
-For support, create an issue on [GitHub Issues](https://github.com/hehewhy321-afk/bca-connect-ai-app/issues).
-
-## 🔗 Links
-
-- [Repository](https://github.com/hehewhy321-afk/bca-connect-ai-app)
-- [Issue Tracker](https://github.com/hehewhy321-afk/bca-connect-ai-app/issues)
-- [Releases](https://github.com/hehewhy321-afk/bca-connect-ai-app/releases)
+**Download permission error:**
+- Grant storage permission when prompted
+- For Android 13+, permission is automatic
+- Check available storage space
 
 ---
 
-**Made with ❤️ using Flutter**
+## 📊 Version History
 
-*Last Updated: January 2026*
+### v1.2.0 (Current)
+**Release Date:** January 17, 2026
+
+**New Features:**
+- ✨ Redesigned forgot password page with modern UI
+- ✨ Contact Us page with database integration
+- ✨ Request Feature/Feedback page
+- ✨ Developer credits in profile with social links
+- ✨ Resource page filters in modal (type & semester)
+- ✨ Fixed splash screen icon centering
+- ✨ Improved logout button design
+
+**Improvements:**
+- 🔧 Code optimization (74% reduction in issues)
+- 🔧 Replaced all print statements with debugPrint
+- 🔧 Fixed constant naming conventions
+- 🔧 Improved error handling
+- 🔧 Better async context management
+- 🔧 Resource card header styling improvements
+- 🔧 Dark theme consistency across pages
+
+**Bug Fixes:**
+- 🐛 Fixed icon centering in splash screen
+- 🐛 Fixed resource card icon container shape
+- 🐛 Fixed filter modal interactions
+- 🐛 Fixed logout button arrow icon
+- 🐛 Fixed unnecessary underscores in code
+
+**Code Quality:**
+- 📊 Reduced issues from 27 to 7 (96/100 quality score)
+- 📊 Production-ready codebase
+- 📊 All critical issues resolved
+
+### v1.1.0
+**Release Date:** January 2025
+
+**New Features:**
+- ✨ Real-time voice input with live transcription
+- ✨ AI Image Gallery with search, filter, and download
+- ✨ Chat export as beautiful HTML files
+- ✨ Smart image display (base64 + URL support)
+- ✨ Permission request dialogs with explanations
+- ✨ Profile integration with AI Gallery
+
+**Improvements:**
+- 🚀 Instant image loading in gallery
+- 🚀 Better permission handling
+- 🚀 Removed back button from gallery (cleaner UI)
+- 🚀 Fixed deprecation warnings
+- 🚀 Optimized code for production
+
+**Bug Fixes:**
+- 🐛 Fixed image preview not showing
+- 🐛 Fixed filename sanitization error
+- 🐛 Fixed async gap warnings
+- 🐛 Fixed Hero widget conflicts
+
+### v1.0.0
+**Release Date:** December 2024
+
+**Initial Release:**
+- Basic AI Assistant
+- Event Management
+- Forum Discussions
+- Resource Library
+- Profile Management
+
+---
+
+## 🔒 Security & Privacy
+
+- All data is encrypted in transit (HTTPS)
+- Passwords are hashed and never stored in plain text
+- User data is stored securely in Supabase
+- No data is shared with third parties
+- AI conversations are private to your account
+
+---
+
+## 📞 Support
+
+For issues, questions, or feedback:
+- **Email**: mmamcbcaassociation@gmail.com
+- **Phone**: +977-9800923746
+- **Office Hours**: Sunday - Friday, 10:00 AM - 5:00 PM
+- **Location**: MMAMC College, Biratnagar, Nepal
+- **In-App**: Use Contact Us or Request Feature/Feedback in Profile
+
+---
+
+## 📄 License
+
+Copyright © 2026 MMAMC College. All rights reserved.
+
+This application is proprietary software developed for MMAMC College BCA students.
+
+---
+
+## 👥 Credits
+
+**Developer:**
+- **Saif Ali**
+  - Instagram: [@me_saifali](https://www.instagram.com/me_saifali/)
+  - GitHub: [@mesaifali](https://github.com/mesaifali)
+
+**Powered By:**
+- Flutter & Dart
+- Supabase
+- OpenAI / Anthropic / Google AI
+- Pollinations AI
+- Material Design 3
+
+---
+
+## 🎯 Roadmap
+
+### Upcoming Features
+- [ ] Offline mode for cached content
+- [ ] Push notifications
+- [ ] Dark mode improvements
+- [ ] More AI models
+- [ ] Study groups
+- [ ] Assignment tracking
+- [ ] Grade calculator
+
+---
+
+## 📱 Screenshots
+
+*Screenshots will be added in future updates*
+
+---
+
+**Made with ❤️ for BCA Students at MMAMC College**

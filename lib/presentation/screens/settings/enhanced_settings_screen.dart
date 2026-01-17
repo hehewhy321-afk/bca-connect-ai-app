@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/cached_image.dart';
 import 'dart:io';
 
 class EnhancedSettingsScreen extends ConsumerStatefulWidget {
@@ -379,19 +380,19 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                               ],
                             ),
                             child: _avatarUrl != null
-                                ? ClipRRect(
+                                ? CachedImage(
+                                    imageUrl: _avatarUrl!,
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
                                     borderRadius: BorderRadius.circular(30),
-                                    child: Image.network(
-                                      _avatarUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Center(
-                                        child: Text(
-                                          _getInitials(_fullNameController.text),
-                                          style: TextStyle(
-                                            color: ModernTheme.primaryOrange,
-                                            fontSize: 40,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                    errorWidget: Center(
+                                      child: Text(
+                                        _getInitials(_fullNameController.text),
+                                        style: TextStyle(
+                                          color: ModernTheme.primaryOrange,
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
@@ -1115,7 +1116,7 @@ class _ModernDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
@@ -1211,7 +1212,7 @@ class _AlumniToggle extends StatelessWidget {
           Switch(
             value: isAlumni,
             onChanged: onChanged,
-            activeColor: ModernTheme.primaryOrange,
+            activeThumbColor: ModernTheme.primaryOrange,
           ),
         ],
       ),

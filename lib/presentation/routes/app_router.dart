@@ -29,6 +29,8 @@ import '../screens/events/enhanced_event_detail_screen.dart';
 import '../screens/events/my_events_screen.dart';
 import '../screens/calendar/nepali_calendar_screen.dart';
 import '../screens/pomodoro/pomodoro_screen.dart';
+import '../screens/finance/finance_tracker_screen.dart';
+import '../screens/study/study_planner_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -37,9 +39,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
+      final isSplashRoute = state.matchedLocation == '/';
+      final isOnboardingRoute = state.matchedLocation == '/onboarding';
+      
+      // Allow splash and onboarding routes to handle their own navigation
+      if (isSplashRoute || isOnboardingRoute) {
+        return null;
+      }
       
       // If not authenticated and not on auth route, redirect to login
-      if (!isAuthenticated && !isAuthRoute && state.matchedLocation != '/') {
+      if (!isAuthenticated && !isAuthRoute) {
         return '/auth/login';
       }
       
@@ -202,6 +211,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pomodoro',
         builder: (context, state) => const PomodoroScreen(),
+      ),
+      
+      // Finance Tracker
+      GoRoute(
+        path: '/finance',
+        builder: (context, state) => const FinanceTrackerScreen(),
+      ),
+      
+      // Study Planner
+      GoRoute(
+        path: '/study',
+        builder: (context, state) => const StudyPlannerScreen(),
       ),
       
       // Debug

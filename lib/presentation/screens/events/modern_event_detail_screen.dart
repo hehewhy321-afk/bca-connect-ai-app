@@ -6,6 +6,7 @@ import '../../../data/models/event.dart';
 import '../../../data/repositories/event_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../widgets/gradient_button.dart';
+import '../../widgets/cached_image.dart';
 
 final eventDetailProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
   final repo = EventRepository();
@@ -46,6 +47,7 @@ class ModernEventDetailScreen extends ConsumerWidget {
             slivers: [
               // App Bar with Image
               SliverAppBar(
+                automaticallyImplyLeading: false,
                 expandedHeight: 300,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
@@ -53,10 +55,12 @@ class ModernEventDetailScreen extends ConsumerWidget {
                     fit: StackFit.expand,
                     children: [
                       event.imageUrl != null
-                          ? Image.network(
-                              event.imageUrl!,
+                          ? CachedImage(
+                              imageUrl: event.imageUrl!,
+                              width: double.infinity,
+                              height: 300,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
+                              errorWidget: Container(
                                 decoration: const BoxDecoration(
                                   gradient: ModernTheme.orangeGradient,
                                 ),
@@ -256,7 +260,7 @@ class _InfoChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
