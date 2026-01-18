@@ -146,19 +146,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  
-                  // Loading Indicator
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withValues(alpha: 0.8),
-                      ),
-                      strokeWidth: 3,
-                    ),
-                  ),
                 ],
               ),
             ),

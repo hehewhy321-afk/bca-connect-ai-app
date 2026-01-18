@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/modern_theme.dart';
@@ -19,9 +18,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      icon: Iconsax.book_15,
+      icon: Icons.bar_chart_rounded, // ✅ REPLACED ICON
       title: 'Welcome to BCA Connect',
-      description: 'Your all-in-one platform for BCA MMAMC community. Stay connected, learn, and grow together.',
+      description:
+          'Your all-in-one platform for BCA MMAMC community. Stay connected, learn, and grow together.',
       gradient: const LinearGradient(
         colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
         begin: Alignment.topLeft,
@@ -29,9 +29,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     ),
     OnboardingPage(
-      icon: Iconsax.calendar_15,
+      icon: Icons.event_rounded,
       title: 'Events & Activities',
-      description: 'Never miss an event! Register for workshops, seminars, competitions, and social gatherings.',
+      description:
+          'Never miss an event! Register for workshops, seminars, competitions, and social gatherings.',
       gradient: const LinearGradient(
         colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
         begin: Alignment.topLeft,
@@ -39,9 +40,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     ),
     OnboardingPage(
-      icon: Iconsax.message_text_15,
+      icon: Icons.forum_rounded,
       title: 'Forum & Community',
-      description: 'Connect with peers, ask questions, share knowledge, and collaborate on projects.',
+      description:
+          'Connect with peers, ask questions, share knowledge, and collaborate on projects.',
       gradient: const LinearGradient(
         colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
         begin: Alignment.topLeft,
@@ -49,9 +51,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     ),
     OnboardingPage(
-      icon: Iconsax.folder_25,
+      icon: Icons.folder_rounded,
       title: 'Resources & Learning',
-      description: 'Access study materials, past papers, projects, and interview preparation resources.',
+      description:
+          'Access study materials, past papers, projects, and interview preparation resources.',
       gradient: const LinearGradient(
         colors: [Color(0xFF10B981), Color(0xFF059669)],
         begin: Alignment.topLeft,
@@ -69,9 +72,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_completed', true);
-    if (mounted) {
-      context.go('/auth/login');
-    }
+    if (mounted) context.go('/auth/login');
   }
 
   void _nextPage() {
@@ -85,9 +86,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  void _skipOnboarding() {
-    _completeOnboarding();
-  }
+  void _skipOnboarding() => _completeOnboarding();
 
   @override
   Widget build(BuildContext context) {
@@ -104,30 +103,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   onPressed: _skipOnboarding,
                   child: const Text(
                     'Skip',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
             ),
 
-            // Page View
+            // Pages
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
+                onPageChanged: (index) =>
+                    setState(() => _currentPage = index),
                 itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index]);
-                },
+                itemBuilder: (context, index) =>
+                    _buildPage(_pages[index]),
               ),
             ),
 
-            // Page Indicator
+            // Indicator
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Row(
@@ -150,7 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
 
-            // Next/Get Started Button
+            // Button
             Padding(
               padding: const EdgeInsets.all(24),
               child: SizedBox(
@@ -160,29 +154,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   onPressed: _nextPage,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ModernTheme.primaryOrange,
-                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _currentPage == _pages.length - 1
-                            ? Iconsax.tick_circle
-                            : Iconsax.arrow_right_3,
-                      ),
-                    ],
+                  child: Text(
+                    _currentPage == _pages.length - 1
+                        ? 'Get Started'
+                        : 'Next',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -199,13 +181,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon with Gradient Background
+          // Icon Circle
           Container(
             width: 200,
             height: 200,
             decoration: BoxDecoration(
               gradient: page.gradient,
-              borderRadius: BorderRadius.circular(100),
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
                   color: page.gradient.colors.first.withValues(alpha: 0.3),
@@ -217,7 +199,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Center(
               child: Icon(
                 page.icon,
-                size: 100,
+                size: 96,
                 color: Colors.white,
               ),
             ),
@@ -229,26 +211,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 48),
 
-          // Title
           Text(
             page.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
             textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
 
           const SizedBox(height: 16),
 
-          // Description
           Text(
             page.description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
             textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge
+                ?.copyWith(color: Colors.grey[600], height: 1.5),
+          ),
         ],
       ),
     );

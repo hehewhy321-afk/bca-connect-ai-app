@@ -70,6 +70,18 @@ final eventDetailProvider = FutureProvider.family<Event?, String>((ref, id) asyn
   }
 });
 
+// User Feedback Provider - Check if user has given feedback
+final userFeedbackProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, eventId) async {
+  try {
+    final feedback = await ref.watch(eventRepositoryProvider).getUserFeedback(eventId);
+    debugPrint('User Feedback Provider: ${feedback != null ? "Has feedback" : "No feedback"} for event $eventId');
+    return feedback;
+  } catch (e) {
+    debugPrint('User Feedback Provider Error: $e');
+    return null;
+  }
+});
+
 // User Registrations Provider
 final userRegistrationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   try {

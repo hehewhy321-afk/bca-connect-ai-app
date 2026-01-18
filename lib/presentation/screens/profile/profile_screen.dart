@@ -630,29 +630,223 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Iconsax.warning_2,
-                size: 64,
-                color: Theme.of(context).colorScheme.error,
+        error: (error, stack) {
+          // Check if it's a network error
+          final isNetworkError = error.toString().contains('No internet connection') ||
+              error.toString().contains('SocketException') ||
+              error.toString().contains('Failed host lookup');
+
+          // Try to get user info from auth even if profile fails
+          final user = SupabaseConfig.client.auth.currentUser;
+          
+          // If we have basic user info, show a minimal profile with error banner
+          if (user != null) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // Error Banner
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isNetworkError
+                          ? Colors.orange.withValues(alpha: 0.1)
+                          : Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isNetworkError
+                            ? Colors.orange.withValues(alpha: 0.3)
+                            : Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isNetworkError ? Iconsax.wifi_square : Iconsax.warning_2,
+                          color: isNetworkError ? Colors.orange : Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isNetworkError ? 'Offline Mode' : 'Profile Load Error',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isNetworkError ? Colors.orange : Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isNetworkError
+                                    ? 'Some features may be limited'
+                                    : 'Unable to load full profile',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Iconsax.refresh),
+                          onPressed: () => ref.invalidate(userProfileProvider),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Basic Profile Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1A1A),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getInitials(user.email?.split('@').first ?? 'User'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          user.email?.split('@').first ?? 'User',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          user.email ?? '',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Limited Menu Options
+                  _SectionHeader(title: 'Account'),
+                  const SizedBox(height: 12),
+                  _MenuGroup(
+                    children: [
+                      _ModernMenuItem(
+                        icon: Iconsax.setting_2,
+                        title: 'Settings',
+                        onTap: () => context.push('/settings'),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => _handleLogout(context, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Iconsax.logout, size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Logout',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading profile',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed: () => ref.invalidate(userProfileProvider),
-                icon: const Icon(Iconsax.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+            );
+          }
+          
+          // If no user at all, show full error
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isNetworkError ? Iconsax.wifi_square : Iconsax.warning_2,
+                  size: 64,
+                  color: isNetworkError
+                      ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                      : Theme.of(context).colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isNetworkError ? 'No Internet Connection' : 'Error loading profile',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    isNetworkError
+                        ? 'Please check your internet connection'
+                        : 'Unable to load your profile',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(userProfileProvider),
+                  icon: const Icon(Iconsax.refresh),
+                  label: const Text('Retry'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ModernTheme.primaryOrange,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

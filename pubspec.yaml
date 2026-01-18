@@ -147,5 +147,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/data/algorithms.json
     - assets/icons/
     - assets/lottie/
+    - assets/data/

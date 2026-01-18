@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/cache_service.dart';
+import '../../../core/services/connectivity_service.dart';
+import 'dart:convert';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -26,13 +29,65 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _fetchNotifications() async {
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    
+    final cacheKey = '${CacheKeys.notifications}_${user.id}';
+    
+    // Try to load from cache first
     try {
-      final user = SupabaseConfig.client.auth.currentUser;
-      if (user == null) {
-        setState(() => _loading = false);
+      final cached = CacheService.get<String>(cacheKey);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached);
+        final notificationsList = jsonList.map((e) => Map<String, dynamic>.from(e)).toList();
+        
+        if (mounted) {
+          setState(() {
+            _notifications = notificationsList;
+            _loading = false;
+          });
+        }
+        
+        debugPrint('Loaded ${notificationsList.length} notifications from cache');
+      }
+    } catch (e) {
+      debugPrint('Error loading notifications from cache: $e');
+    }
+    
+    // Check connectivity
+    final connectivity = ConnectivityService();
+    final isOnline = await connectivity.isOnline();
+    
+    if (!isOnline) {
+      // If offline and we have cached data, we're done
+      if (_notifications.isNotEmpty) {
+        debugPrint('Offline: Using cached notifications');
         return;
       }
-
+      // If offline and no cache, show error
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Iconsax.wifi_square, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(child: Text('No internet connection')),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Fetch from network
+    try {
       final response = await SupabaseConfig.client
           .from('notifications')
           .select()
@@ -40,14 +95,41 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .order('created_at', ascending: false);
 
       if (mounted) {
+        final notificationsList = List<Map<String, dynamic>>.from(response);
+        
+        // Cache the results
+        await CacheService.set(
+          cacheKey,
+          jsonEncode(notificationsList),
+          duration: CacheKeys.shortCache,
+        );
+        
         setState(() {
-          _notifications = List<Map<String, dynamic>>.from(response);
+          _notifications = notificationsList;
           _loading = false;
         });
+        
+        debugPrint('Fetched and cached ${notificationsList.length} notifications');
       }
     } catch (e) {
+      debugPrint('Error fetching notifications: $e');
       if (mounted) {
         setState(() => _loading = false);
+        // If we have cached data, don't show error
+        if (_notifications.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Iconsax.danger, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('Error loading notifications: ${e.toString()}')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

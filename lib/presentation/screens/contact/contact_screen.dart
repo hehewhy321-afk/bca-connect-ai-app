@@ -224,36 +224,22 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                   const SizedBox(height: 24),
 
                   // Name Field
-                  TextFormField(
+                  _ModernTextField(
                     controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Your Name',
-                      hintText: 'Enter your full name',
-                      prefixIcon: const Icon(Iconsax.user),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
+                    label: 'Your Name',
+                    hint: 'Enter your full name',
+                    icon: Iconsax.user,
                     validator: (value) =>
                         value?.trim().isEmpty ?? true ? 'Name is required' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Email Field
-                  TextFormField(
+                  _ModernTextField(
                     controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email Address',
-                      hintText: 'your@email.com',
-                      prefixIcon: const Icon(Iconsax.sms),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
+                    label: 'Email Address',
+                    hint: 'your@email.com',
+                    icon: Iconsax.sms,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value?.trim().isEmpty ?? true) return 'Email is required';
@@ -263,60 +249,35 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Phone Field
-                  TextFormField(
+                  _ModernTextField(
                     controller: _phoneController,
-                    decoration: InputDecoration(
-                      labelText: 'Phone Number (Optional)',
-                      hintText: '+977 9800000000',
-                      prefixIcon: const Icon(Iconsax.call),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
+                    label: 'Phone Number (Optional)',
+                    hint: '+977 9800000000',
+                    icon: Iconsax.call,
                     keyboardType: TextInputType.phone,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Subject Field
-                  TextFormField(
+                  _ModernTextField(
                     controller: _subjectController,
-                    decoration: InputDecoration(
-                      labelText: 'Subject',
-                      hintText: 'What is this about?',
-                      prefixIcon: const Icon(Iconsax.document_text),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
+                    label: 'Subject',
+                    hint: 'How can we help you?',
+                    icon: Iconsax.document_text,
                     validator: (value) =>
                         value?.trim().isEmpty ?? true ? 'Subject is required' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Message Field
-                  TextFormField(
+                  _ModernTextField(
                     controller: _messageController,
-                    decoration: InputDecoration(
-                      labelText: 'Message',
-                      hintText: 'Tell us more...',
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.only(bottom: 60),
-                        child: Icon(Iconsax.message_text),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      alignLabelWithHint: true,
-                    ),
+                    label: 'Message',
+                    hint: 'Your message here...',
+                    icon: Iconsax.message_text,
                     maxLines: 5,
                     validator: (value) =>
                         value?.trim().isEmpty ?? true ? 'Message is required' : null,
@@ -506,6 +467,99 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModernTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final IconData? icon;
+  final int maxLines;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
+
+  const _ModernTextField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    this.icon,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: Theme.of(context).textTheme.bodyLarge,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            filled: true,
+            fillColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: maxLines > 1 ? 16 : 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: ModernTheme.primaryOrange,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.error,
+                width: 1.5,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.error,
+                width: 2,
+              ),
+            ),
           ),
         ),
       ],

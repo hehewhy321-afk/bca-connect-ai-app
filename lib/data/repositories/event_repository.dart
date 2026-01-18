@@ -19,105 +19,112 @@ class EventRepository {
   }) async {
     final cacheKey = '${CacheKeys.events}_${status ?? 'all'}';
     
-    // Check cache first if not forcing refresh
-    if (!forceRefresh && CacheService.has(cacheKey)) {
-      try {
-        final cached = CacheService.get<String>(cacheKey);
-        if (cached != null) {
-          final List<dynamic> jsonList = jsonDecode(cached);
-          debugPrint('Loaded ${jsonList.length} events from cache');
-          return jsonList.map((e) => Event.fromJson(e)).toList();
-        }
-      } catch (e) {
-        debugPrint('Error loading from cache: $e');
-      }
-    }
-
-    // Check connectivity
+    // Check connectivity first
     final isOnline = await _connectivity.isOnline();
-    if (!isOnline) {
-      // Return cached data if offline
+    
+    // If online, always fetch fresh data (unless explicitly using cache)
+    if (isOnline && !forceRefresh) {
       try {
-        final cached = CacheService.get<String>(cacheKey);
-        if (cached != null) {
-          final List<dynamic> jsonList = jsonDecode(cached);
-          debugPrint('Offline: Loaded ${jsonList.length} events from cache');
-          return jsonList.map((e) => Event.fromJson(e)).toList();
+        dynamic query = _client
+            .from('events')
+            .select()
+            .order('start_date', ascending: true);
+
+        if (status != null) {
+          query = query.eq('status', status);
         }
+
+        final response = await query;
+        
+        if (response.isEmpty) {
+          debugPrint('No events found in database');
+          return [];
+        }
+        
+        debugPrint('Fetched ${response.length} events from database (online)');
+        final events = (response as List).map((e) => Event.fromJson(e)).toList();
+        
+        // Cache the fresh results
+        final jsonList = events.map((e) => e.toJson()).toList();
+        await CacheService.set(
+          cacheKey,
+          jsonEncode(jsonList),
+          duration: CacheKeys.mediumCache,
+        );
+        
+        return events;
       } catch (e) {
-        debugPrint('Error loading from cache while offline: $e');
+        debugPrint('Error fetching events: $e');
+        // Fall through to cache on error
       }
-      throw Exception('No internet connection and no cached data available');
     }
-
-    // Fetch from network
+    
+    // If offline or error, use cache
     try {
-      dynamic query = _client
-          .from('events')
-          .select()
-          .order('start_date', ascending: true);
-
-      if (status != null) {
-        query = query.eq('status', status);
+      final cached = CacheService.get<String>(cacheKey);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached);
+        debugPrint('Loaded ${jsonList.length} events from cache (offline or error)');
+        return jsonList.map((e) => Event.fromJson(e)).toList();
       }
-
-      final response = await query;
-      
-      if (response.isEmpty) {
-        debugPrint('No events found in database');
-        return [];
-      }
-      
-      debugPrint('Fetched ${response.length} events from database');
-      final events = (response as List).map((e) => Event.fromJson(e)).toList();
-      
-      // Cache the results
-      final jsonList = events.map((e) => e.toJson()).toList();
-      await CacheService.set(
-        cacheKey,
-        jsonEncode(jsonList),
-        duration: CacheKeys.mediumCache,
-      );
-      
-      return events;
     } catch (e) {
-      debugPrint('Error fetching events: $e');
-      
-      // Try to return cached data on error
-      try {
-        final cached = CacheService.get<String>(cacheKey);
-        if (cached != null) {
-          final List<dynamic> jsonList = jsonDecode(cached);
-          debugPrint('Error: Loaded ${jsonList.length} events from cache');
-          return jsonList.map((e) => Event.fromJson(e)).toList();
-        }
-      } catch (cacheError) {
-        debugPrint('Error loading from cache after network error: $cacheError');
-      }
-      
-      rethrow;
+      debugPrint('Error loading from cache: $e');
     }
+    
+    throw Exception('No internet connection and no cached data available');
   }
 
   // Get upcoming events
-  Future<List<Event>> getUpcomingEvents({int limit = 50}) async {
-    try {
-      final response = await _client
-          .from('events')
-          .select()
-          .order('start_date', ascending: true);
+  Future<List<Event>> getUpcomingEvents({int limit = 50, bool forceRefresh = false}) async {
+    const cacheKey = '${CacheKeys.events}_upcoming';
+    
+    // Check connectivity first
+    final isOnline = await _connectivity.isOnline();
+    
+    // If online, always fetch fresh data
+    if (isOnline) {
+      try {
+        final response = await _client
+            .from('events')
+            .select()
+            .order('start_date', ascending: true);
 
-      if (response.isEmpty) {
-        debugPrint('No upcoming events found in database');
-        return [];
+        if (response.isEmpty) {
+          debugPrint('No upcoming events found in database');
+          return [];
+        }
+        
+        debugPrint('Fetched ${response.length} upcoming events from database (online)');
+        final events = (response as List).map((e) => Event.fromJson(e)).toList();
+        
+        // Cache the fresh results
+        final jsonList = events.map((e) => e.toJson()).toList();
+        await CacheService.set(
+          cacheKey,
+          jsonEncode(jsonList),
+          duration: CacheKeys.mediumCache,
+        );
+        
+        return events;
+      } catch (e) {
+        debugPrint('Error fetching upcoming events: $e');
+        // Fall through to cache on error
       }
-      
-      debugPrint('Fetched ${response.length} upcoming events from database');
-      return (response as List).map((e) => Event.fromJson(e)).toList();
-    } catch (e) {
-      debugPrint('Error fetching upcoming events: $e');
-      rethrow;
     }
+
+    // If offline or error, use cache
+    try {
+      final cached = CacheService.get<String>(cacheKey);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached);
+        debugPrint('Loaded ${jsonList.length} upcoming events from cache (offline or error)');
+        return jsonList.map((e) => Event.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading upcoming events from cache: $e');
+    }
+    
+    throw Exception('No internet connection and no cached data available');
   }
 
   // Get featured events
@@ -215,6 +222,73 @@ class EventRepository {
     } catch (e) {
       debugPrint('Error checking registration: $e');
       return false;
+    }
+  }
+
+  // Submit or update event feedback
+  Future<void> submitFeedback({
+    required String eventId,
+    required int rating,
+    String? feedback,
+    bool isAnonymous = false,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    try {
+      // Check if feedback already exists
+      final existing = await _client
+          .from('event_feedback')
+          .select('id')
+          .eq('event_id', eventId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existing != null) {
+        // Update existing feedback
+        await _client
+            .from('event_feedback')
+            .update({
+              'rating': rating,
+              'feedback': feedback,
+              'is_anonymous': isAnonymous,
+            })
+            .eq('id', existing['id']);
+        debugPrint('Updated feedback for event $eventId');
+      } else {
+        // Insert new feedback
+        await _client.from('event_feedback').insert({
+          'event_id': eventId,
+          'user_id': userId,
+          'rating': rating,
+          'feedback': feedback,
+          'is_anonymous': isAnonymous,
+        });
+        debugPrint('Submitted new feedback for event $eventId');
+      }
+    } catch (e) {
+      debugPrint('Error submitting feedback: $e');
+      rethrow;
+    }
+  }
+
+  // Check if user has given feedback for event
+  Future<Map<String, dynamic>?> getUserFeedback(String eventId) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return null;
+
+    try {
+      final response = await _client
+          .from('event_feedback')
+          .select()
+          .eq('event_id', eventId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching user feedback: $e');
+      return null;
     }
   }
 }

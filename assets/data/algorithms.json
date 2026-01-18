@@ -1,0 +1,375 @@
+[
+  {
+    "id": "bubble_sort",
+    "name": "Bubble Sort",
+    "category": "Sorting",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Start from the first element of the array"},
+      {"order": 2, "text": "Compare the current element with the next element"},
+      {"order": 3, "text": "Swap if current element is greater than next element"},
+      {"order": 4, "text": "Move to the next pair of elements"},
+      {"order": 5, "text": "Repeat until no swaps are needed"}
+    ],
+    "explanation": "Bubble Sort repeatedly compares adjacent elements and swaps them if they are in wrong order. The largest element 'bubbles up' to its correct position in each pass.",
+    "tags": ["array", "comparison", "O(n²)"],
+    "commonMistake": "Students often forget that the inner loop size reduces after each pass"
+  },
+  {
+    "id": "selection_sort",
+    "name": "Selection Sort",
+    "category": "Sorting",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Set the first element as minimum"},
+      {"order": 2, "text": "Compare minimum with remaining elements"},
+      {"order": 3, "text": "Update minimum if smaller element is found"},
+      {"order": 4, "text": "Swap minimum with first unsorted element"},
+      {"order": 5, "text": "Move boundary of sorted portion by one"}
+    ],
+    "explanation": "Selection Sort divides the array into sorted and unsorted portions. It repeatedly selects the smallest element from unsorted portion and places it at the beginning.",
+    "tags": ["array", "comparison", "O(n²)"],
+    "commonMistake": "Confusing when to swap - only after finding the minimum"
+  },
+  {
+    "id": "insertion_sort",
+    "name": "Insertion Sort",
+    "category": "Sorting",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Start with second element (first is sorted)"},
+      {"order": 2, "text": "Store current element as key"},
+      {"order": 3, "text": "Compare key with elements in sorted portion"},
+      {"order": 4, "text": "Shift larger elements one position right"},
+      {"order": 5, "text": "Insert key at correct position"},
+      {"order": 6, "text": "Repeat for all remaining elements"}
+    ],
+    "explanation": "Insertion Sort builds the sorted array one element at a time by inserting each element into its correct position in the already sorted portion.",
+    "tags": ["array", "comparison", "O(n²)"],
+    "commonMistake": "Forgetting to shift elements before insertion"
+  },
+  {
+    "id": "merge_sort",
+    "name": "Merge Sort",
+    "category": "Sorting",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Divide array into two halves"},
+      {"order": 2, "text": "Recursively sort the left half"},
+      {"order": 3, "text": "Recursively sort the right half"},
+      {"order": 4, "text": "Create temporary arrays for left and right"},
+      {"order": 5, "text": "Compare elements from both halves"},
+      {"order": 6, "text": "Place smaller element in original array"},
+      {"order": 7, "text": "Copy remaining elements if any"},
+      {"order": 8, "text": "Return merged sorted array"}
+    ],
+    "explanation": "Merge Sort uses divide-and-conquer approach. It divides array into halves, recursively sorts them, and then merges the sorted halves.",
+    "tags": ["divide-conquer", "recursive", "O(n log n)"],
+    "commonMistake": "Not handling remaining elements after one array is exhausted"
+  },
+  {
+    "id": "quick_sort",
+    "name": "Quick Sort",
+    "category": "Sorting",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Choose a pivot element (usually last element)"},
+      {"order": 2, "text": "Initialize partition index at start"},
+      {"order": 3, "text": "Traverse array from start to end-1"},
+      {"order": 4, "text": "If element is smaller than pivot, swap and increment partition index"},
+      {"order": 5, "text": "Place pivot at partition index"},
+      {"order": 6, "text": "Recursively sort left partition"},
+      {"order": 7, "text": "Recursively sort right partition"}
+    ],
+    "explanation": "Quick Sort picks a pivot and partitions array so elements smaller than pivot are on left and larger on right. Then recursively sorts both partitions.",
+    "tags": ["divide-conquer", "recursive", "O(n log n)"],
+    "commonMistake": "Wrong pivot placement or incorrect partition logic"
+  },
+  {
+    "id": "heap_sort",
+    "name": "Heap Sort",
+    "category": "Sorting",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Build a max heap from input array"},
+      {"order": 2, "text": "Swap root (maximum) with last element"},
+      {"order": 3, "text": "Reduce heap size by 1"},
+      {"order": 4, "text": "Heapify the root element"},
+      {"order": 5, "text": "Repeat until heap size is 1"},
+      {"order": 6, "text": "Array is now sorted"}
+    ],
+    "explanation": "Heap Sort uses a binary heap data structure. It builds a max heap and repeatedly extracts the maximum element.",
+    "tags": ["heap", "comparison", "O(n log n)"],
+    "commonMistake": "Not properly maintaining heap property after each extraction"
+  },
+  {
+    "id": "counting_sort",
+    "name": "Counting Sort",
+    "category": "Sorting",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Find the maximum element in array"},
+      {"order": 2, "text": "Create count array of size max+1"},
+      {"order": 3, "text": "Count occurrences of each element"},
+      {"order": 4, "text": "Calculate cumulative count"},
+      {"order": 5, "text": "Place elements in sorted order"},
+      {"order": 6, "text": "Copy sorted array back to original"}
+    ],
+    "explanation": "Counting Sort counts the occurrences of each element and uses arithmetic to determine positions. Works best for small range of integers.",
+    "tags": ["non-comparison", "stable", "O(n+k)"],
+    "commonMistake": "Not suitable for large range of values or floating point numbers"
+  },
+  {
+    "id": "binary_search",
+    "name": "Binary Search",
+    "category": "Searching",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Ensure array is sorted"},
+      {"order": 2, "text": "Set low to 0 and high to array length - 1"},
+      {"order": 3, "text": "Calculate mid = (low + high) / 2"},
+      {"order": 4, "text": "If target equals mid element, return mid"},
+      {"order": 5, "text": "If target is less than mid, search left half (high = mid - 1)"},
+      {"order": 6, "text": "If target is greater than mid, search right half (low = mid + 1)"},
+      {"order": 7, "text": "Repeat until element found or low > high"}
+    ],
+    "explanation": "Binary Search efficiently finds an element in a sorted array by repeatedly dividing the search interval in half.",
+    "tags": ["array", "divide-conquer", "O(log n)"],
+    "commonMistake": "Forgetting that array must be sorted first"
+  },
+  {
+    "id": "linear_search",
+    "name": "Linear Search",
+    "category": "Searching",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Start from the first element"},
+      {"order": 2, "text": "Compare current element with target"},
+      {"order": 3, "text": "If match found, return current index"},
+      {"order": 4, "text": "Move to next element"},
+      {"order": 5, "text": "Repeat until element found or end reached"}
+    ],
+    "explanation": "Linear Search sequentially checks each element until the target is found or the end of array is reached.",
+    "tags": ["array", "sequential", "O(n)"],
+    "commonMistake": "Not handling case when element is not found"
+  },
+  {
+    "id": "stack_push",
+    "name": "Stack Push Operation",
+    "category": "Data Structures",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Check if stack is full (overflow condition)"},
+      {"order": 2, "text": "If full, return overflow error"},
+      {"order": 3, "text": "Increment top pointer"},
+      {"order": 4, "text": "Insert element at top position"},
+      {"order": 5, "text": "Return success"}
+    ],
+    "explanation": "Push operation adds an element to the top of the stack. It follows LIFO (Last In First Out) principle.",
+    "tags": ["stack", "LIFO", "O(1)"],
+    "commonMistake": "Incrementing top before checking overflow"
+  },
+  {
+    "id": "stack_pop",
+    "name": "Stack Pop Operation",
+    "category": "Data Structures",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Check if stack is empty (underflow condition)"},
+      {"order": 2, "text": "If empty, return underflow error"},
+      {"order": 3, "text": "Store element at top position"},
+      {"order": 4, "text": "Decrement top pointer"},
+      {"order": 5, "text": "Return stored element"}
+    ],
+    "explanation": "Pop operation removes and returns the top element from the stack.",
+    "tags": ["stack", "LIFO", "O(1)"],
+    "commonMistake": "Decrementing top before storing the element"
+  },
+  {
+    "id": "queue_enqueue",
+    "name": "Queue Enqueue Operation",
+    "category": "Data Structures",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Check if queue is full"},
+      {"order": 2, "text": "If full, return overflow error"},
+      {"order": 3, "text": "Increment rear pointer"},
+      {"order": 4, "text": "Insert element at rear position"},
+      {"order": 5, "text": "If first element, set front to 0"}
+    ],
+    "explanation": "Enqueue adds an element to the rear of the queue. Queue follows FIFO (First In First Out) principle.",
+    "tags": ["queue", "FIFO", "O(1)"],
+    "commonMistake": "Not initializing front pointer for first element"
+  },
+  {
+    "id": "queue_dequeue",
+    "name": "Queue Dequeue Operation",
+    "category": "Data Structures",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Check if queue is empty"},
+      {"order": 2, "text": "If empty, return underflow error"},
+      {"order": 3, "text": "Store element at front position"},
+      {"order": 4, "text": "Increment front pointer"},
+      {"order": 5, "text": "If queue becomes empty, reset front and rear"}
+    ],
+    "explanation": "Dequeue removes and returns the front element from the queue.",
+    "tags": ["queue", "FIFO", "O(1)"],
+    "commonMistake": "Not resetting pointers when queue becomes empty"
+  },
+  {
+    "id": "circular_queue",
+    "name": "Circular Queue Operations",
+    "category": "Data Structures",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Initialize front and rear to -1"},
+      {"order": 2, "text": "Check if queue is full: (rear+1)%size == front"},
+      {"order": 3, "text": "If first element, set front = 0"},
+      {"order": 4, "text": "Increment rear using: rear = (rear+1)%size"},
+      {"order": 5, "text": "Insert element at rear position"},
+      {"order": 6, "text": "Handle wrap-around using modulo"}
+    ],
+    "explanation": "Circular Queue efficiently uses array space by connecting the end to the beginning, forming a circle.",
+    "tags": ["queue", "circular", "O(1)"],
+    "commonMistake": "Not using modulo operator for wrap-around"
+  },
+  {
+    "id": "linked_list_insert",
+    "name": "Linked List Insert at Beginning",
+    "category": "Data Structures",
+    "difficulty": "easy",
+    "steps": [
+      {"order": 1, "text": "Create a new node with given data"},
+      {"order": 2, "text": "Set new node's next pointer to current head"},
+      {"order": 3, "text": "Update head to point to new node"},
+      {"order": 4, "text": "Return success"}
+    ],
+    "explanation": "Inserting at beginning of linked list is O(1) operation. New node becomes the new head.",
+    "tags": ["linked-list", "insertion", "O(1)"],
+    "commonMistake": "Losing reference to original head"
+  },
+  {
+    "id": "bst_insert",
+    "name": "Binary Search Tree Insert",
+    "category": "Data Structures",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Start at root node"},
+      {"order": 2, "text": "If tree is empty, create root with new value"},
+      {"order": 3, "text": "If value is less than current node, go left"},
+      {"order": 4, "text": "If value is greater than current node, go right"},
+      {"order": 5, "text": "If left/right child is null, insert new node there"},
+      {"order": 6, "text": "Otherwise, recursively repeat for that subtree"}
+    ],
+    "explanation": "BST Insert maintains the property: left child < parent < right child. Recursively finds correct position.",
+    "tags": ["tree", "BST", "recursive", "O(log n)"],
+    "commonMistake": "Not handling duplicate values or empty tree case"
+  },
+  {
+    "id": "avl_rotation",
+    "name": "AVL Tree Rotation",
+    "category": "Data Structures",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Calculate balance factor of node"},
+      {"order": 2, "text": "If balance factor > 1, left subtree is heavy"},
+      {"order": 3, "text": "If balance factor < -1, right subtree is heavy"},
+      {"order": 4, "text": "Perform appropriate rotation (LL, RR, LR, RL)"},
+      {"order": 5, "text": "Update heights of affected nodes"},
+      {"order": 6, "text": "Return new root of subtree"}
+    ],
+    "explanation": "AVL Tree maintains balance through rotations. Balance factor is height(left) - height(right), must be -1, 0, or 1.",
+    "tags": ["tree", "self-balancing", "O(log n)"],
+    "commonMistake": "Choosing wrong rotation type or not updating heights"
+  },
+  {
+    "id": "bfs",
+    "name": "Breadth First Search (BFS)",
+    "category": "Graph Algorithms",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Create a queue and mark starting node as visited"},
+      {"order": 2, "text": "Enqueue the starting node"},
+      {"order": 3, "text": "While queue is not empty, dequeue a node"},
+      {"order": 4, "text": "Process the dequeued node"},
+      {"order": 5, "text": "Get all adjacent unvisited nodes"},
+      {"order": 6, "text": "Mark them as visited and enqueue them"},
+      {"order": 7, "text": "Repeat until queue is empty"}
+    ],
+    "explanation": "BFS explores graph level by level using a queue. It visits all neighbors before moving to next level.",
+    "tags": ["graph", "traversal", "queue", "O(V+E)"],
+    "commonMistake": "Not marking nodes as visited before enqueueing"
+  },
+  {
+    "id": "dfs",
+    "name": "Depth First Search (DFS)",
+    "category": "Graph Algorithms",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Create a stack and mark starting node as visited"},
+      {"order": 2, "text": "Push the starting node onto stack"},
+      {"order": 3, "text": "While stack is not empty, pop a node"},
+      {"order": 4, "text": "Process the popped node"},
+      {"order": 5, "text": "Get all adjacent unvisited nodes"},
+      {"order": 6, "text": "Mark them as visited and push onto stack"},
+      {"order": 7, "text": "Repeat until stack is empty"}
+    ],
+    "explanation": "DFS explores graph by going as deep as possible before backtracking. Uses stack (or recursion).",
+    "tags": ["graph", "traversal", "stack", "O(V+E)"],
+    "commonMistake": "Using queue instead of stack"
+  },
+  {
+    "id": "dijkstra",
+    "name": "Dijkstra's Algorithm",
+    "category": "Graph Algorithms",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Initialize distances: source = 0, others = infinity"},
+      {"order": 2, "text": "Create a set of unvisited nodes"},
+      {"order": 3, "text": "Select unvisited node with minimum distance"},
+      {"order": 4, "text": "Mark selected node as visited"},
+      {"order": 5, "text": "For each unvisited neighbor, calculate tentative distance"},
+      {"order": 6, "text": "If tentative distance is less, update distance"},
+      {"order": 7, "text": "Repeat until all nodes are visited"},
+      {"order": 8, "text": "Return shortest distances"}
+    ],
+    "explanation": "Dijkstra's algorithm finds shortest path from source to all other nodes in weighted graph with non-negative edges.",
+    "tags": ["graph", "shortest-path", "greedy", "O(V²)"],
+    "commonMistake": "Not updating distances correctly or visiting nodes multiple times"
+  },
+  {
+    "id": "kruskal",
+    "name": "Kruskal's Algorithm",
+    "category": "Graph Algorithms",
+    "difficulty": "hard",
+    "steps": [
+      {"order": 1, "text": "Sort all edges by weight in ascending order"},
+      {"order": 2, "text": "Initialize empty MST"},
+      {"order": 3, "text": "Pick smallest edge from sorted list"},
+      {"order": 4, "text": "Check if edge creates cycle using Union-Find"},
+      {"order": 5, "text": "If no cycle, add edge to MST"},
+      {"order": 6, "text": "Repeat until MST has V-1 edges"}
+    ],
+    "explanation": "Kruskal's algorithm finds Minimum Spanning Tree by greedily selecting smallest edges that don't form cycles.",
+    "tags": ["graph", "MST", "greedy", "O(E log E)"],
+    "commonMistake": "Not checking for cycles or incorrect Union-Find implementation"
+  },
+  {
+    "id": "topological_sort",
+    "name": "Topological Sort",
+    "category": "Graph Algorithms",
+    "difficulty": "medium",
+    "steps": [
+      {"order": 1, "text": "Calculate in-degree for all vertices"},
+      {"order": 2, "text": "Enqueue all vertices with in-degree 0"},
+      {"order": 3, "text": "Dequeue a vertex and add to result"},
+      {"order": 4, "text": "Decrease in-degree of adjacent vertices"},
+      {"order": 5, "text": "If in-degree becomes 0, enqueue vertex"},
+      {"order": 6, "text": "Repeat until queue is empty"}
+    ],
+    "explanation": "Topological Sort orders vertices in a DAG such that for every edge u→v, u comes before v. Uses Kahn's algorithm.",
+    "tags": ["graph", "DAG", "ordering", "O(V+E)"],
+    "commonMistake": "Trying to apply on cyclic graphs or not handling all vertices"
+  }
+]

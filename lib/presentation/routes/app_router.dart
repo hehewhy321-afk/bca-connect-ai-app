@@ -31,6 +31,8 @@ import '../screens/calendar/nepali_calendar_screen.dart';
 import '../screens/pomodoro/pomodoro_screen.dart';
 import '../screens/finance/finance_tracker_screen.dart';
 import '../screens/study/study_planner_screen.dart';
+import '../screens/algorithm_game/algorithm_game_home_screen.dart';
+import '../screens/fun_zone/fun_zone_home_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -223,6 +225,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/study',
         builder: (context, state) => const StudyPlannerScreen(),
+      ),
+      
+      // Algorithm Game
+      GoRoute(
+        path: '/algorithm-game',
+        builder: (context, state) => const AlgorithmGameHomeScreen(),
+      ),
+      
+      // Fun Zone
+      GoRoute(
+        path: '/fun-zone',
+        builder: (context, state) => const FunZoneHomeScreen(),
       ),
       
       // Debug

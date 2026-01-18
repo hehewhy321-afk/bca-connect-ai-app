@@ -1,64 +1,76 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/services/cache_service.dart';
+import '../../core/services/connectivity_service.dart';
 import '../models/forum_post.dart';
+import 'dart:convert';
 
 class ForumRepository {
   final SupabaseClient _client = SupabaseConfig.client;
+  final ConnectivityService _connectivity = ConnectivityService();
 
-  // Get all posts
+  // Get all posts with caching
   Future<List<ForumPost>> getPosts({
     String? category,
     int limit = 20,
     int offset = 0,
+    bool forceRefresh = false,
   }) async {
-    try {
-      dynamic query = _client
-          .from('forum_posts')
-          .select('*, comments_count:forum_replies(count)')
-          .order('created_at', ascending: false)
-          .range(offset, offset + limit - 1);
+    final cacheKey = '${CacheKeys.forumPosts}_${category ?? 'all'}_$offset';
+    
+    // Check connectivity first
+    final isOnline = await _connectivity.isOnline();
+    
+    // If online, always fetch fresh data
+    if (isOnline) {
+      try {
+        dynamic query = _client
+            .from('forum_posts')
+            .select('*, comments_count:forum_replies(count)')
+            .order('created_at', ascending: false)
+            .range(offset, offset + limit - 1);
 
-      if (category != null) {
-        query = query.eq('category', category);
-      }
+        if (category != null) {
+          query = query.eq('category', category);
+        }
 
-      final response = await query;
-      
-      // Fetch user names separately for each post
-      final posts = <ForumPost>[];
-      for (var postData in response as List) {
-        final data = Map<String, dynamic>.from(postData);
+        final response = await query;
         
-        // Debug: Print upvotes value
-        debugPrint('Post ${data['id']}: upvotes = ${data['upvotes']} (type: ${data['upvotes'].runtimeType})');
-        
-        // Ensure upvotes is not null
-        if (data['upvotes'] == null) {
-          data['upvotes'] = 0;
-          debugPrint('  -> Fixed null upvotes to 0');
-        }
-        
-        // Extract comment count from the nested response
-        if (data['comments_count'] != null && data['comments_count'] is List) {
-          final countList = data['comments_count'] as List;
-          data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
-        } else {
-          data['comments_count'] = 0;
-        }
-        
-        // Try to fetch user profile
-        try {
-          final profile = await _client
-              .from('profiles')
-              .select('full_name, avatar_url')
-              .eq('user_id', data['user_id'])
-              .maybeSingle();
+        // Fetch user names separately for each post
+        final posts = <ForumPost>[];
+        for (var postData in response as List) {
+          final data = Map<String, dynamic>.from(postData);
           
-          if (profile != null) {
-            data['user_name'] = profile['full_name'];
-            data['user_avatar'] = profile['avatar_url'];
+          // Debug: Print upvotes value
+          debugPrint('Post ${data['id']}: upvotes = ${data['upvotes']} (type: ${data['upvotes'].runtimeType})');
+          
+          // Ensure upvotes is not null
+          if (data['upvotes'] == null) {
+            data['upvotes'] = 0;
+            debugPrint('  -> Fixed null upvotes to 0');
           }
+          
+          // Extract comment count from the nested response
+          if (data['comments_count'] != null && data['comments_count'] is List) {
+            final countList = data['comments_count'] as List;
+            data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
+          } else {
+            data['comments_count'] = 0;
+          }
+          
+          // Try to fetch user profile
+          try {
+            final profile = await _client
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('user_id', data['user_id'])
+                .maybeSingle();
+            
+            if (profile != null) {
+              data['user_name'] = profile['full_name'];
+              data['user_avatar'] = profile['avatar_url'];
+            }
         } catch (e) {
           // If profile fetch fails, continue without user data
           debugPrint('Error fetching profile for post: $e');
@@ -67,11 +79,36 @@ class ForumRepository {
         posts.add(ForumPost.fromJson(data));
       }
       
+      debugPrint('Fetched ${posts.length} forum posts from database (online)');
+      
+      // Cache the fresh results
+      final jsonList = posts.map((e) => e.toJson()).toList();
+      await CacheService.set(
+        cacheKey,
+        jsonEncode(jsonList),
+        duration: CacheKeys.mediumCache,
+      );
+      
       return posts;
-    } catch (e) {
-      debugPrint('Error fetching forum posts: $e');
-      return [];
+      } catch (e) {
+        debugPrint('Error fetching forum posts: $e');
+        // Fall through to cache on error
+      }
     }
+    
+    // If offline or error, use cache
+    try {
+      final cached = CacheService.get<String>(cacheKey);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached);
+        debugPrint('Loaded ${jsonList.length} forum posts from cache (offline or error)');
+        return jsonList.map((e) => ForumPost.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading forum posts from cache: $e');
+    }
+    
+    throw Exception('No internet connection and no cached data available');
   }
 
   // Get post by ID

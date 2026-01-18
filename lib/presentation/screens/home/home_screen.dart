@@ -17,6 +17,7 @@ import '../profile/profile_screen.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/offline_indicator.dart';
+import '../../widgets/daily_quote_card.dart';
 
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
 final lastBackPressProvider = StateProvider<DateTime?>((ref) => null);
@@ -261,6 +262,9 @@ class DashboardTab extends ConsumerWidget {
                 error: (err, stack) => const SizedBox.shrink(),
               ),
 
+              // Daily Quote/Tip Card
+              const DailyQuoteCard(),
+
               // Quick Actions - Bento Grid
               Text(
                 'Quick Actions',
@@ -331,6 +335,28 @@ class DashboardTab extends ConsumerWidget {
                       label: 'Notices',
                       color: const Color(0xFF10B981),
                       onTap: () => context.push('/notices'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BentoCard(
+                      icon: Iconsax.game,
+                      label: 'Algorithm Game',
+                      color: const Color(0xFF6366F1),
+                      onTap: () => context.push('/algorithm-game'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _BentoCard(
+                      icon: Iconsax.emoji_happy,
+                      label: 'Fun Zone',
+                      color: const Color(0xFFEC4899),
+                      onTap: () => context.push('/fun-zone'),
                     ),
                   ),
                 ],

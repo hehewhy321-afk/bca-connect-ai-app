@@ -222,6 +222,7 @@ class FinanceTrackerScreen extends ConsumerWidget {
       await file.writeAsString(jsonData);
       
       if (context.mounted) {
+        // ignore: deprecated_member_use
         await Share.shareXFiles(
           [XFile(file.path)],
           subject: 'Finance Tracker Export',

@@ -4,7 +4,10 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/cache_service.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../widgets/cached_image.dart';
+import 'dart:convert';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -29,6 +32,67 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Future<void> _fetchMembers() async {
+    const cacheKey = 'community_members_cache';
+    
+    // Try to load from cache first
+    try {
+      final cached = CacheService.get<String>(cacheKey);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached);
+        final membersList = jsonList.map((e) => Map<String, dynamic>.from(e)).toList();
+        
+        // Extract unique batches
+        final batches = <String>{};
+        for (final member in membersList) {
+          if (member['batch'] != null) {
+            batches.add(member['batch'].toString());
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _members = membersList;
+            _availableBatches = batches.toList()..sort();
+            _loading = false;
+          });
+        }
+        
+        debugPrint('Loaded ${membersList.length} community members from cache');
+      }
+    } catch (e) {
+      debugPrint('Error loading community members from cache: $e');
+    }
+    
+    // Check connectivity
+    final connectivity = ConnectivityService();
+    final isOnline = await connectivity.isOnline();
+    
+    if (!isOnline) {
+      // If offline and we have cached data, we're done
+      if (_members.isNotEmpty) {
+        debugPrint('Offline: Using cached community members');
+        return;
+      }
+      // If offline and no cache, show error
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Iconsax.wifi_square, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(child: Text('No internet connection')),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Fetch from network
     try {
       final response = await SupabaseConfig.client
           .from('profiles')
@@ -51,15 +115,40 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           }
         }
         
+        // Cache the results
+        await CacheService.set(
+          cacheKey,
+          jsonEncode(membersList),
+          duration: CacheKeys.longCache,
+        );
+        
         setState(() {
           _members = membersList;
           _availableBatches = batches.toList()..sort();
           _loading = false;
         });
+        
+        debugPrint('Fetched and cached ${membersList.length} community members');
       }
     } catch (e) {
+      debugPrint('Error fetching community members: $e');
       if (mounted) {
         setState(() => _loading = false);
+        // If we have cached data, don't show error
+        if (_members.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Iconsax.danger, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('Error loading members: ${e.toString()}')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

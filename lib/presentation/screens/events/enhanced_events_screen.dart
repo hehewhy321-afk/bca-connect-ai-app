@@ -183,40 +183,56 @@ class EnhancedEventsScreen extends ConsumerWidget {
                 separatorBuilder: (context, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) => const EventCardSkeleton(),
               ),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Iconsax.danger,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error loading events',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Text(
-                        error.toString(),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
+              error: (error, stack) {
+                // Check if it's a network error
+                final isNetworkError = error.toString().contains('No internet connection') ||
+                    error.toString().contains('SocketException') ||
+                    error.toString().contains('Failed host lookup');
+
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
+                        size: 64,
+                        color: isNetworkError
+                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                            : Theme.of(context).colorScheme.error,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: () => ref.invalidate(upcomingEventsProvider),
-                      icon: const Icon(Iconsax.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+                      const SizedBox(height: 16),
+                      Text(
+                        isNetworkError ? 'No Internet Connection' : 'Error loading events',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          isNetworkError
+                              ? 'Please check your internet connection and try again'
+                              : 'Something went wrong. Please try again',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: () => ref.invalidate(upcomingEventsProvider),
+                        icon: const Icon(Iconsax.refresh),
+                        label: const Text('Retry'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: ModernTheme.primaryOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

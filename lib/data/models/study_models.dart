@@ -58,7 +58,7 @@ class Subject {
       'name': name,
       'code': code,
       'teacher': teacher,
-      'color': color.value.toRadixString(16).padLeft(8, '0'),
+      'color': '0x${color.toARGB32().toRadixString(16).padLeft(8, '0')}',
       'semester': semester,
       'credits': credits,
     };

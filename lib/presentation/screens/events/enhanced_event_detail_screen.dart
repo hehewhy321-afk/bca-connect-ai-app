@@ -7,6 +7,8 @@ import '../../../data/models/event.dart';
 import '../../../data/repositories/event_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/event_feedback_dialog.dart';
+import '../../providers/event_provider.dart';
 
 final eventDetailProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
   final repo = EventRepository();
@@ -1084,8 +1086,135 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
         ),
       ),
       bottomNavigationBar: eventAsync.maybeWhen(
-        data: (event) => event != null && event.status.toLowerCase() != 'completed'
-            ? isRegisteredAsync.when(
+        data: (event) {
+          if (event == null) return null;
+          
+          // Show feedback button for completed events if user is registered
+          if (event.status.toLowerCase() == 'completed') {
+            return isRegisteredAsync.when(
+              data: (isRegistered) {
+                if (!isRegistered) return null;
+                
+                // Check if user has given feedback
+                final feedbackAsync = ref.watch(userFeedbackProvider(event.id));
+                return feedbackAsync.when(
+                  data: (existingFeedback) => Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      child: Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: existingFeedback != null
+                              ? LinearGradient(
+                                  colors: [Colors.green.shade600, Colors.green.shade700],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : ModernTheme.orangeGradient,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (existingFeedback != null ? Colors.green : ModernTheme.primaryOrange)
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => EventFeedbackDialog(
+                                  eventId: event.id,
+                                  eventTitle: event.title,
+                                  existingFeedback: existingFeedback,
+                                  onSuccess: () {
+                                    ref.invalidate(userFeedbackProvider(event.id));
+                                  },
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    existingFeedback != null ? Iconsax.edit5 : Iconsax.star5,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    existingFeedback != null
+                                        ? 'Update Feedback'
+                                        : 'Rate This Event',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  if (existingFeedback != null) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Iconsax.star5, color: Colors.white, size: 12),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${existingFeedback['rating']}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  loading: () => Container(
+                    padding: const EdgeInsets.all(20),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, stackTrace) => null,
+                );
+              },
+              loading: () => null,
+              error: (error, stackTrace) => null,
+            );
+          }
+          
+          // Show register button for non-completed events
+          return isRegisteredAsync.when(
                 data: (isRegistered) => Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -1238,8 +1367,8 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                     ),
                   ),
                 ),
-              )
-            : null,
+              );
+        },
         orElse: () => null,
       ),
     );

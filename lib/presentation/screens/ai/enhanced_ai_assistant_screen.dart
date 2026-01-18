@@ -43,6 +43,9 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   void initState() {
     super.initState();
     _initSpeech();
+    _messageController.addListener(() {
+      setState(() {}); // Rebuild to update send button color
+    });
   }
 
   Future<void> _initSpeech() async {
@@ -51,13 +54,31 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       final status = await Permission.microphone.request();
       if (status.isGranted) {
         _speechAvailable = await _speech.initialize(
-          onError: (error) => debugPrint('Speech error: $error'),
-          onStatus: (status) => debugPrint('Speech status: $status'),
+          onError: (error) {
+            debugPrint('Speech error: $error');
+            if (mounted) {
+              setState(() {
+                _speechAvailable = false;
+                _isListening = false;
+              });
+            }
+          },
+          onStatus: (status) {
+            debugPrint('Speech status: $status');
+            if (status == 'notListening' && mounted) {
+              setState(() => _isListening = false);
+            }
+          },
         );
         if (mounted) setState(() {});
+      } else {
+        debugPrint('Microphone permission denied');
+        _speechAvailable = false;
       }
     } catch (e) {
       debugPrint('Speech init error: $e');
+      _speechAvailable = false;
+      if (mounted) setState(() {});
     }
   }
 
@@ -406,6 +427,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       await file.writeAsString(html);
       
       // Share the file
+      // ignore: deprecated_member_use
       await Share.shareXFiles(
         [XFile(file.path)],
         subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
@@ -678,19 +700,15 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
 
   @override
   Widget build(BuildContext context) {
-    final suggestedQuestions = _mode == AIMode.image
-        ? [
-            'Generate an image of a futuristic classroom',
-            'Create an image of a beautiful sunset over mountains',
-            'Draw a cute robot studying computer science',
-            'Make an image of Nepal\'s Himalayan landscape',
-          ]
-        : [
-            'Explain polymorphism in Java',
-            'What is normalization in databases?',
-            'Write a Python function for binary search',
-            'How does recursion work?',
-          ];
+    // Updated suggestions: 2 chat + 2 image examples
+    final suggestedQuestions = [
+      // Chat examples
+      'Explain polymorphism in Java',
+      'What is normalization in databases?',
+      // Image examples
+      'Generate a futuristic classroom with AI',
+      'Create a beautiful mountain landscape',
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -798,36 +816,37 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
               children: [
                 Row(
                   children: [
-                    // Voice Button
-                    if (_speechAvailable)
-                      IconButton(
-                        icon: Icon(
-                          _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
-                          color: _isListening
-                              ? Colors.red
-                              : ModernTheme.primaryOrange,
-                        ),
-                        onPressed: _isLoading ? null : _toggleListening,
-                        tooltip: _isListening ? 'Stop Listening' : 'Voice Input',
-                      ),
-                    
-                    // Mode Toggle
-                    IconButton(
-                      icon: Icon(
-                        _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_text,
+                    // Mode Toggle Button (+ icon on left, gallery icon when active)
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
                         color: _mode == AIMode.image
-                            ? ModernTheme.primaryOrange
-                            : Theme.of(context).colorScheme.onSurface,
+                            ? const Color(0xFF8B5CF6) // Purple for image mode
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
                       ),
-                      onPressed: _isLoading ? null : () {
-                        setState(() {
-                          _mode = _mode == AIMode.chat ? AIMode.image : AIMode.chat;
-                        });
-                      },
-                      tooltip: _mode == AIMode.chat ? 'Switch to Image Mode' : 'Switch to Chat Mode',
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          _mode == AIMode.image ? Iconsax.gallery5 : Iconsax.add,
+                          color: _mode == AIMode.image
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
+                          size: 20,
+                        ),
+                        onPressed: _isLoading ? null : () {
+                          setState(() {
+                            _mode = _mode == AIMode.chat ? AIMode.image : AIMode.chat;
+                          });
+                        },
+                        tooltip: _mode == AIMode.chat ? 'Switch to Image Mode' : 'Switch to Chat Mode',
+                      ),
                     ),
                     
-                    // Input Field
+                    const SizedBox(width: 8),
+                    
+                    // Input Field with Voice Icon Inside
                     Expanded(
                       child: Stack(
                         children: [
@@ -838,16 +857,18 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                                   ? 'Listening... Speak now!'
                                   : _mode == AIMode.image
                                       ? 'Describe the image you want...'
-                                      : 'Ask anything about your studies...',
+                                      : 'Message AI Assistant...',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide.none,
                               ),
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
+                              contentPadding: const EdgeInsets.only(
+                                left: 20,
+                                right: 50, // Space for voice icon
+                                top: 12,
+                                bottom: 12,
                               ),
                             ),
                             maxLines: null,
@@ -868,21 +889,64 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                                 ),
                               ),
                             ),
+                          // Voice Input Button Inside TextField
+                          Positioned(
+                            right: 8,
+                            top: 4,
+                            bottom: 4,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: _isListening
+                                    ? Colors.red.shade100
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                icon: Icon(
+                                  _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
+                                  color: _isListening
+                                      ? Colors.red
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                onPressed: _isLoading ? null : _toggleListening,
+                                tooltip: _speechAvailable
+                                    ? (_isListening ? 'Stop Listening' : 'Voice Input')
+                                    : 'Voice input not available',
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     
                     const SizedBox(width: 8),
                     
-                    // Send Button
+                    // Send Button (arrow up, changes color based on text)
                     Container(
-                      decoration: const BoxDecoration(
-                        gradient: ModernTheme.orangeGradient,
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _messageController.text.trim().isNotEmpty
+                            ? ModernTheme.primaryOrange
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: const Icon(Iconsax.send_1, color: Colors.white),
-                        onPressed: _isLoading ? null : _sendMessage,
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          Iconsax.arrow_up_1,
+                          color: _messageController.text.trim().isNotEmpty
+                              ? Colors.white
+                              : Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: _isLoading || _messageController.text.trim().isEmpty
+                            ? null
+                            : _sendMessage,
                       ),
                     ),
                   ],
@@ -892,8 +956,8 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                   _isListening
                       ? '🎤 LISTENING... Speak now!'
                       : _mode == AIMode.image
-                          ? '🎨 IMAGE MODE ON • Describe any image to generate'
-                          : '💬 Chat Mode • Ask anything about BCA studies${_speechAvailable ? ' • 🎤 Voice available' : ''}',
+                          ? '🎨 IMAGE MODE • Tip: Be specific! e.g., "A sunset over mountains with purple sky"'
+                          : '💬 Chat Mode • Ask anything about BCA studies',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: _isListening
                             ? Colors.red
@@ -951,20 +1015,51 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                   ),
             ),
             const SizedBox(height: 32),
+            // Show all 4 suggestions (2 chat + 2 image)
             Wrap(
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: suggestions.map((question) {
-                return _SuggestionChip(
-                  label: question,
-                  icon: _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
+              children: [
+                // Chat examples
+                _SuggestionChip(
+                  label: suggestions[0],
+                  icon: Iconsax.message_programming,
                   onTap: () {
-                    _messageController.text = question;
+                    setState(() => _mode = AIMode.chat);
+                    _messageController.text = suggestions[0];
                     _sendMessage();
                   },
-                );
-              }).toList(),
+                ),
+                _SuggestionChip(
+                  label: suggestions[1],
+                  icon: Iconsax.message_programming,
+                  onTap: () {
+                    setState(() => _mode = AIMode.chat);
+                    _messageController.text = suggestions[1];
+                    _sendMessage();
+                  },
+                ),
+                // Image examples
+                _SuggestionChip(
+                  label: suggestions[2],
+                  icon: Iconsax.gallery,
+                  onTap: () {
+                    setState(() => _mode = AIMode.image);
+                    _messageController.text = suggestions[2];
+                    _sendMessage();
+                  },
+                ),
+                _SuggestionChip(
+                  label: suggestions[3],
+                  icon: Iconsax.gallery,
+                  onTap: () {
+                    setState(() => _mode = AIMode.image);
+                    _messageController.text = suggestions[3];
+                    _sendMessage();
+                  },
+                ),
+              ],
             ),
           ],
         ),

@@ -183,19 +183,20 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                 FilledButton.icon(
                   onPressed: () async {
                     final hasPermission = await PermissionService().hasNotificationPermission();
+                    if (!mounted) return;
+                    
+                    final scaffoldMessenger = ScaffoldMessenger.of(context);
                     if (hasPermission) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notification permission is already enabled!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Notification permission is already enabled!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                     } else {
-                      if (mounted) {
-                        await PermissionService().requestNotificationPermission(context);
-                      }
+                      if (!mounted) return;
+                      // ignore: use_build_context_synchronously
+                      await PermissionService().requestNotificationPermission(context);
                     }
                   },
                   icon: const Icon(Iconsax.notification_bing),

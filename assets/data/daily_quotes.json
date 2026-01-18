@@ -1,0 +1,365 @@
+{
+  "quotes": [
+    {
+      "id": 1,
+      "text": "Break your study sessions into 25-minute chunks with 5-minute breaks. This Pomodoro technique helps maintain focus and prevents burnout.",
+      "category": "study_tip",
+      "icon": "timer"
+    },
+    {
+      "id": 2,
+      "text": "Start exam preparation at least 2 weeks in advance. Cramming the night before reduces retention by up to 50%.",
+      "category": "exam_advice",
+      "icon": "calendar"
+    },
+    {
+      "id": 3,
+      "text": "Your potential is limitless. Every expert was once a beginner. Keep pushing forward!",
+      "category": "motivation",
+      "icon": "star"
+    },
+    {
+      "id": 4,
+      "text": "Use active recall instead of passive reading. Test yourself regularly to strengthen memory pathways.",
+      "category": "study_tip",
+      "icon": "brain"
+    },
+    {
+      "id": 5,
+      "text": "Read questions carefully during exams. Underline keywords and plan your answer before writing.",
+      "category": "exam_advice",
+      "icon": "document"
+    },
+    {
+      "id": 6,
+      "text": "Success is not final, failure is not fatal. It's the courage to continue that counts.",
+      "category": "motivation",
+      "icon": "trophy"
+    },
+    {
+      "id": 7,
+      "text": "Create mind maps to visualize connections between concepts. Visual learning improves retention.",
+      "category": "study_tip",
+      "icon": "hierarchy"
+    },
+    {
+      "id": 8,
+      "text": "Get 7-8 hours of sleep before exams. Sleep strengthens memory and improves problem-solving.",
+      "category": "exam_advice",
+      "icon": "moon"
+    },
+    {
+      "id": 9,
+      "text": "Believe in yourself. You've prepared for this moment. Stay calm and confident.",
+      "category": "motivation",
+      "icon": "heart"
+    },
+    {
+      "id": 10,
+      "text": "Teach concepts to others or explain them aloud. Teaching reinforces understanding.",
+      "category": "study_tip",
+      "icon": "people"
+    },
+    {
+      "id": 11,
+      "text": "Review your answers if time permits. Small mistakes can cost easy marks.",
+      "category": "exam_advice",
+      "icon": "checkmark"
+    },
+    {
+      "id": 12,
+      "text": "Every small step forward is progress. Consistency creates success.",
+      "category": "motivation",
+      "icon": "rocket"
+    },
+    {
+      "id": 13,
+      "text": "Study in a distraction-free environment. Focus is your greatest productivity tool.",
+      "category": "study_tip",
+      "icon": "shield"
+    },
+    {
+      "id": 14,
+      "text": "Arrive early for exams. A calm mind performs better than a rushed one.",
+      "category": "exam_advice",
+      "icon": "time"
+    },
+    {
+      "id": 15,
+      "text": "Education is an investment that pays lifelong dividends.",
+      "category": "motivation",
+      "icon": "bulb"
+    },
+    {
+      "id": 16,
+      "text": "Use spaced repetition to retain information long-term.",
+      "category": "study_tip",
+      "icon": "refresh"
+    },
+    {
+      "id": 17,
+      "text": "Stay hydrated during exams. Even mild dehydration affects focus.",
+      "category": "exam_advice",
+      "icon": "water"
+    },
+    {
+      "id": 18,
+      "text": "Difficult roads often lead to the strongest versions of yourself.",
+      "category": "motivation",
+      "icon": "trending_up"
+    },
+    {
+      "id": 19,
+      "text": "Handwritten notes improve understanding and long-term memory.",
+      "category": "study_tip",
+      "icon": "create"
+    },
+    {
+      "id": 20,
+      "text": "Practice past papers under exam conditions to build confidence.",
+      "category": "exam_advice",
+      "icon": "document_text"
+    },
+    {
+      "id": 21,
+      "text": "You are more capable than you think. Keep moving forward.",
+      "category": "motivation",
+      "icon": "flash"
+    },
+    {
+      "id": 22,
+      "text": "Study hard topics when your energy and concentration are highest.",
+      "category": "study_tip",
+      "icon": "sunny"
+    },
+    {
+      "id": 23,
+      "text": "Skip tough questions initially and return later with a fresh mind.",
+      "category": "exam_advice",
+      "icon": "arrow_forward"
+    },
+    {
+      "id": 24,
+      "text": "Consistency always beats motivation. Build habits, not excuses.",
+      "category": "motivation",
+      "icon": "fitness"
+    },
+    {
+      "id": 25,
+      "text": "Explain concepts in simple words to truly understand them.",
+      "category": "study_tip",
+      "icon": "school"
+    },
+    {
+      "id": 26,
+      "text": "Scan all exam questions first to plan your time wisely.",
+      "category": "exam_advice",
+      "icon": "eye"
+    },
+    {
+      "id": 27,
+      "text": "Compare yourself only with who you were yesterday.",
+      "category": "motivation",
+      "icon": "person"
+    },
+    {
+      "id": 28,
+      "text": "A fixed study routine reduces procrastination and stress.",
+      "category": "study_tip",
+      "icon": "calendar_today"
+    },
+    {
+      "id": 29,
+      "text": "Allocate exam time based on marks, not question length.",
+      "category": "exam_advice",
+      "icon": "alarm"
+    },
+    {
+      "id": 30,
+      "text": "Effort compounds over time. Keep working even when results feel slow.",
+      "category": "motivation",
+      "icon": "medal"
+    },
+
+    {
+      "id": 31,
+      "text": "Revise using short summaries instead of rereading full chapters.",
+      "category": "study_tip",
+      "icon": "list"
+    },
+    {
+      "id": 32,
+      "text": "Write legibly in exams. Clear handwriting improves examiner understanding.",
+      "category": "exam_advice",
+      "icon": "edit"
+    },
+    {
+      "id": 33,
+      "text": "Discipline will take you places motivation cannot.",
+      "category": "motivation",
+      "icon": "shield_check"
+    },
+    {
+      "id": 34,
+      "text": "Use flashcards for formulas, definitions, and key concepts.",
+      "category": "study_tip",
+      "icon": "layers"
+    },
+    {
+      "id": 35,
+      "text": "Attempt easier questions first to build confidence early.",
+      "category": "exam_advice",
+      "icon": "thumb_up"
+    },
+    {
+      "id": 36,
+      "text": "Your future self will thank you for the work you do today.",
+      "category": "motivation",
+      "icon": "timeline"
+    },
+    {
+      "id": 37,
+      "text": "Study actively by asking 'why' and 'how', not just 'what'.",
+      "category": "study_tip",
+      "icon": "help"
+    },
+    {
+      "id": 38,
+      "text": "Keep a watch on the clock during exams to avoid last-minute panic.",
+      "category": "exam_advice",
+      "icon": "watch"
+    },
+    {
+      "id": 39,
+      "text": "Progress may be slow, but quitting stops it completely.",
+      "category": "motivation",
+      "icon": "trending_flat"
+    },
+    {
+      "id": 40,
+      "text": "Revise difficult topics multiple times instead of all topics once.",
+      "category": "study_tip",
+      "icon": "repeat"
+    },
+    {
+      "id": 41,
+      "text": "Read instructions carefully. Many mistakes happen due to assumptions.",
+      "category": "exam_advice",
+      "icon": "info"
+    },
+    {
+      "id": 42,
+      "text": "Focus on learning, not just grades. Skills matter long-term.",
+      "category": "motivation",
+      "icon": "lightbulb"
+    },
+    {
+      "id": 43,
+      "text": "Use real-life examples to understand complex concepts better.",
+      "category": "study_tip",
+      "icon": "link"
+    },
+    {
+      "id": 44,
+      "text": "If stuck, take a deep breath and reset your thinking.",
+      "category": "exam_advice",
+      "icon": "self_improvement"
+    },
+    {
+      "id": 45,
+      "text": "You don't need perfection, you need persistence.",
+      "category": "motivation",
+      "icon": "autorenew"
+    },
+    {
+      "id": 46,
+      "text": "Study with clear goals for each session to stay productive.",
+      "category": "study_tip",
+      "icon": "flag"
+    },
+    {
+      "id": 47,
+      "text": "Avoid discussing answers immediately after exams to reduce stress.",
+      "category": "exam_advice",
+      "icon": "block"
+    },
+    {
+      "id": 48,
+      "text": "Trust the process. Growth is happening even when unseen.",
+      "category": "motivation",
+      "icon": "nature"
+    },
+    {
+      "id": 49,
+      "text": "Revise formulas daily to keep them fresh in memory.",
+      "category": "study_tip",
+      "icon": "functions"
+    },
+    {
+      "id": 50,
+      "text": "Answer to the point. Quality matters more than quantity.",
+      "category": "exam_advice",
+      "icon": "filter_alt"
+    },
+    {
+      "id": 51,
+      "text": "Your hard work today builds your confidence tomorrow.",
+      "category": "motivation",
+      "icon": "verified"
+    },
+    {
+      "id": 52,
+      "text": "Break large topics into smaller, manageable units.",
+      "category": "study_tip",
+      "icon": "view_module"
+    },
+    {
+      "id": 53,
+      "text": "Maintain a positive body posture during exams to stay alert.",
+      "category": "exam_advice",
+      "icon": "accessibility"
+    },
+    {
+      "id": 54,
+      "text": "Success comes from showing up even on difficult days.",
+      "category": "motivation",
+      "icon": "event_available"
+    },
+    {
+      "id": 55,
+      "text": "Use diagrams and flowcharts to simplify complex answers.",
+      "category": "study_tip",
+      "icon": "account_tree"
+    },
+    {
+      "id": 56,
+      "text": "Double-check calculations to avoid avoidable errors.",
+      "category": "exam_advice",
+      "icon": "calculate"
+    },
+    {
+      "id": 57,
+      "text": "You are building discipline, not just passing exams.",
+      "category": "motivation",
+      "icon": "build"
+    },
+    {
+      "id": 58,
+      "text": "Review mistakes regularly; they are powerful learning tools.",
+      "category": "study_tip",
+      "icon": "bug_report"
+    },
+    {
+      "id": 59,
+      "text": "Stay calm if you forget something; memory often returns.",
+      "category": "exam_advice",
+      "icon": "psychology"
+    },
+    {
+      "id": 60,
+      "text": "Your dedication today shapes the life you want tomorrow.",
+      "category": "motivation",
+      "icon": "public"
+    }
+  ]
+}

@@ -9,7 +9,8 @@ final announcementRepositoryProvider = Provider<AnnouncementRepository>((ref) {
 
 final activeAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) async {
   try {
-    return await ref.watch(announcementRepositoryProvider).getActiveAnnouncements();
+    // Force refresh on first load to ensure we get fresh data
+    return await ref.watch(announcementRepositoryProvider).getActiveAnnouncements(forceRefresh: true);
   } catch (e) {
     debugPrint('Error loading announcements: $e');
     return [];
@@ -18,7 +19,8 @@ final activeAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) asy
 
 final allAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) async {
   try {
-    return await ref.watch(announcementRepositoryProvider).getAllAnnouncements();
+    // Force refresh on first load to ensure we get fresh data
+    return await ref.watch(announcementRepositoryProvider).getAllAnnouncements(forceRefresh: true);
   } catch (e) {
     debugPrint('Error loading all announcements: $e');
     return [];
