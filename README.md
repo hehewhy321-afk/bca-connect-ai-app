@@ -8,6 +8,7 @@
 A comprehensive mobile application for BCA students at MMAMC College, featuring AI-powered study assistance, event management, forum discussions, resource hub, study planner, finance tracker, algorithm learning game, and 13 fun arcade games.
 
 ---
+<img width="3252" height="4000" alt="7fc616f24c9" src="https://github.com/user-attachments/assets/9c241a9a-9856-47ba-89ca-b709508216bc" />
 
 ## 📱 Features
 
