@@ -30,6 +30,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
+  bool _isCancelled = false; // Flag to track cancellation
   AIMode _mode = AIMode.chat;
   StreamingStatus? _streamingStatus;
   
@@ -163,6 +164,88 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     super.dispose();
   }
 
+  void _cancelGeneration() {
+    setState(() {
+      _isCancelled = true;
+      _isLoading = false;
+      _streamingStatus = null;
+    });
+    
+    // Remove the last assistant message if it's incomplete
+    if (_messages.isNotEmpty && !_messages.last.isUser) {
+      setState(() {
+        _messages.removeLast();
+      });
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Generation cancelled'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  String _getUserFriendlyError(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+    
+    // Network/Connection errors
+    if (errorString.contains('socketexception') || 
+        errorString.contains('failed host lookup') ||
+        errorString.contains('no address associated with hostname') ||
+        errorString.contains('network is unreachable')) {
+      return '🌐 No internet connection. Please check your network and try again.';
+    }
+    
+    if (errorString.contains('timeout') || errorString.contains('timed out')) {
+      return '⏱️ Request timed out. The server is taking too long to respond. Please try again.';
+    }
+    
+    if (errorString.contains('connection refused') || errorString.contains('connection reset')) {
+      return '🔌 Unable to connect to the server. Please check your internet connection.';
+    }
+    
+    // Authentication errors
+    if (errorString.contains('unauthorized') || errorString.contains('401')) {
+      return '🔐 Session expired. Please log out and log in again.';
+    }
+    
+    if (errorString.contains('forbidden') || errorString.contains('403')) {
+      return '🚫 Access denied. You don\'t have permission to use this feature.';
+    }
+    
+    // Rate limiting
+    if (errorString.contains('rate limit') || errorString.contains('too many requests') || errorString.contains('429')) {
+      return '⏳ Too many requests. Please wait a moment and try again.';
+    }
+    
+    // Server errors
+    if (errorString.contains('500') || errorString.contains('internal server error')) {
+      return '⚠️ Server error. Our team has been notified. Please try again later.';
+    }
+    
+    if (errorString.contains('503') || errorString.contains('service unavailable')) {
+      return '🔧 Service temporarily unavailable. Please try again in a few minutes.';
+    }
+    
+    // API/Credits errors
+    if (errorString.contains('credits exhausted') || errorString.contains('quota exceeded')) {
+      return '💳 AI credits exhausted. Please contact the administrator.';
+    }
+    
+    if (errorString.contains('invalid api key') || errorString.contains('api key')) {
+      return '🔑 AI service configuration error. Please contact support.';
+    }
+    
+    // Generic fallback
+    if (errorString.contains('exception') || errorString.contains('error')) {
+      return '❌ Something went wrong. Please check your internet connection and try again.';
+    }
+    
+    return '❌ Unable to process your request. Please try again.';
+  }
+
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty || _isLoading) return;
 
@@ -177,6 +260,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     setState(() {
       _messages.add(userMessage);
       _isLoading = true;
+      _isCancelled = false; // Reset cancel flag
       _streamingStatus = StreamingStatus(
         isStreaming: true,
         provider: '',
@@ -300,10 +384,11 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       }
     } catch (e) {
       if (mounted) {
+        final friendlyError = _getUserFriendlyError(e);
         setState(() {
           _messages.add(ChatMessage(
             id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
-            text: 'I apologize, but I\'m having trouble connecting right now. Error: ${e.toString()}',
+            text: friendlyError,
             isUser: false,
             timestamp: DateTime.now(),
             type: MessageType.text,
@@ -337,7 +422,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       String fullText = '';
       
       for (final line in lines) {
-        if (!mounted) break;
+        if (!mounted || _isCancelled) break; // Check for cancellation
         
         if (line.startsWith('data: ')) {
           final data = line.substring(6);
@@ -349,6 +434,8 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
             
             if (content != null) {
               fullText += content;
+              
+              if (_isCancelled) break; // Check again before updating
               
               setState(() {
                 final index = _messages.indexWhere((m) => m.id == assistantId);
@@ -371,15 +458,17 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     } catch (e) {
       debugPrint('Error handling streaming response: $e');
       // Fallback: use full response body
-      setState(() {
-        final index = _messages.indexWhere((m) => m.id == assistantId);
-        if (index != -1) {
-          _messages[index] = _messages[index].copyWith(text: response.body);
-        }
-      });
+      if (!_isCancelled) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == assistantId);
+          if (index != -1) {
+            _messages[index] = _messages[index].copyWith(text: response.body);
+          }
+        });
+      }
     }
 
-    if (mounted) {
+    if (mounted && !_isCancelled) {
       setState(() {
         _isLoading = false;
         _streamingStatus = null;
@@ -415,33 +504,147 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       return;
     }
 
+    // Show modern dialog with options
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Iconsax.document_download, color: ModernTheme.primaryOrange),
+            SizedBox(width: 12),
+            Text('Export Chat'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Choose how to export your conversation:'),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                    ModernTheme.primaryOrange.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: ListTile(
+                leading: const Icon(Iconsax.save_2, color: ModernTheme.primaryOrange, size: 28),
+                title: const Text('Save to Device', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Save in Downloads folder'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () => Navigator.pop(context, 'save'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blue.withValues(alpha: 0.1),
+                    Colors.blue.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: ListTile(
+                leading: const Icon(Iconsax.share, color: Colors.blue, size: 28),
+                title: const Text('Share', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Share via other apps'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () => Navigator.pop(context, 'share'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+
+    if (action == null) return;
+
     try {
       // Create HTML content
       final html = _generateChatHTML();
+      final fileName = 'ai-chat-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.html';
       
-      // Get temporary directory
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/ai-chat-${DateTime.now().millisecondsSinceEpoch}.html');
-      
-      // Write HTML to file
-      await file.writeAsString(html);
-      
-      // Share the file
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
-      );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chat exported successfully!')),
+      if (action == 'save') {
+        // Save to Downloads folder
+        final directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          // Fallback to app documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          final file = File('${appDir.path}/$fileName');
+          await file.writeAsString(html);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Saved to: ${file.path}'),
+                action: SnackBarAction(
+                  label: 'OK',
+                  onPressed: () {},
+                ),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        } else {
+          final file = File('${directory.path}/$fileName');
+          await file.writeAsString(html);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Chat saved to Downloads folder!'),
+                backgroundColor: Colors.green,
+                action: SnackBarAction(
+                  label: 'OK',
+                  textColor: Colors.white,
+                  onPressed: () {},
+                ),
+              ),
+            );
+          }
+        }
+      } else {
+        // Share via other apps
+        final directory = await getTemporaryDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsString(html);
+        
+        // ignore: deprecated_member_use
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to export chat: $e')),
+          SnackBar(
+            content: Text('Failed to export chat: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -767,18 +970,97 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       ),
       body: Column(
         children: [
-          // Streaming Status
+          // Streaming Status with Stop Button
           if (_streamingStatus?.isStreaming == true)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    ModernTheme.primaryOrange.withValues(alpha: 0.15),
+                    ModernTheme.primaryOrange.withValues(alpha: 0.05),
+                  ],
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  const Icon(Iconsax.flash_1, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_streamingStatus?.provider} • ${_streamingStatus?.model}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Iconsax.flash_1,
+                      size: 14,
+                      color: ModernTheme.primaryOrange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Generating response...',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: ModernTheme.primaryOrange,
+                          ),
+                        ),
+                        Text(
+                          '${_streamingStatus?.provider} • ${_streamingStatus?.model}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Stop Button
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _cancelGeneration,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Iconsax.stop_circle,
+                              size: 16,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Stop',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

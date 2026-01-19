@@ -33,7 +33,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       await SupabaseConfig.client.auth.resetPasswordForEmail(
         _emailController.text.trim(),
-        redirectTo: 'bca-connect://reset-password',
+        redirectTo: 'https://mmamc-bca.vercel.app/reset-password',
       );
 
       if (mounted) {
@@ -111,10 +111,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Iconsax.key,
-                  size: 60,
-                  color: ModernTheme.primaryOrange,
+                child: const Center(
+                  child: Icon(
+                    Iconsax.key,
+                    size: 60,
+                    color: ModernTheme.primaryOrange,
+                  ),
                 ),
               ).animate().scale(
                 duration: 800.ms,
@@ -319,10 +321,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ],
           ),
-          child: const Icon(
-            Iconsax.tick_circle5,
-            size: 60,
-            color: Colors.green,
+          child: const Center(
+            child: Icon(
+              Icons.check_circle_rounded,
+              size: 60,
+              color: Colors.green,
+            ),
           ),
         ).animate().scale(
           duration: 800.ms,

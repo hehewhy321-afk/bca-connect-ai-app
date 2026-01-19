@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/cached_image.dart';
 import '../../../core/theme/modern_theme.dart';
@@ -12,6 +13,9 @@ import '../../providers/theme_provider.dart';
 import '../ai/image_gallery_screen.dart';
 import '../contact/contact_screen.dart';
 import '../feedback/feedback_screen.dart';
+import '../../../core/services/app_update_service.dart';
+import 'hall_of_fame_screen.dart';
+import 'founding_members_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -55,6 +59,336 @@ class ProfileScreen extends ConsumerWidget {
         .toUpperCase()
         .substring(0, 2.clamp(0, name.length));
   }
+
+  Future<void> _checkForUpdates(BuildContext context) async {
+    // Show checking dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Checking for updates...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final updateInfo = await AppUpdateService.checkForUpdates();
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close checking dialog
+
+        if (updateInfo != null) {
+          // Show update available dialog
+          _showUpdateDialog(context, updateInfo);
+        } else {
+          // No update available
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(child: Text('You\'re using the latest version!')),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close checking dialog
+        
+        String errorMessage;
+        Color errorColor = Colors.red;
+        IconData errorIcon = Icons.error_outline;
+        
+        final errorString = e.toString();
+        if (errorString.contains('UPDATE_DISABLED')) {
+          errorMessage = 'Update check is not configured yet. Please check back later.';
+          errorIcon = Icons.info_outline;
+          errorColor = Colors.blue;
+        } else if (errorString.contains('NO_INTERNET')) {
+          errorMessage = 'No internet connection. Please check your network.';
+          errorIcon = Icons.wifi_off;
+          errorColor = Colors.orange;
+        } else if (errorString.contains('TIMEOUT')) {
+          errorMessage = 'Request timed out. Please try again.';
+          errorIcon = Icons.access_time;
+          errorColor = Colors.orange;
+        } else if (errorString.contains('NO_RELEASES')) {
+          errorMessage = 'No releases found. Please check back later.';
+          errorIcon = Icons.info_outline;
+          errorColor = Colors.blue;
+        } else if (errorString.contains('SERVER_ERROR')) {
+          errorMessage = 'Server error. Please try again later.';
+          errorIcon = Icons.cloud_off;
+        } else {
+          errorMessage = 'Unable to check for updates. Please try again later.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(errorIcon, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(errorMessage)),
+              ],
+            ),
+            backgroundColor: errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showUpdateDialog(BuildContext context, UpdateInfo updateInfo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4CAF50), Color(0xFF8BC34A)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Iconsax.refresh_circle, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Update Available')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Version info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          'v${updateInfo.currentVersion}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Icon(Icons.arrow_forward, color: ModernTheme.primaryOrange),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Latest',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          'v${updateInfo.latestVersion}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF4CAF50),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Release date
+              Row(
+                children: [
+                  const Icon(Iconsax.calendar, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Released: ${DateFormat('MMM dd, yyyy').format(updateInfo.publishedAt)}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Release notes
+              const Text(
+                'What\'s New:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Text(
+                  updateInfo.releaseNotes,
+                  style: const TextStyle(fontSize: 13, height: 1.5),
+                  maxLines: 8,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Download options
+              const Text(
+                'Choose your device architecture:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              
+              // 64-bit option
+              if (updateInfo.apkUrl64 != null)
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    AppUpdateService.downloadAndInstall(context, updateInfo.apkUrl64!);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                          ModernTheme.primaryOrange.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.mobile, color: ModernTheme.primaryOrange),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '64-bit (Recommended)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'For newer devices • ${AppUpdateService.formatBytes(updateInfo.apkSize64 ?? 0)}',
+                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Iconsax.arrow_down_1, color: ModernTheme.primaryOrange),
+                      ],
+                    ),
+                  ),
+                ),
+              
+              if (updateInfo.apkUrl64 != null && updateInfo.apkUrl32 != null)
+                const SizedBox(height: 8),
+              
+              // 32-bit option
+              if (updateInfo.apkUrl32 != null)
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    AppUpdateService.downloadAndInstall(context, updateInfo.apkUrl32!);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.blue.withValues(alpha: 0.1),
+                          Colors.blue.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.mobile, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '32-bit',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'For older devices • ${AppUpdateService.formatBytes(updateInfo.apkSize32 ?? 0)}',
+                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Iconsax.arrow_down_1, color: Colors.blue),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Later'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -311,6 +645,18 @@ class ProfileScreen extends ConsumerWidget {
               _MenuGroup(
                 children: [
                   _ModernMenuItem(
+                    icon: Iconsax.cup,
+                    title: 'Hall of Fame',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HallOfFameScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _ModernMenuItem(
                     icon: Iconsax.medal_star,
                     title: 'My Certificates',
                     onTap: () => context.push('/certificates'),
@@ -405,6 +751,23 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _MenuGroup(
                 children: [
+                  _ModernMenuItem(
+                    icon: Iconsax.people,
+                    title: 'Founding Members',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FoundingMembersScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _ModernMenuItem(
+                    icon: Iconsax.refresh_circle,
+                    title: 'Check for Updates',
+                    onTap: () => _checkForUpdates(context),
+                  ),
                   _ModernMenuItem(
                     icon: Iconsax.message,
                     title: 'Contact Us',

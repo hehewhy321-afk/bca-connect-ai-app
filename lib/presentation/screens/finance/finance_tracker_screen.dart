@@ -215,23 +215,148 @@ class FinanceTrackerScreen extends ConsumerWidget {
   }
 
   Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    // Show modern dialog with options
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Iconsax.document_upload, color: ModernTheme.primaryOrange),
+            SizedBox(width: 12),
+            Text('Export Finance Data'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Choose how to export your finance data:'),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                    ModernTheme.primaryOrange.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: ListTile(
+                leading: const Icon(Iconsax.save_2, color: ModernTheme.primaryOrange, size: 28),
+                title: const Text('Save to Device', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Save in Downloads folder'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () => Navigator.pop(context, 'save'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blue.withValues(alpha: 0.1),
+                    Colors.blue.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: ListTile(
+                leading: const Icon(Iconsax.share, color: Colors.blue, size: 28),
+                title: const Text('Share', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Share via other apps'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () => Navigator.pop(context, 'share'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+
+    if (action == null) return;
+
     try {
       final jsonData = await ref.read(transactionsProvider.notifier).exportData();
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/finance_export_${DateTime.now().millisecondsSinceEpoch}.json');
-      await file.writeAsString(jsonData);
+      final fileName = 'finance-export-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.json';
       
-      if (context.mounted) {
-        // ignore: deprecated_member_use
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          subject: 'Finance Tracker Export',
-        );
+      if (action == 'save') {
+        // Save to Downloads folder
+        final directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          // Fallback to app documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          final file = File('${appDir.path}/$fileName');
+          await file.writeAsString(jsonData);
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Saved to: ${file.path}'),
+                action: SnackBarAction(
+                  label: 'OK',
+                  onPressed: () {},
+                ),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        } else {
+          final file = File('${directory.path}/$fileName');
+          await file.writeAsString(jsonData);
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Finance data saved to Downloads folder!'),
+                backgroundColor: Colors.green,
+                action: SnackBarAction(
+                  label: 'OK',
+                  textColor: Colors.white,
+                  onPressed: () {},
+                ),
+              ),
+            );
+          }
+        }
+      } else {
+        // Share via other apps
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsString(jsonData);
+        
+        if (context.mounted) {
+          // ignore: deprecated_member_use
+          await Share.shareXFiles(
+            [XFile(file.path)],
+            subject: 'Finance Tracker Export',
+          );
+        }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

@@ -326,10 +326,31 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Watch how the algorithm works step by step',
+                  _getExampleProblem(widget.algorithm.id),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'Watch how the algorithm solves this step by step',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: ModernTheme.primaryOrange,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -351,6 +372,71 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         ],
       ),
     );
+  }
+  
+  String _getExampleProblem(String algorithmId) {
+    switch (algorithmId) {
+      // Sorting
+      case 'bubble_sort':
+        return '📊 Example: Sort [64, 34, 25, 12, 22, 11, 90] in ascending order';
+      case 'selection_sort':
+        return '📊 Example: Sort [29, 10, 14, 37, 13] using Selection Sort';
+      case 'insertion_sort':
+        return '📊 Example: Sort [12, 11, 13, 5, 6] by inserting elements';
+      case 'merge_sort':
+        return '📊 Example: Sort [38, 27, 43, 3, 9, 82, 10] using divide & conquer';
+      case 'quick_sort':
+        return '📊 Example: Sort [10, 7, 8, 9, 1, 5] using pivot partitioning';
+      case 'heap_sort':
+        return '📊 Example: Sort [4, 10, 3, 5, 1] using heap structure';
+      case 'counting_sort':
+        return '📊 Example: Sort [1, 4, 1, 2, 7, 5, 2] using counting technique';
+      
+      // Searching
+      case 'binary_search':
+        return '🔍 Example: Find 23 in sorted array [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]';
+      case 'linear_search':
+        return '🔍 Example: Find 31 in array [10, 23, 45, 70, 11, 15, 31, 89]';
+      
+      // Stack
+      case 'stack_push':
+        return '📚 Example: Push elements [5, 10, 15, 20] onto an empty stack';
+      case 'stack_pop':
+        return '📚 Example: Pop 2 elements from stack [5, 10, 15, 20]';
+      
+      // Queue
+      case 'queue_enqueue':
+        return '🎫 Example: Enqueue [A, B, C, D] into an empty queue';
+      case 'queue_dequeue':
+        return '🎫 Example: Dequeue 2 elements from queue [A, B, C, D]';
+      case 'circular_queue':
+        return '🔄 Example: Circular queue operations with size 5';
+      
+      // Linked List
+      case 'linked_list_insert':
+        return '🔗 Example: Insert 25 at position 2 in list [10→20→30→40]';
+      
+      // Trees
+      case 'bst_insert':
+        return '🌳 Example: Insert [50, 30, 70, 20, 40, 60, 80] into BST';
+      case 'avl_rotation':
+        return '🌳 Example: Balance AVL tree after inserting [10, 20, 30]';
+      
+      // Graphs
+      case 'bfs':
+        return '🗺️ Example: BFS traversal starting from node A in graph';
+      case 'dfs':
+        return '🗺️ Example: DFS traversal starting from node A in graph';
+      case 'dijkstra':
+        return '🗺️ Example: Find shortest path from A to E in weighted graph';
+      case 'kruskal':
+        return '🗺️ Example: Find Minimum Spanning Tree of connected graph';
+      case 'topological_sort':
+        return '🗺️ Example: Order tasks with dependencies [A→B, B→C, A→D]';
+      
+      default:
+        return '📖 Watch the algorithm in action with a real example';
+    }
   }
 
   @override
@@ -416,7 +502,6 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
           
           // Target Slots (Top)
           Expanded(
-            flex: 3,
             child: Container(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -444,35 +529,36 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
           
-          // Available Steps (Bottom)
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Drag Steps Here (${_availableSteps.length} remaining)',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: _availableSteps.isEmpty
-                        ? const Center(
-                            child: Text(
-                              '✅ All steps placed!',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _availableSteps.length,
-                            itemBuilder: (context, index) => _buildDraggableStep(_availableSteps[index]),
+          // Available Steps (Bottom) - Dynamic Height
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Drag Steps Here (${_availableSteps.length} remaining)',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                _availableSteps.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text(
+                            '✅ All steps placed!',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                  ),
-                ],
-              ),
+                        ),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _availableSteps
+                            .map((step) => _buildDraggableStep(step))
+                            .toList(),
+                      ),
+              ],
             ),
           ),
         ],
@@ -605,14 +691,14 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
 
   Widget _buildDraggableStep(AlgorithmStep step) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
       child: Draggable<AlgorithmStep>(
         data: step,
         feedback: Material(
           elevation: 8,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            width: MediaQuery.of(context).size.width - 64,
+            width: MediaQuery.of(context).size.width - 80,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: ModernTheme.primaryOrange,
