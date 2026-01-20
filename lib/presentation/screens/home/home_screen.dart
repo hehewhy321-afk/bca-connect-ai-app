@@ -180,7 +180,7 @@ class DashboardTab extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFDA7809),
+                        color: Color(0xFFFF9500),
                         shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(
@@ -214,7 +214,7 @@ class DashboardTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         heroTag: 'home_ai_fab',
         onPressed: () => context.push('/ai-assistant'),
-        backgroundColor: const Color(0xFFDA7809),
+        backgroundColor: const Color(0xFFFF9500),
         child: const Icon(Iconsax.message_programming, color: Colors.white),
       ),
       body: RefreshIndicator(
@@ -280,68 +280,69 @@ class DashboardTab extends ConsumerWidget {
                     ),
               ),
               const SizedBox(height: 12),
-              // Bento Grid Layout (2x3)
+              // Bento Grid Layout with varying sizes
               Row(
                 children: [
+                  // Study Planner - Large card (left)
                   Expanded(
-                    child: _BentoCard(
-                      icon: Iconsax.calendar_2,
-                      label: 'नेपाली पात्रो',
-                      color: const Color(0xFFDC2626),
-                      onTap: () => context.push('/calendar'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _BentoCard(
-                      icon: Iconsax.timer_1,
-                      label: 'Pomodoro',
-                      color: const Color(0xFF3B82F6),
-                      onTap: () => context.push('/pomodoro'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
+                    flex: 2,
                     child: _BentoCard(
                       icon: Iconsax.book_1,
                       label: 'Study Planner',
+                      subtitle: 'Plan your studies',
                       color: const Color(0xFF8B5CF6),
+                      height: 200,
                       onTap: () => context.push('/study'),
                     ),
                   ),
                   const SizedBox(width: 12),
+                  // Right column with two smaller cards
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      children: [
+                        _BentoCard(
+                          icon: Iconsax.calendar_2,
+                          label: 'नेपाली पात्रो',
+                          color: const Color(0xFFDC2626),
+                          height: 94,
+                          onTap: () => context.push('/calendar'),
+                        ),
+                        const SizedBox(height: 12),
+                        _BentoCard(
+                          icon: Iconsax.timer_1,
+                          label: 'Pomodoro',
+                          color: const Color(0xFF3B82F6),
+                          height: 94,
+                          onTap: () => context.push('/pomodoro'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Expanded(
                     child: _BentoCard(
                       icon: Iconsax.wallet_money,
                       label: 'Finance',
+                      subtitle: 'Track expenses',
                       color: const Color(0xFFEC4899),
+                      height: 120,
                       onTap: () => context.push('/finance'),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _BentoCard(
                       icon: Iconsax.people,
                       label: 'Community',
+                      subtitle: 'Connect & share',
                       color: const Color(0xFFFF9500),
+                      height: 120,
                       onTap: () => context.push('/community'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _BentoCard(
-                      icon: Iconsax.document_text,
-                      label: 'Notices',
-                      color: const Color(0xFF10B981),
-                      onTap: () => context.push('/notices'),
                     ),
                   ),
                 ],
@@ -349,24 +350,40 @@ class DashboardTab extends ConsumerWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
+                  // Notices - smaller
                   Expanded(
+                    flex: 1,
                     child: _BentoCard(
-                      icon: Iconsax.game,
-                      label: 'Algorithm Game',
-                      color: const Color(0xFF6366F1),
-                      onTap: () => context.push('/algorithm-game'),
+                      icon: Iconsax.document_text,
+                      label: 'Notices',
+                      color: const Color(0xFF10B981),
+                      height: 110,
+                      onTap: () => context.push('/notices'),
                     ),
                   ),
                   const SizedBox(width: 12),
+                  // Algorithm Game - larger
                   Expanded(
+                    flex: 2,
                     child: _BentoCard(
-                      icon: Iconsax.emoji_happy,
-                      label: 'Fun Zone',
-                      color: const Color(0xFFEC4899),
-                      onTap: () => context.push('/fun-zone'),
+                      icon: Iconsax.game,
+                      label: 'Algorithm Game',
+                      subtitle: 'Learn & play',
+                      color: const Color(0xFF6366F1),
+                      height: 110,
+                      onTap: () => context.push('/algorithm-game'),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _BentoCard(
+                icon: Iconsax.emoji_happy,
+                label: 'Fun Zone',
+                subtitle: 'Relax and have fun',
+                color: const Color(0xFFEC4899),
+                height: 100,
+                onTap: () => context.push('/fun-zone'),
               ),
               const SizedBox(height: 24),
 
@@ -460,14 +477,14 @@ class DashboardTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                    colors: [Color(0xFFFF9500), Color(0xFFFFAA33)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFDA7809).withValues(alpha: 0.3),
+                      color: const Color(0xFFFF9500).withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -546,7 +563,7 @@ class DashboardTab extends ConsumerWidget {
                             label: const Text('Open Website'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFDA7809),
+                              foregroundColor: const Color(0xFFFF9500),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -572,13 +589,17 @@ class DashboardTab extends ConsumerWidget {
 class _BentoCard extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final Color color;
+  final double height;
   final VoidCallback onTap;
 
   const _BentoCard({
     required this.icon,
     required this.label,
+    this.subtitle,
     required this.color,
+    this.height = 100,
     required this.onTap,
   });
 
@@ -586,32 +607,73 @@ class _BentoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        height: height,
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
-          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              color,
+              color.withValues(alpha: 0.85),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 18),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
@@ -683,7 +745,7 @@ class _FullEventCard extends StatelessWidget {
                   height: 140,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                      colors: [Color(0xFFFF9500), Color(0xFFFFAA33)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

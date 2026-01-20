@@ -158,9 +158,12 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _showUpdateDialog(BuildContext context, UpdateInfo updateInfo) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -175,7 +178,15 @@ class ProfileScreen extends ConsumerWidget {
               child: const Icon(Iconsax.refresh_circle, color: Colors.white, size: 24),
             ),
             const SizedBox(width: 12),
-            const Expanded(child: Text('Update Available')),
+            Expanded(
+              child: Text(
+                'Update Available',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
         content: SingleChildScrollView(
@@ -187,7 +198,7 @@ class ProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -200,14 +211,15 @@ class ProfileScreen extends ConsumerWidget {
                           'Current',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
                         ),
                         Text(
                           'v${updateInfo.currentVersion}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
                       ],
@@ -220,7 +232,7 @@ class ProfileScreen extends ConsumerWidget {
                           'Latest',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
                         ),
                         Text(
@@ -241,32 +253,49 @@ class ProfileScreen extends ConsumerWidget {
               // Release date
               Row(
                 children: [
-                  const Icon(Iconsax.calendar, size: 16, color: Colors.grey),
+                  Icon(
+                    Iconsax.calendar,
+                    size: 16,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Released: ${DateFormat('MMM dd, yyyy').format(updateInfo.publishedAt)}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               
               // Release notes
-              const Text(
+              Text(
                 'What\'s New:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+                  ),
                 ),
                 child: Text(
                   updateInfo.releaseNotes,
-                  style: const TextStyle(fontSize: 13, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: isDark ? Colors.grey.shade300 : Colors.black87,
+                  ),
                   maxLines: 8,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -274,9 +303,13 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               
               // Download options
-              const Text(
+              Text(
                 'Choose your device architecture:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
               const SizedBox(height: 12),
               
@@ -293,13 +326,13 @@ class ProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
+                          ModernTheme.primaryOrange.withValues(alpha: 0.2),
                           ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                          ModernTheme.primaryOrange.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                        color: ModernTheme.primaryOrange.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                     ),
@@ -311,13 +344,19 @@ class ProfileScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 '64-bit (Recommended)',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
                               ),
                               Text(
                                 'For newer devices • ${AppUpdateService.formatBytes(updateInfo.apkSize64 ?? 0)}',
-                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                ),
                               ),
                             ],
                           ),
@@ -344,13 +383,13 @@ class ProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
+                          Colors.blue.withValues(alpha: 0.2),
                           Colors.blue.withValues(alpha: 0.1),
-                          Colors.blue.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.blue.withValues(alpha: 0.3),
+                        color: Colors.blue.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                     ),
@@ -362,13 +401,19 @@ class ProfileScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 '32-bit',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
                               ),
                               Text(
                                 'For older devices • ${AppUpdateService.formatBytes(updateInfo.apkSize32 ?? 0)}',
-                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                ),
                               ),
                             ],
                           ),
@@ -384,6 +429,9 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: ModernTheme.primaryOrange,
+            ),
             child: const Text('Later'),
           ),
         ],

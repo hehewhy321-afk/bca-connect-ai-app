@@ -170,17 +170,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                                   .shimmer(duration: 2.seconds, color: Colors.white.withValues(alpha: 0.3))
                                   .then(delay: 1.seconds),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'FUN ZONE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 3,
-                              ),
-                            ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 24),
                             Text(
                               'Take a break & play amazing games!',
                               style: TextStyle(

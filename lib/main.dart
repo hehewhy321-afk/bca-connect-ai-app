@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/modern_theme.dart';
 import 'core/services/cache_service.dart';
@@ -45,9 +46,14 @@ void main() async {
     // Initialize Supabase
     await SupabaseConfig.initialize();
     
-    // Initialize Firebase for push notifications (optional)
+    // Initialize Firebase for push notifications & analytics
     try {
       await Firebase.initializeApp();
+      
+      // Initialize Firebase Analytics
+      FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+      await analytics.setAnalyticsCollectionEnabled(true);
+      debugPrint('Firebase Analytics initialized successfully');
       
       // Set background message handler
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -56,7 +62,7 @@ void main() async {
       await NotificationService().initialize();
     } catch (e) {
       debugPrint('Firebase initialization skipped: $e');
-      // App will work without push notifications
+      // App will work without push notifications and analytics
     }
     
     runApp(const ProviderScope(child: MyApp()));

@@ -107,17 +107,83 @@ class AppUpdateService {
   /// Download and install APK
   static Future<void> downloadAndInstall(BuildContext context, String apkUrl) async {
     try {
-      // Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Storage permission is required to download updates'),
-              backgroundColor: Colors.red,
-            ),
-          );
+      // Check and request storage permission based on Android version
+      bool hasPermission = false;
+      
+      // For Android 10+ (API 29+), we don't need WRITE_EXTERNAL_STORAGE for Downloads folder
+      // For Android 13+ (API 33+), we need MANAGE_EXTERNAL_STORAGE or use scoped storage
+      if (Platform.isAndroid) {
+        // Try to get storage permission
+        var status = await Permission.storage.status;
+        
+        if (status.isDenied) {
+          status = await Permission.storage.request();
         }
+        
+        if (status.isGranted) {
+          hasPermission = true;
+        } else if (status.isPermanentlyDenied) {
+          // Permission permanently denied, show dialog to open settings
+          if (context.mounted) {
+            final shouldOpenSettings = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.folder_open, color: Colors.orange),
+                    SizedBox(width: 12),
+                    Text('Storage Permission Required'),
+                  ],
+                ),
+                content: const Text(
+                  'Storage permission is required to download updates.\n\n'
+                  'Please enable it in Settings:\n'
+                  'Settings → Apps → BCA MMAMC → Permissions → Storage',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            );
+            
+            if (shouldOpenSettings == true) {
+              await openAppSettings();
+            }
+          }
+          return;
+        } else {
+          // Permission denied but not permanently
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Storage permission is required to download updates'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+      } else {
+        hasPermission = true; // For non-Android platforms
+      }
+      
+      if (!hasPermission) {
         return;
       }
 

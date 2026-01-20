@@ -133,10 +133,10 @@ class AppTheme {
         elevation: 3,
         height: 80,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFDA7809).withValues(alpha: 0.15),
+        indicatorColor: colorScheme.primary,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Color(0xFFFFFFFF), size: 24);
+            return const IconThemeData(color: Colors.white, size: 24);
           }
           return const IconThemeData(color: Color(0xFF79747E), size: 24);
         }),
@@ -145,7 +145,7 @@ class AppTheme {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFFDA7809),
+              color: colorScheme.primary,
             );
           }
           return GoogleFonts.inter(
@@ -319,10 +319,10 @@ class AppTheme {
         elevation: 3,
         height: 80,
         backgroundColor: const Color(0xFF1A1A1A),
-        indicatorColor: const Color(0xFFDA7809).withValues(alpha: 0.15),
+        indicatorColor: colorScheme.primary,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Color(0xFFFFFFFF), size: 24);
+            return const IconThemeData(color: Colors.white, size: 24);
           }
           return const IconThemeData(color: Color(0xFF938F99), size: 24);
         }),
@@ -331,7 +331,7 @@ class AppTheme {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFFDA7809),
+              color: colorScheme.primary,
             );
           }
           return GoogleFonts.inter(

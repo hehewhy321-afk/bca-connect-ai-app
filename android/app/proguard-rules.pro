@@ -20,6 +20,12 @@
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
+# Firebase Analytics
+-keep class com.google.android.gms.measurement.** { *; }
+-keep class com.google.firebase.analytics.** { *; }
+-dontwarn com.google.android.gms.measurement.**
+-dontwarn com.google.firebase.analytics.**
+
 # Gson
 -keepattributes Signature
 -keepattributes *Annotation*
