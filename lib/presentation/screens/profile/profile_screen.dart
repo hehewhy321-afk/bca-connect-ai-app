@@ -16,6 +16,8 @@ import '../feedback/feedback_screen.dart';
 import '../../../core/services/app_update_service.dart';
 import 'hall_of_fame_screen.dart';
 import 'founding_members_screen.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -449,52 +451,57 @@ class ProfileScreen extends ConsumerWidget {
                       offset: const Offset(0, -40),
                       child: Column(
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFF1A1A1A),
-                                width: 4,
-                              ),
-                            ),
+                          EasterEggWidget(
+                            soundFile: EasterEggs.settings.soundFile,
+                            emoji: EasterEggs.settings.emoji,
+                            message: EasterEggs.settings.message,
                             child: Container(
-                              width: 80,
-                              height: 80,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                border: Border.all(
+                                  color: const Color(0xFF1A1A1A),
+                                  width: 4,
                                 ),
                               ),
-                              child: profile?.avatarUrl != null
-                                  ? ClipOval(
-                                      child: CachedImage(
-                                        imageUrl: profile!.avatarUrl!,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                        errorWidget: Center(
-                                          child: Text(
-                                            _getInitials(profile.fullName),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 28,
-                                              fontWeight: FontWeight.bold,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                  ),
+                                ),
+                                child: profile?.avatarUrl != null
+                                    ? ClipOval(
+                                        child: CachedImage(
+                                          imageUrl: profile!.avatarUrl!,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorWidget: Center(
+                                            child: Text(
+                                              _getInitials(profile.fullName),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        _getInitials(profile?.fullName ?? user?.email ?? 'User'),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          _getInitials(profile?.fullName ?? user?.email ?? 'User'),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
                           
@@ -856,104 +863,109 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Developer Credits
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                      const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+              EasterEggWidget(
+                soundFile: EasterEggs.developerCredits.soundFile,
+                emoji: EasterEggs.developerCredits.emoji,
+                message: EasterEggs.developerCredits.message,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                        const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Iconsax.code_1,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Developed by',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Saif Ali',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: ModernTheme.primaryOrange,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Instagram Link
+                          InkWell(
+                            onTap: () async {
+                              final uri = Uri.parse('https://www.instagram.com/me_saifali/');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Iconsax.instagram,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // GitHub Link
+                          InkWell(
+                            onTap: () async {
+                              final uri = Uri.parse('https://github.com/mesaifali');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Iconsax.code,
+                                color: Theme.of(context).colorScheme.surface,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Iconsax.code_1,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Developed by',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Saif Ali',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: ModernTheme.primaryOrange,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Instagram Link
-                        InkWell(
-                          onTap: () async {
-                            final uri = Uri.parse('https://www.instagram.com/me_saifali/');
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF)],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Iconsax.instagram,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // GitHub Link
-                        InkWell(
-                          onTap: () async {
-                            final uri = Uri.parse('https://github.com/mesaifali');
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Iconsax.code,
-                              color: Theme.of(context).colorScheme.surface,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(duration: 500.ms, delay: 450.ms).scale(begin: const Offset(0.95, 0.95)),
+                ).animate().fadeIn(duration: 500.ms, delay: 450.ms).scale(begin: const Offset(0.95, 0.95)),
+              ),
 
               const SizedBox(height: 24),
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class ResourcesScreen extends StatelessWidget {
   const ResourcesScreen({super.key});
@@ -19,10 +21,15 @@ class ResourcesScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.library_books,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
+            EasterEggWidget(
+              soundFile: EasterEggs.resources.soundFile,
+              emoji: EasterEggs.resources.emoji,
+              message: EasterEggs.resources.message,
+              child: Icon(
+                Icons.library_books,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 16),
             Text(

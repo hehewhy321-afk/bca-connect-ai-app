@@ -8,6 +8,8 @@ import '../../../core/theme/modern_theme.dart';
 import '../../providers/event_provider.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // State providers for filters
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -47,15 +49,20 @@ class EnhancedEventsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Events', style: TextStyle(fontSize: 20)),
-            Text(
-              'Discover and register for events',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
-            ),
-          ],
+        title: EasterEggWidget(
+          soundFile: EasterEggs.events.soundFile,
+          emoji: EasterEggs.events.emoji,
+          message: EasterEggs.events.message,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Events', style: TextStyle(fontSize: 20)),
+              Text(
+                'Discover and register for events',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(

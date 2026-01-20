@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:nepali_utils/nepali_utils.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 final selectedDateProvider = StateProvider<NepaliDateTime>((ref) => NepaliDateTime.now());
 final selectedViewProvider = StateProvider<CalendarView>((ref) => CalendarView.month);
@@ -84,16 +86,21 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Iconsax.calendar_1,
-                                color: Colors.white,
-                                size: 28,
+                            EasterEggWidget(
+                              soundFile: EasterEggs.calendar.soundFile,
+                              emoji: EasterEggs.calendar.emoji,
+                              message: EasterEggs.calendar.message,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Iconsax.calendar_1,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 16),

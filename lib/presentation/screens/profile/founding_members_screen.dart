@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../data/models/founding_member.dart';
 import '../../widgets/cached_image.dart';
+import '../../../core/services/cache_service.dart';
+import '../../../core/services/connectivity_service.dart';
+import '../../widgets/easter_egg_widget.dart';
+import '../../../core/constants/easter_eggs.dart';
 
 class FoundingMembersScreen extends StatefulWidget {
   const FoundingMembersScreen({super.key});
@@ -32,32 +37,79 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
         _error = null;
       });
 
+      // Check connectivity
+      final connectivityService = ConnectivityService();
+      final isOnline = await connectivityService.isOnline();
+
+      // Try to load from cache first
+      const cacheKey = 'founding_members';
+      if (CacheService.has(cacheKey) && CacheService.isCacheValid(cacheKey, maxAge: const Duration(hours: 24))) {
+        final cachedData = CacheService.get<String>(cacheKey);
+        if (cachedData != null) {
+          final data = jsonDecode(cachedData) as List;
+          setState(() {
+            _members = data.map((json) => FoundingMember.fromJson(json)).toList();
+            _isLoading = false;
+          });
+          
+          // If online, refresh in background
+          if (isOnline) {
+            _fetchFreshData(cacheKey);
+          }
+          return;
+        }
+      }
+
+      // If no cache or offline, try to fetch fresh data
+      if (!isOnline) {
+        throw Exception('NO_INTERNET');
+      }
+
+      await _fetchFreshData(cacheKey);
+    } catch (e) {
+      // User-friendly error messages
+      String errorMessage;
+      if (e.toString().contains('NO_INTERNET')) {
+        errorMessage = 'No internet connection. Please check your network and try again.';
+      } else if (e.toString().contains('relation') && e.toString().contains('does not exist')) {
+        errorMessage = 'Founding members feature is not yet configured in the database.';
+      } else {
+        errorMessage = 'Unable to load founding members. Please try again later.';
+      }
+      
+      setState(() {
+        _error = errorMessage;
+        _isLoading = false;
+      });
+      debugPrint('Error loading founding members: $e');
+    }
+  }
+
+  Future<void> _fetchFreshData(String cacheKey) async {
+    try {
       final response = await SupabaseConfig.client
           .from('founding_members')
           .select()
           .eq('is_active', true)
           .order('display_order', ascending: true);
 
+      final members = (response as List)
+          .map((json) => FoundingMember.fromJson(json))
+          .toList();
+
+      // Cache the data
+      await CacheService.set(
+        cacheKey,
+        jsonEncode(response),
+        duration: const Duration(hours: 24),
+      );
+
       setState(() {
-        _members = (response as List)
-            .map((json) => FoundingMember.fromJson(json))
-            .toList();
+        _members = members;
         _isLoading = false;
       });
     } catch (e) {
-      // Check if it's a table not found error
-      if (e.toString().contains('relation') && e.toString().contains('does not exist')) {
-        setState(() {
-          _error = 'Founding members feature is not yet configured in the database.';
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Unable to load founding members. Please try again later.';
-          _isLoading = false;
-        });
-      }
-      debugPrint('Error loading founding members: $e');
+      rethrow;
     }
   }
 
@@ -113,43 +165,48 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                       ),
                     ),
                     // Content
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 40),
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
+                    EasterEggWidget(
+                      soundFile: EasterEggs.foundingMembers.soundFile,
+                      emoji: EasterEggs.foundingMembers.emoji,
+                      message: EasterEggs.foundingMembers.message,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 40),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Iconsax.people5,
+                                size: 48,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: const Icon(
-                              Iconsax.people5,
-                              size: 48,
-                              color: Colors.white,
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Founding Members',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Founding Members',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Meet the visionaries behind BCA Association',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Meet the visionaries behind BCA Association',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -186,13 +243,13 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Iconsax.warning_2,
+                      _error!.contains('internet') ? Iconsax.wifi_square : Iconsax.warning_2,
                       size: 64,
                       color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error loading members',
+                      _error!.contains('internet') ? 'No Internet Connection' : 'Error Loading',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),

@@ -66,9 +66,12 @@
         
         <!-- Home Screen Widget -->
         <receiver android:name=".QuickActionsWidget"
-            android:exported="true">
+            android:exported="true"
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_ENABLED" />
+                <action android:name="android.appwidget.action.APPWIDGET_DISABLED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

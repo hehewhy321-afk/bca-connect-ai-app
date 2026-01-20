@@ -3,6 +3,8 @@ import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../data/repositories/algorithm_repository.dart';
 import 'algorithm_category_screen.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class AlgorithmGameHomeScreen extends StatefulWidget {
   const AlgorithmGameHomeScreen({super.key});
@@ -39,7 +41,12 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Algorithm Master'),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.algorithmGame.soundFile,
+          emoji: EasterEggs.algorithmGame.emoji,
+          message: EasterEggs.algorithmGame.message,
+          child: const Text('Algorithm Master'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Iconsax.info_circle),

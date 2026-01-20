@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -26,13 +25,18 @@ class AppUpdateService {
       final currentVersion = packageInfo.version;
 
       // Fetch latest release from GitHub
-      final response = await http.get(
-        Uri.parse(githubApiUrl),
-        headers: {'Accept': 'application/vnd.github.v3+json'},
-      ).timeout(const Duration(seconds: 10));
+      final dio = Dio();
+      final response = await dio.get(
+        githubApiUrl,
+        options: Options(
+          headers: {'Accept': 'application/vnd.github.v3+json'},
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = response.data;
         final latestVersion = (data['tag_name'] as String).replaceAll('v', '');
         final releaseNotes = data['body'] as String? ?? 'No release notes available';
         final publishedAt = DateTime.parse(data['published_at']);
@@ -136,14 +140,18 @@ class AppUpdateService {
       }
 
       // Download APK
-      final response = await http.get(Uri.parse(apkUrl));
+      final dio = Dio();
+      final response = await dio.get(
+        apkUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
       
       if (response.statusCode == 200) {
         // Save to Downloads folder
         final directory = Directory('/storage/emulated/0/Download');
         final fileName = 'BCA-Association-Update-${DateTime.now().millisecondsSinceEpoch}.apk';
         final file = File('${directory.path}/$fileName');
-        await file.writeAsBytes(response.bodyBytes);
+        await file.writeAsBytes(response.data as List<int>);
 
         if (context.mounted) {
           Navigator.pop(context); // Close downloading dialog

@@ -10,6 +10,8 @@ import 'package:file_picker/file_picker.dart';
 import '../../../data/models/finance_transaction.dart';
 import '../../../data/services/finance_storage_service.dart';
 import '../../../core/theme/modern_theme.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // Providers
 final financeStorageProvider = Provider((ref) => FinanceStorageService());
@@ -82,7 +84,12 @@ class FinanceTrackerScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Finance Tracker'),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.finance.soundFile,
+          emoji: EasterEggs.finance.emoji,
+          message: EasterEggs.finance.message,
+          child: const Text('Finance Tracker'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Iconsax.setting_2),

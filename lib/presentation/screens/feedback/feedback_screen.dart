@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/easter_egg_widget.dart';
+import '../../../core/constants/easter_eggs.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
@@ -132,52 +134,57 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            EasterEggWidget(
+              soundFile: EasterEggs.feedbackRequest.soundFile,
+              emoji: EasterEggs.feedbackRequest.emoji,
+              message: EasterEggs.feedbackRequest.message,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Iconsax.lamp_charge,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
-                    child: const Icon(
-                      Iconsax.lamp_charge,
-                      color: Colors.white,
-                      size: 32,
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Share Your Ideas',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Share Your Ideas',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    const SizedBox(height: 8),
+                    Text(
+                      'Help us improve by sharing your feature requests and feedback.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Help us improve by sharing your feature requests and feedback.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
+                  ],
+                ),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
+            ),
 
             const SizedBox(height: 32),
 

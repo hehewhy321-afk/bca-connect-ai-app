@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:convert';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/cache_service.dart';
+import '../../../core/services/connectivity_service.dart';
 
 class HallOfFameScreen extends ConsumerStatefulWidget {
   const HallOfFameScreen({super.key});
@@ -37,18 +40,71 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
         throw Exception('User not authenticated');
       }
 
+      // Check connectivity
+      final connectivityService = ConnectivityService();
+      final isOnline = await connectivityService.isOnline();
+
+      // Try to load from cache first
+      final cacheKey = 'hall_of_fame_${user.id}';
+      if (CacheService.has(cacheKey) && CacheService.isCacheValid(cacheKey, maxAge: const Duration(hours: 1))) {
+        final cachedData = CacheService.get<String>(cacheKey);
+        if (cachedData != null) {
+          final data = jsonDecode(cachedData);
+          setState(() {
+            _stats = Map<String, dynamic>.from(data['stats']);
+            _recentAchievements = (data['achievements'] as List).cast<Map<String, dynamic>>();
+            _isLoading = false;
+          });
+          
+          // If online, refresh in background
+          if (isOnline) {
+            _fetchFreshData(user.id, cacheKey);
+          }
+          return;
+        }
+      }
+
+      // If no cache or offline, try to fetch fresh data
+      if (!isOnline) {
+        throw Exception('NO_INTERNET');
+      }
+
+      await _fetchFreshData(user.id, cacheKey);
+    } catch (e) {
+      // User-friendly error messages
+      String errorMessage;
+      if (e.toString().contains('NO_INTERNET')) {
+        errorMessage = 'No internet connection. Please check your network and try again.';
+      } else if (e.toString().contains('User not authenticated')) {
+        errorMessage = 'Please log in to view your achievements.';
+      } else if (e.toString().contains('relation') || e.toString().contains('does not exist')) {
+        errorMessage = 'Achievements feature is not yet configured. Please check back later.';
+      } else {
+        errorMessage = 'Unable to load achievements. Please try again later.';
+      }
+      
+      setState(() {
+        _error = errorMessage;
+        _isLoading = false;
+      });
+      debugPrint('Error loading hall of fame: $e');
+    }
+  }
+
+  Future<void> _fetchFreshData(String userId, String cacheKey) async {
+    try {
       // Fetch profile stats
       final profileResponse = await SupabaseConfig.client
           .from('profiles')
           .select('xp_points, level')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
 
       // Fetch user achievements count
       final achievementsCountResponse = await SupabaseConfig.client
           .from('user_achievements')
           .select('achievement_id')
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
 
       // Fetch total achievements count
       final totalAchievementsResponse = await SupabaseConfig.client
@@ -69,25 +125,35 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
               category
             )
           ''')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .order('earned_at', ascending: false)
           .limit(6);
 
+      final stats = {
+        'level': profileResponse?['level'] ?? 1,
+        'xp_points': profileResponse?['xp_points'] ?? 0,
+        'earned_count': (achievementsCountResponse as List).length,
+        'total_count': (totalAchievementsResponse as List).length,
+      };
+      final achievements = (recentResponse as List).cast<Map<String, dynamic>>();
+
+      // Cache the data
+      await CacheService.set(
+        cacheKey,
+        jsonEncode({
+          'stats': stats,
+          'achievements': achievements,
+        }),
+        duration: const Duration(hours: 1),
+      );
+
       setState(() {
-        _stats = {
-          'level': profileResponse?['level'] ?? 1,
-          'xp_points': profileResponse?['xp_points'] ?? 0,
-          'earned_count': (achievementsCountResponse as List).length,
-          'total_count': (totalAchievementsResponse as List).length,
-        };
-        _recentAchievements = (recentResponse as List).cast<Map<String, dynamic>>();
+        _stats = stats;
+        _recentAchievements = achievements;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      rethrow;
     }
   }
 
@@ -215,13 +281,13 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Iconsax.warning_2,
+                      _error!.contains('internet') ? Iconsax.wifi_square : Iconsax.warning_2,
                       size: 64,
                       color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error loading achievements',
+                      _error!.contains('internet') ? 'No Internet Connection' : 'Error Loading',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),

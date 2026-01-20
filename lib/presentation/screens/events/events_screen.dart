@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../providers/event_provider.dart';
 import '../../../data/models/event.dart';
 import '../../widgets/cached_image.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
@@ -17,9 +19,14 @@ class EventsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Events'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {},
+          EasterEggWidget(
+            soundFile: EasterEggs.events.soundFile,
+            emoji: EasterEggs.events.emoji,
+            message: EasterEggs.events.message,
+            child: IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: () {},
+            ),
           ),
         ],
       ),

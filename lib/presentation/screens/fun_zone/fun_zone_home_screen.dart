@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../data/repositories/game_repository.dart';
 import '../../../data/models/game_score.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 import 'color_match_game_screen.dart';
 import 'swipe_mania_game_screen.dart';
 import 'tap_master_game_screen.dart';
@@ -29,22 +29,13 @@ class FunZoneHomeScreen extends StatefulWidget {
 
 class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProviderStateMixin {
   final _repository = GameRepository();
-  final _audioPlayer = AudioPlayer();
   Map<String, GameStats> _stats = {};
-  int _logoTapCount = 0;
-  DateTime? _lastTapTime;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadStats();
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -82,56 +73,6 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
       };
       _isLoading = false;
     });
-  }
-
-  Future<void> _handleLogoTap() async {
-    final now = DateTime.now();
-    
-    // Reset counter if more than 2 seconds since last tap
-    if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds > 2) {
-      _logoTapCount = 0;
-    }
-    
-    _lastTapTime = now;
-    _logoTapCount++;
-    
-    // Easter egg: Play sound after 3-4 taps
-    if (_logoTapCount >= 3 && _logoTapCount <= 4) {
-      HapticFeedback.heavyImpact();
-      try {
-        await _audioPlayer.play(AssetSource('data/amit-sound.mp3'));
-        
-        // Show fun message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Text('🎉'),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'You found the secret! 🎮',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: ModernTheme.primaryOrange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-        
-        // Reset counter after playing
-        _logoTapCount = 0;
-      } catch (e) {
-        // Silently handle audio playback errors
-        debugPrint('Error playing sound: $e');
-      }
-    }
   }
 
   @override
@@ -204,8 +145,10 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                           children: [
                             const SizedBox(height: 40),
                             // Tappable game logo (Easter egg)
-                            GestureDetector(
-                              onTap: _handleLogoTap,
+                            EasterEggWidget(
+                              soundFile: EasterEggs.funZone.soundFile,
+                              emoji: EasterEggs.funZone.emoji,
+                              message: EasterEggs.funZone.message,
                               child: Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(

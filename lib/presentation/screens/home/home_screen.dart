@@ -18,6 +18,8 @@ import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/offline_indicator.dart';
 import '../../widgets/daily_quote_card.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
 final lastBackPressProvider = StateProvider<DateTime?>((ref) => null);
@@ -155,7 +157,12 @@ class DashboardTab extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.home.soundFile,
+          emoji: EasterEggs.home.emoji,
+          message: EasterEggs.home.message,
+          child: const Text('Dashboard'),
+        ),
         actions: [
           // Offline Indicator in AppBar
           const OfflineIndicatorCompact(),

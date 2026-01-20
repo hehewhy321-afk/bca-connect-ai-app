@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/study_models.dart';
 import '../../../data/services/study_storage_service.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // Providers
 final studyStorageProvider = Provider((ref) => StudyStorageService());
@@ -227,7 +229,12 @@ class _StudyPlannerScreenState extends ConsumerState<StudyPlannerScreen> with Si
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Study Planner'),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.study.soundFile,
+          emoji: EasterEggs.study.emoji,
+          message: EasterEggs.study.message,
+          child: const Text('Study Planner'),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

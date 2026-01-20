@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import '../../../core/config/supabase_config.dart';
@@ -284,9 +284,13 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
       }
 
       // Download from URL
-      final response = await http.get(Uri.parse(imageUrl));
+      final dio = Dio();
+      final response = await dio.get(
+        imageUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
       if (response.statusCode == 200) {
-        await _saveImageToGallery(response.bodyBytes, prompt);
+        await _saveImageToGallery(response.data as List<int>, prompt);
       } else {
         throw Exception('Failed to download image');
       }

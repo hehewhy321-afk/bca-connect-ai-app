@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // Pomodoro State
 enum PomodoroState { idle, working, shortBreak, longBreak, paused }
@@ -515,28 +517,33 @@ class PomodoroScreen extends ConsumerWidget {
           ),
           
           // Time Display
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                session.timeDisplay,
-                style: TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+          EasterEggWidget(
+            soundFile: EasterEggs.pomodoro.soundFile,
+            emoji: EasterEggs.pomodoro.emoji,
+            message: EasterEggs.pomodoro.message,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  session.timeDisplay,
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _getStateLabel(session.state),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[400],
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 8),
+                Text(
+                  _getStateLabel(session.state),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class ForumScreen extends StatelessWidget {
   const ForumScreen({super.key});
@@ -19,10 +21,15 @@ class ForumScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.forum,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
+            EasterEggWidget(
+              soundFile: EasterEggs.forum.soundFile,
+              emoji: EasterEggs.forum.emoji,
+              message: EasterEggs.forum.message,
+              child: Icon(
+                Icons.forum,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 16),
             Text(

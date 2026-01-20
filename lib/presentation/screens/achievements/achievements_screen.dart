@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
   const AchievementsScreen({super.key});
@@ -93,7 +95,12 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Achievements'),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.achievements.soundFile,
+          emoji: EasterEggs.achievements.emoji,
+          message: EasterEggs.achievements.message,
+          child: const Text('Achievements'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Iconsax.refresh),

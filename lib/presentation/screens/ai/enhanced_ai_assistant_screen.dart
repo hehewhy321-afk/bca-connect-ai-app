@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,6 +15,8 @@ import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/cached_image.dart';
 import 'image_gallery_screen.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 enum AIMode { chat, image }
 
@@ -287,25 +289,29 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
         defaultValue: 'https://xtpkzqeylypdsxspmbmg.supabase.co');
       final url = '$supabaseUrl/functions/v1/ai-chat';
       
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${session.accessToken}',
-        },
-        body: jsonEncode({
+      final dio = Dio();
+      final response = await dio.post(
+        url,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${session.accessToken}',
+          },
+          validateStatus: (status) => true, // Accept all status codes
+        ),
+        data: {
           'messages': _messages.map((m) => {
             'role': m.isUser ? 'user' : 'assistant',
             'content': m.text,
           }).toList(),
           'mode': _mode == AIMode.image ? 'image' : 'chat',
-        }),
+        },
       );
 
       if (!mounted) return;
 
-      final provider = response.headers['x-ai-provider'] ?? 'unknown';
-      final model = response.headers['x-ai-model'] ?? 'unknown';
+      final provider = response.headers.value('x-ai-provider') ?? 'unknown';
+      final model = response.headers.value('x-ai-model') ?? 'unknown';
 
       setState(() {
         _streamingStatus = _streamingStatus?.copyWith(
@@ -315,7 +321,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       });
 
       if (response.statusCode != 200) {
-        final errorData = jsonDecode(response.body);
+        final errorData = response.data;
         final errorCode = errorData['code'];
         
         String errorMessage = errorData['error'] ?? 'Failed to get response';
@@ -332,9 +338,9 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       }
 
       // Check if it's an image response
-      final contentType = response.headers['content-type'];
+      final contentType = response.headers.value('content-type');
       if (contentType?.contains('application/json') == true) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data is String ? jsonDecode(response.data) : response.data;
         
         if (jsonData['type'] == 'image') {
           String? imageUrl;
@@ -401,7 +407,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     }
   }
 
-  Future<void> _handleStreamingResponse(http.Response response, String provider, String model) async {
+  Future<void> _handleStreamingResponse(Response response, String provider, String model) async {
     final assistantId = (DateTime.now().millisecondsSinceEpoch + 1).toString();
     
     setState(() {
@@ -418,7 +424,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
 
     try {
       // Parse SSE stream
-      final lines = response.body.split('\n');
+      final lines = (response.data as String).split('\n');
       String fullText = '';
       
       for (final line in lines) {
@@ -462,7 +468,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
         setState(() {
           final index = _messages.indexWhere((m) => m.id == assistantId);
           if (index != -1) {
-            _messages[index] = _messages[index].copyWith(text: response.body);
+            _messages[index] = _messages[index].copyWith(text: response.data.toString());
           }
         });
       }
@@ -915,31 +921,36 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: ModernTheme.orangeGradient,
-                borderRadius: BorderRadius.circular(12),
+        title: EasterEggWidget(
+          soundFile: EasterEggs.aiAssistant.soundFile,
+          emoji: EasterEggs.aiAssistant.emoji,
+          message: EasterEggs.aiAssistant.message,
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: ModernTheme.orangeGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Iconsax.message_programming, color: Colors.white, size: 20),
               ),
-              child: const Icon(Iconsax.message_programming, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('AI Study Assistant', style: TextStyle(fontSize: 16)),
-                  Text(
-                    'Chat, Voice & Image Generation',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.normal),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('AI Study Assistant', style: TextStyle(fontSize: 16)),
+                    Text(
+                      'Chat, Voice & Image Generation',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.normal),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(

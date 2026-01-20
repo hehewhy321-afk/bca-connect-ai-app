@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 class AIAssistantScreen extends ConsumerStatefulWidget {
   const AIAssistantScreen({super.key});
@@ -96,21 +98,24 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(Iconsax.message_programming, color: ModernTheme.primaryOrange),
-            SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('AI Assistant', style: TextStyle(fontSize: 18)),
-                Text(
-                  'Powered by AI',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
-                ),
-              ],
-            ),
-          ],
+        title: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              const Icon(Iconsax.message_programming, color: ModernTheme.primaryOrange),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('AI Assistant', style: TextStyle(fontSize: 18)),
+                  const Text(
+                    'Powered by AI',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -129,17 +134,22 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: ModernTheme.orangeGradient,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Icon(
-                            Iconsax.message_programming,
-                            size: 50,
-                            color: Colors.white,
+                        EasterEggWidget(
+                          soundFile: EasterEggs.aiAssistant.soundFile,
+                          emoji: EasterEggs.aiAssistant.emoji,
+                          message: EasterEggs.aiAssistant.message,
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              gradient: ModernTheme.orangeGradient,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: const Icon(
+                              Iconsax.message_programming,
+                              size: 50,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),

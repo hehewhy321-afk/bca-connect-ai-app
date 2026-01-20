@@ -11,6 +11,8 @@ import '../../../data/repositories/resource_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // Provider for all resources
 final allResourcesProvider = FutureProvider<List<Resource>>((ref) async {
@@ -390,15 +392,20 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Resource Hub', style: TextStyle(fontSize: 20)),
-            Text(
-              'Study materials & resources',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
-            ),
-          ],
+        title: EasterEggWidget(
+          soundFile: EasterEggs.resources.soundFile,
+          emoji: EasterEggs.resources.emoji,
+          message: EasterEggs.resources.message,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Resource Hub', style: TextStyle(fontSize: 20)),
+              Text(
+                'Study materials & resources',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+              ),
+            ],
+          ),
         ),
       ),
       body: CustomScrollView(

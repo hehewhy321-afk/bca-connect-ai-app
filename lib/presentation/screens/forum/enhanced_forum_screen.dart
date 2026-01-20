@@ -8,6 +8,8 @@ import '../../../data/repositories/forum_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../../core/constants/easter_eggs.dart';
+import '../../widgets/easter_egg_widget.dart';
 
 // Provider for all forum posts
 final allForumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
@@ -135,15 +137,20 @@ class EnhancedForumScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Discussion Forum', style: TextStyle(fontSize: 20)),
-            Text(
-              'Ask questions and share knowledge',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
-            ),
-          ],
+        title: EasterEggWidget(
+          soundFile: EasterEggs.forum.soundFile,
+          emoji: EasterEggs.forum.emoji,
+          message: EasterEggs.forum.message,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Discussion Forum', style: TextStyle(fontSize: 20)),
+              Text(
+                'Ask questions and share knowledge',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
