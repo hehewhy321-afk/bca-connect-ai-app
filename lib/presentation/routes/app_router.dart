@@ -15,7 +15,7 @@ import '../screens/certificates/certificates_screen.dart';
 import '../screens/resources/enhanced_resources_screen.dart';
 import '../screens/resources/resource_detail_screen.dart';
 import '../screens/profile/profile_screen.dart';
-import '../screens/ai/enhanced_ai_assistant_screen.dart';
+import '../screens/ai/improved_ai_assistant_screen.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/community/community_screen.dart';
 import '../screens/alumni/alumni_screen.dart';
@@ -33,6 +33,9 @@ import '../screens/finance/finance_tracker_screen.dart';
 import '../screens/study/study_planner_screen.dart';
 import '../screens/algorithm_game/algorithm_game_home_screen.dart';
 import '../screens/fun_zone/fun_zone_home_screen.dart';
+import '../screens/courses/courses_screen.dart';
+import '../screens/courses/course_detail_screen.dart';
+import '../screens/courses/learning_player_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -158,7 +161,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // AI Assistant
       GoRoute(
         path: '/ai-assistant',
-        builder: (context, state) => const EnhancedAIAssistantScreen(),
+        builder: (context, state) => const ImprovedAIAssistantScreen(),
       ),
       
       // Achievements
@@ -237,6 +240,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/fun-zone',
         builder: (context, state) => const FunZoneHomeScreen(),
+      ),
+      
+      // Courses
+      GoRoute(
+        path: '/courses',
+        builder: (context, state) => const CoursesScreen(),
+      ),
+      GoRoute(
+        path: '/courses/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CourseDetailScreen(courseId: id);
+        },
+      ),
+      GoRoute(
+        path: '/courses/:id/learn',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return LearningPlayerScreen(courseId: id);
+        },
       ),
       
       // Debug

@@ -456,8 +456,12 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
       body: userProfileAsync.when(
-        data: (profile) => SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+        data: (profile) => RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(userProfileProvider);
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               // Profile Card - Completely Redesigned
@@ -1051,6 +1055,7 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 32),
             ],
           ),
+        ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) {

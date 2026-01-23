@@ -386,9 +386,6 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
     final semesters = ['all', '1', '2', '3', '4', '5', '6', '7', '8'];
 
-    // Check if any filter is active
-    final hasActiveFilters = selectedType != 'all' || selectedSemester != 'all';
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -408,11 +405,14 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
           ),
         ),
       ),
-      body: CustomScrollView(
-        slivers: [
-          // Search Bar with Filter Button
-          SliverToBoxAdapter(
-            child: Padding(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(allResourcesProvider);
+        },
+        child: Column(
+          children: [
+            // Search Bar with Semester Filter Button
+            Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
@@ -439,28 +439,28 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Filter Button
+                  // Semester Filter Button
                   Stack(
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          gradient: hasActiveFilters
+                          gradient: selectedSemester != 'all'
                               ? const LinearGradient(
                                   colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
                                 )
                               : null,
-                          color: hasActiveFilters ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: selectedSemester != 'all' ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
                           icon: Icon(
-                            Iconsax.filter,
-                            color: hasActiveFilters ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                            Iconsax.calendar,
+                            color: selectedSemester != 'all' ? Colors.white : Theme.of(context).colorScheme.onSurface,
                           ),
-                          onPressed: () => _showFilterModal(context, ref, types, semesters),
+                          onPressed: () => _showSemesterModal(context, ref, semesters),
                         ),
                       ),
-                      if (hasActiveFilters)
+                      if (selectedSemester != 'all')
                         Positioned(
                           right: 8,
                           top: 8,
@@ -478,127 +478,158 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 ],
               ),
             ),
-          ),
 
-          // Resources List
-          filteredResourcesAsync.when(
-            data: (resources) {
-              if (resources.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
+            // Resource Type Filter Pills
+            SizedBox(
+              height: 50,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: types.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final type = types[index];
+                  final isSelected = selectedType == type;
+                  return FilterChip(
+                    label: Text(_formatType(type)),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      ref.read(resourceSelectedTypeProvider.notifier).state = type;
+                    },
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    selectedColor: ModernTheme.primaryOrange,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                      side: BorderSide(
+                        color: isSelected
+                            ? ModernTheme.primaryOrange
+                            : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? ModernTheme.primaryOrange
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Resources List
+            Expanded(
+              child: filteredResourcesAsync.when(
+                data: (resources) {
+                  if (resources.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Iconsax.folder_open,
+                            size: 80,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'No resources found',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Try adjusting your filters',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    itemCount: resources.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      return _ResourceCard(
+                        resource: resources[index],
+                        onTap: () => _handleResourceView(context, resources[index]),
+                        downloadProgress: _downloadProgress[resources[index].id],
+                      );
+                    },
+                  );
+                },
+                loading: () => ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  itemCount: 6,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) => const ResourceCardSkeleton(),
+                ),
+                error: (error, stack) {
+                  // Check if it's a network error
+                  final isNetworkError = error.toString().contains('No internet connection') ||
+                      error.toString().contains('SocketException') ||
+                      error.toString().contains('Failed host lookup');
+
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Iconsax.folder_open,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
+                          size: 64,
+                          color: isNetworkError
+                              ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                              : Theme.of(context).colorScheme.error,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Text(
-                          'No resources found',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          isNetworkError ? 'No Internet Connection' : 'Error loading resources',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Try adjusting your filters',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            isNetworkError
+                                ? 'Please check your internet connection and try again'
+                                : 'Something went wrong. Please try again',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed: () => ref.invalidate(allResourcesProvider),
+                          icon: const Icon(Iconsax.refresh),
+                          label: const Text('Retry'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: ModernTheme.primaryOrange,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _ResourceCard(
-                          resource: resources[index],
-                          onTap: () => _handleResourceView(context, resources[index]),
-                          downloadProgress: _downloadProgress[resources[index].id],
-                        ),
-                      );
-                    },
-                    childCount: resources.length,
-                  ),
-                ),
-              );
-            },
-            loading: () => SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => const Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: ResourceCardSkeleton(),
-                  ),
-                  childCount: 6,
-                ),
+                  );
+                },
               ),
             ),
-            error: (error, stack) {
-              // Check if it's a network error
-              final isNetworkError = error.toString().contains('No internet connection') ||
-                  error.toString().contains('SocketException') ||
-                  error.toString().contains('Failed host lookup');
-
-              return SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
-                        size: 64,
-                        color: isNetworkError
-                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
-                            : Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        isNetworkError ? 'No Internet Connection' : 'Error loading resources',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          isNetworkError
-                              ? 'Please check your internet connection and try again'
-                              : 'Something went wrong. Please try again',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () => ref.invalidate(allResourcesProvider),
-                        icon: const Icon(Iconsax.refresh),
-                        label: const Text('Retry'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: ModernTheme.primaryOrange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -608,14 +639,13 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
     return type.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
   }
 
-  void _showFilterModal(BuildContext context, WidgetRef ref, List<String> types, List<String> semesters) {
+  void _showSemesterModal(BuildContext context, WidgetRef ref, List<String> semesters) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        // Use local state variables
-        String localType = ref.read(resourceSelectedTypeProvider);
+        // Use local state variable
         String localSemester = ref.read(resourceSelectedSemesterProvider);
         
         return StatefulBuilder(
@@ -646,11 +676,11 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
+                            child: const Icon(Iconsax.calendar, color: Colors.white, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Filter Resources',
+                            'Filter by Semester',
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -664,66 +694,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                       ),
                       const SizedBox(height: 24),
 
-                      // Resource Type Section
-                      Text(
-                        'Resource Type',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: types.map((type) {
-                          final isSelected = localType == type;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                localType = type;
-                              });
-                              ref.read(resourceSelectedTypeProvider.notifier).state = type;
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? const LinearGradient(
-                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                                      )
-                                    : null,
-                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(50),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.transparent
-                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Text(
-                                _formatType(type),
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-
-                      const SizedBox(height: 24),
-
                       // Semester Section
-                      Text(
-                        'Semester',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -775,14 +746,12 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 setState(() {
-                                  localType = 'all';
                                   localSemester = 'all';
                                 });
-                                ref.read(resourceSelectedTypeProvider.notifier).state = 'all';
                                 ref.read(resourceSelectedSemesterProvider.notifier).state = 'all';
                               },
                               icon: const Icon(Iconsax.refresh),
-                              label: const Text('Clear Filters'),
+                              label: const Text('Clear Filter'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(

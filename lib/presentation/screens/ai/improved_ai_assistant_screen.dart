@@ -19,32 +19,33 @@ import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
 
 enum AIMode { chat, image }
-
 enum ConnectionStatus { idle, connecting, wakingUp, streaming }
 
-class EnhancedAIAssistantScreen extends ConsumerStatefulWidget {
-  const EnhancedAIAssistantScreen({super.key});
+class ImprovedAIAssistantScreen extends ConsumerStatefulWidget {
+  const ImprovedAIAssistantScreen({super.key});
 
   @override
-  ConsumerState<EnhancedAIAssistantScreen> createState() => _EnhancedAIAssistantScreenState();
+  ConsumerState<ImprovedAIAssistantScreen> createState() => _ImprovedAIAssistantScreenState();
 }
 
-class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantScreen> {
+class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  bool _isCancelled = false; // Flag to track cancellation
+  bool _isCancelled = false;
   AIMode _mode = AIMode.chat;
   StreamingStatus? _streamingStatus;
   ConnectionStatus _connectionStatus = ConnectionStatus.idle;
   Timer? _wakingUpTimer;
   
-  // Voice input
+  // Enhanced Voice input with real-time transcription
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _interimTranscript = '';
+  String _finalTranscript = '';
   bool _speechAvailable = false;
+  Timer? _speechTimer;
 
   @override
   void initState() {
@@ -89,38 +90,12 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     }
   }
 
-  Future<void> _saveImageToDatabase({
-    required String prompt,
-    required String imageUrl,
-    String? provider,
-    String? model,
-  }) async {
-    try {
-      final user = SupabaseConfig.client.auth.currentUser;
-      if (user == null) return;
-
-      final modelUsed = provider != null && model != null ? '$provider:$model' : null;
-
-      // Save generated image to database (like web version)
-      await SupabaseConfig.client.from('ai_generated_images').insert({
-        'user_id': user.id,
-        'prompt': prompt,
-        'image_url': imageUrl,
-        'model_used': modelUsed,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      debugPrint('Image saved to database successfully');
-    } catch (e) {
-      debugPrint('Error saving image to database: $e');
-    }
-  }
-
   Future<void> _toggleListening() async {
     if (!_speechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Speech recognition not available on this device'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -130,34 +105,64 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       await _speech.stop();
       setState(() {
         _isListening = false;
+        // Add final transcript to input if available
+        if (_finalTranscript.isNotEmpty) {
+          final newText = _messageController.text.isEmpty
+              ? _finalTranscript
+              : '${_messageController.text} $_finalTranscript';
+          _messageController.text = newText;
+          _finalTranscript = '';
+        }
         _interimTranscript = '';
       });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Voice input stopped'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     } else {
-      setState(() => _isListening = true);
+      setState(() {
+        _isListening = true;
+        _interimTranscript = '';
+        _finalTranscript = '';
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎤 Listening... Speak now!'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 2),
+        ),
+      );
       
       await _speech.listen(
         onResult: (result) {
           setState(() {
             if (result.finalResult) {
-              // Add final result to input
-              final newText = _messageController.text.isEmpty
-                  ? result.recognizedWords
-                  : '${_messageController.text} ${result.recognizedWords}';
-              _messageController.text = newText;
+              // Final result - add to transcript
+              _finalTranscript = result.recognizedWords;
               _interimTranscript = '';
             } else {
-              // Show interim results
+              // Interim result - show in real-time
               _interimTranscript = result.recognizedWords;
             }
           });
         },
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
+        listenFor: const Duration(seconds: 60), // Extended listening time
+        pauseFor: const Duration(seconds: 5), // Longer pause tolerance
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: true,
           listenMode: stt.ListenMode.confirmation,
         ),
+        onSoundLevelChange: (level) {
+          // Visual feedback for sound level (optional)
+        },
       );
     }
   }
@@ -168,6 +173,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     _scrollController.dispose();
     _speech.cancel();
     _wakingUpTimer?.cancel();
+    _speechTimer?.cancel();
     super.dispose();
   }
 
@@ -199,7 +205,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   String _getUserFriendlyError(dynamic error) {
     final errorString = error.toString().toLowerCase();
     
-    // Network/Connection errors
     if (errorString.contains('socketexception') || 
         errorString.contains('failed host lookup') ||
         errorString.contains('no address associated with hostname') ||
@@ -215,7 +220,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       return '🔌 Unable to connect to the server. Please check your internet connection.';
     }
     
-    // Authentication errors
     if (errorString.contains('unauthorized') || errorString.contains('401')) {
       return '🔐 Session expired. Please log out and log in again.';
     }
@@ -224,12 +228,10 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       return '🚫 Access denied. You don\'t have permission to use this feature.';
     }
     
-    // Rate limiting
     if (errorString.contains('rate limit') || errorString.contains('too many requests') || errorString.contains('429')) {
       return '⏳ Too many requests. Please wait a moment and try again.';
     }
     
-    // Server errors
     if (errorString.contains('500') || errorString.contains('internal server error')) {
       return '⚠️ Server error. Our team has been notified. Please try again later.';
     }
@@ -238,18 +240,12 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       return '🔧 Service temporarily unavailable. Please try again in a few minutes.';
     }
     
-    // API/Credits errors
     if (errorString.contains('credits exhausted') || errorString.contains('quota exceeded')) {
       return '💳 AI credits exhausted. Please contact the administrator.';
     }
     
     if (errorString.contains('invalid api key') || errorString.contains('api key')) {
       return '🔑 AI service configuration error. Please contact support.';
-    }
-    
-    // Generic fallback
-    if (errorString.contains('exception') || errorString.contains('error')) {
-      return '❌ Something went wrong. Please check your internet connection and try again.';
     }
     
     return '❌ Unable to process your request. Please try again.';
@@ -269,7 +265,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     setState(() {
       _messages.add(userMessage);
       _isLoading = true;
-      _isCancelled = false; // Reset cancel flag
+      _isCancelled = false;
       _connectionStatus = ConnectionStatus.connecting;
       _streamingStatus = StreamingStatus(
         isStreaming: true,
@@ -280,7 +276,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       );
     });
 
-    // Start waking up timer (show "waking up" after 4 seconds)
+    // Start waking up timer
     _wakingUpTimer = Timer(const Duration(seconds: 4), () {
       if (mounted && _connectionStatus == ConnectionStatus.connecting) {
         setState(() {
@@ -289,12 +285,8 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       }
     });
 
-    final messageText = _messageController.text.trim();
     _messageController.clear();
     _scrollToBottom();
-
-    // Use messageText in the API call
-    debugPrint('Sending message: $messageText');
 
     try {
       final session = SupabaseConfig.client.auth.currentSession;
@@ -314,7 +306,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ${session.accessToken}',
           },
-          validateStatus: (status) => true, // Accept all status codes
+          validateStatus: (status) => true,
         ),
         data: {
           'messages': _messages.map((m) => {
@@ -371,12 +363,11 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
           }
           
           if (mounted) {
-            // Cancel waking up timer
             _wakingUpTimer?.cancel();
             
             // Save image to database
             if (imageUrl != null) {
-              _saveImageToDatabase(
+              await _saveImageToDatabase(
                 prompt: jsonData['prompt'] ?? userMessage.text,
                 imageUrl: imageUrl,
                 provider: jsonData['provider'],
@@ -433,7 +424,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   Future<void> _handleStreamingResponse(Response response, String provider, String model) async {
     final assistantId = (DateTime.now().millisecondsSinceEpoch + 1).toString();
     
-    // Cancel waking up timer and set to streaming
     _wakingUpTimer?.cancel();
     
     setState(() {
@@ -450,12 +440,11 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     });
 
     try {
-      // Parse SSE stream
       final lines = (response.data as String).split('\n');
       String fullText = '';
       
       for (final line in lines) {
-        if (!mounted || _isCancelled) break; // Check for cancellation
+        if (!mounted || _isCancelled) break;
         
         if (line.startsWith('data: ')) {
           final data = line.substring(6);
@@ -468,7 +457,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
             if (content != null) {
               fullText += content;
               
-              if (_isCancelled) break; // Check again before updating
+              if (_isCancelled) break;
               
               setState(() {
                 final index = _messages.indexWhere((m) => m.id == assistantId);
@@ -490,7 +479,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       }
     } catch (e) {
       debugPrint('Error handling streaming response: $e');
-      // Fallback: use full response body
       if (!_isCancelled) {
         setState(() {
           final index = _messages.indexWhere((m) => m.id == assistantId);
@@ -512,6 +500,32 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     }
   }
 
+  Future<void> _saveImageToDatabase({
+    required String prompt,
+    required String imageUrl,
+    String? provider,
+    String? model,
+  }) async {
+    try {
+      final user = SupabaseConfig.client.auth.currentUser;
+      if (user == null) return;
+
+      final modelUsed = provider != null && model != null ? '$provider:$model' : null;
+
+      await SupabaseConfig.client.from('ai_generated_images').insert({
+        'user_id': user.id,
+        'prompt': prompt,
+        'image_url': imageUrl,
+        'model_used': modelUsed,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      debugPrint('Image saved to database successfully');
+    } catch (e) {
+      debugPrint('Error saving image to database: $e');
+    }
+  }
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -527,7 +541,10 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   void _clearChat() {
     setState(() => _messages.clear());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chat cleared')),
+      const SnackBar(
+        content: Text('Chat cleared'),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -539,138 +556,27 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       return;
     }
 
-    // Show modern dialog with options
-    final action = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E1E1E)
-            : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Iconsax.document_download, color: ModernTheme.primaryOrange),
-            SizedBox(width: 12),
-            Text('Export Chat'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Choose how to export your conversation:'),
-            const SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                    ModernTheme.primaryOrange.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: ListTile(
-                leading: const Icon(Iconsax.save_2, color: ModernTheme.primaryOrange, size: 28),
-                title: const Text('Save to Device', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Save in Downloads folder'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                onTap: () => Navigator.pop(context, 'save'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.1),
-                    Colors.blue.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.blue.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: ListTile(
-                leading: const Icon(Iconsax.share, color: Colors.blue, size: 28),
-                title: const Text('Share', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Share via other apps'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                onTap: () => Navigator.pop(context, 'share'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
-    );
-
-    if (action == null) return;
-
     try {
-      // Create HTML content
       final html = _generateChatHTML();
       final fileName = 'ai-chat-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.html';
       
-      if (action == 'save') {
-        // Save to Downloads folder
-        final directory = Directory('/storage/emulated/0/Download');
-        if (!await directory.exists()) {
-          // Fallback to app documents directory
-          final appDir = await getApplicationDocumentsDirectory();
-          final file = File('${appDir.path}/$fileName');
-          await file.writeAsString(html);
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Saved to: ${file.path}'),
-                action: SnackBarAction(
-                  label: 'OK',
-                  onPressed: () {},
-                ),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        } else {
-          final file = File('${directory.path}/$fileName');
-          await file.writeAsString(html);
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Chat saved to Downloads folder!'),
-                backgroundColor: Colors.green,
-                action: SnackBarAction(
-                  label: 'OK',
-                  textColor: Colors.white,
-                  onPressed: () {},
-                ),
-              ),
-            );
-          }
-        }
-      } else {
-        // Share via other apps
-        final directory = await getTemporaryDirectory();
-        final file = File('${directory.path}/$fileName');
-        await file.writeAsString(html);
-        
-        // ignore: deprecated_member_use
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsString(html);
+      
+      // Share the file
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chat exported successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -686,9 +592,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   }
 
   String _generateChatHTML() {
-    final user = SupabaseConfig.client.auth.currentUser;
-    final userName = user?.email?.split('@')[0] ?? 'User';
-    
     final messagesHtml = _messages.map((message) {
       final isUser = message.isUser;
       final avatar = isUser ? '👤' : '🤖';
@@ -699,24 +602,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
           .replaceAll('<', '&lt;')
           .replaceAll('>', '&gt;')
           .replaceAll('\n', '<br>');
-      
-      // Format code blocks
-      contentHtml = contentHtml.replaceAllMapped(
-        RegExp(r'```(\w+)?\n(.*?)```', multiLine: true, dotAll: true),
-        (match) => '<pre class="code-block"><code>${match.group(2)}</code></pre>',
-      );
-      
-      // Format inline code
-      contentHtml = contentHtml.replaceAllMapped(
-        RegExp(r'`([^`]+)`'),
-        (match) => '<code class="inline-code">${match.group(1)}</code>',
-      );
-      
-      // Format bold
-      contentHtml = contentHtml.replaceAllMapped(
-        RegExp(r'\*\*([^*]+)\*\*'),
-        (match) => '<strong>${match.group(1)}</strong>',
-      );
       
       String imageHtml = '';
       if (message.type == MessageType.image && message.imageUrl != null) {
@@ -753,7 +638,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #DA7809 0%, #FF9500 100%);
       padding: 40px 20px;
       min-height: 100vh;
       line-height: 1.6;
@@ -776,28 +661,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       font-size: 32px;
       font-weight: 800;
       margin-bottom: 8px;
-    }
-    .header p {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    .stats {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .stat-value {
-      font-size: 28px;
-      font-weight: 800;
-      display: block;
-    }
-    .stat-label {
-      font-size: 12px;
-      opacity: 0.8;
-      text-transform: uppercase;
     }
     .messages {
       padding: 40px;
@@ -851,23 +714,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       color: #1a1a1a;
       border-bottom-left-radius: 4px;
     }
-    .inline-code {
-      background: rgba(0, 0, 0, 0.08);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-      font-size: 0.9em;
-    }
-    .code-block {
-      background: #2d2d2d;
-      color: #f8f8f2;
-      padding: 16px;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 12px 0;
-      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-      font-size: 13px;
-    }
     .message-image {
       margin-top: 12px;
       border-radius: 12px;
@@ -908,20 +754,6 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
     <div class="header">
       <h1>🤖 AI Chat Conversation</h1>
       <p>Exported on ${DateFormat('MMM d, y • h:mm a').format(DateTime.now())}</p>
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-value">${_messages.length}</span>
-          <span class="stat-label">Messages</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">${_messages.where((m) => m.type == MessageType.image).length}</span>
-          <span class="stat-label">Images</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">$userName</span>
-          <span class="stat-label">Account</span>
-        </div>
-      </div>
     </div>
     <div class="messages">
       $messagesHtml
@@ -938,15 +770,19 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
 
   @override
   Widget build(BuildContext context) {
-    // Updated suggestions: 2 chat + 2 image examples
-    final suggestedQuestions = [
-      // Chat examples
-      'Explain polymorphism in Java',
-      'What is normalization in databases?',
-      // Image examples
-      'Generate a futuristic classroom with AI',
-      'Create a beautiful mountain landscape',
-    ];
+    final suggestedQuestions = _mode == AIMode.image
+        ? [
+            'Generate a futuristic classroom with AI',
+            'Create a beautiful sunset over mountains',
+            'Draw a cute robot studying computer science',
+            'Make an image of Nepal\'s Himalayan landscape',
+          ]
+        : [
+            'Explain polymorphism in Java',
+            'What is normalization in databases?',
+            'Write a Python function for binary search',
+            'How does recursion work?',
+          ];
 
     return Scaffold(
       appBar: AppBar(
@@ -1010,10 +846,10 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
       ),
       body: Column(
         children: [
-          // Streaming Status with Stop Button
+          // Enhanced Streaming Status
           if (_streamingStatus?.isStreaming == true)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -1031,15 +867,15 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      gradient: ModernTheme.orangeGradient,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Iconsax.flash_1,
-                      size: 14,
-                      color: ModernTheme.primaryOrange,
+                      size: 16,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1049,7 +885,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                       children: [
                         Text(
                           _connectionStatus == ConnectionStatus.connecting
-                              ? 'Connecting to server...'
+                              ? 'Connecting...'
                               : _connectionStatus == ConnectionStatus.wakingUp
                                   ? 'Waking up model... (15-30s)'
                                   : 'Generating response...',
@@ -1090,7 +926,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                       ],
                     ),
                   ),
-                  // Stop Button
+                  // Enhanced Stop Button
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -1106,15 +942,15 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                             width: 1.5,
                           ),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Iconsax.stop_circle,
                               size: 16,
                               color: Colors.red,
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Text(
                               'Stop',
                               style: TextStyle(
@@ -1149,7 +985,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                   ),
           ),
           
-          // Input Area
+          // Enhanced Input Area with Real-time Voice Feedback
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1164,23 +1000,21 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
               children: [
                 Row(
                   children: [
-                    // Mode Toggle Button (+ icon on left, gallery icon when active)
+                    // Mode Toggle Button
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: _mode == AIMode.image
-                            ? const Color(0xFF8B5CF6) // Purple for image mode
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        gradient: _mode == AIMode.image
+                            ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)])
+                            : ModernTheme.orangeGradient,
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(
-                          _mode == AIMode.image ? Iconsax.gallery5 : Iconsax.add,
-                          color: _mode == AIMode.image
-                              ? Colors.white
-                              : Theme.of(context).colorScheme.onSurface,
+                          _mode == AIMode.image ? Iconsax.gallery5 : Iconsax.message_programming,
+                          color: Colors.white,
                           size: 20,
                         ),
                         onPressed: _isLoading ? null : () {
@@ -1192,9 +1026,9 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                       ),
                     ),
                     
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     
-                    // Input Field with Voice Icon Inside
+                    // Enhanced Input Field with Real-time Voice Feedback
                     Expanded(
                       child: Stack(
                         children: [
@@ -1211,10 +1045,12 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                                 borderSide: BorderSide.none,
                               ),
                               filled: true,
-                              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              fillColor: _isListening
+                                  ? Colors.red.withValues(alpha: 0.1)
+                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
                               contentPadding: const EdgeInsets.only(
                                 left: 20,
-                                right: 50, // Space for voice icon
+                                right: 60, // Space for voice icon
                                 top: 12,
                                 bottom: 12,
                               ),
@@ -1224,31 +1060,37 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                             onSubmitted: (_) => _sendMessage(),
                             enabled: !_isLoading,
                           ),
-                          // Interim transcript overlay
+                          // Real-time transcript overlay
                           if (_interimTranscript.isNotEmpty)
                             Positioned(
                               left: 20,
                               top: 12,
+                              right: 60,
                               child: Text(
-                                _interimTranscript,
+                                '${_messageController.text}$_interimTranscript',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),
-                          // Voice Input Button Inside TextField
+                          // Enhanced Voice Input Button
                           Positioned(
                             right: 8,
                             top: 4,
                             bottom: 4,
                             child: Container(
-                              width: 36,
-                              height: 36,
+                              width: 40,
+                              height: 40,
                               decoration: BoxDecoration(
-                                color: _isListening
-                                    ? Colors.red.shade100
-                                    : Colors.transparent,
+                                gradient: _isListening
+                                    ? const LinearGradient(colors: [Colors.red, Colors.pink])
+                                    : LinearGradient(
+                                        colors: [
+                                          Colors.grey.withValues(alpha: 0.2),
+                                          Colors.grey.withValues(alpha: 0.1),
+                                        ],
+                                      ),
                                 shape: BoxShape.circle,
                               ),
                               child: IconButton(
@@ -1256,7 +1098,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                                 icon: Icon(
                                   _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
                                   color: _isListening
-                                      ? Colors.red
+                                      ? Colors.white
                                       : Theme.of(context).colorScheme.onSurfaceVariant,
                                   size: 20,
                                 ),
@@ -1267,26 +1109,52 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                               ),
                             ),
                           ),
+                          // Voice level indicator
+                          if (_isListening)
+                            Positioned(
+                              right: 52,
+                              top: 8,
+                              bottom: 8,
+                              child: Row(
+                                children: [
+                                  for (int i = 0; i < 3; i++)
+                                    Container(
+                                      width: 2,
+                                      height: 12 + (i * 4),
+                                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(alpha: 0.7),
+                                        borderRadius: BorderRadius.circular(1),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
                     
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     
-                    // Send Button (arrow up, changes color based on text)
+                    // Enhanced Send Button
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: _messageController.text.trim().isNotEmpty
-                            ? ModernTheme.primaryOrange
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        gradient: _messageController.text.trim().isNotEmpty
+                            ? ModernTheme.orangeGradient
+                            : LinearGradient(
+                                colors: [
+                                  Colors.grey.withValues(alpha: 0.3),
+                                  Colors.grey.withValues(alpha: 0.2),
+                                ],
+                              ),
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(
-                          Iconsax.arrow_up_1,
+                          Iconsax.send_1,
                           color: _messageController.text.trim().isNotEmpty
                               ? Colors.white
                               : Colors.grey,
@@ -1299,20 +1167,52 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _isListening
-                      ? '🎤 LISTENING... Speak now!'
-                      : _mode == AIMode.image
-                          ? '🎨 IMAGE MODE • Tip: Be specific! e.g., "A sunset over mountains with purple sky"'
-                          : '💬 Chat Mode • Ask anything about BCA studies',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _isListening
-                            ? Colors.red
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 10,
+                const SizedBox(height: 12),
+                // Enhanced Status Text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_isListening) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Iconsax.microphone, size: 12, color: Colors.red),
+                            SizedBox(width: 4),
+                            Text(
+                              'LISTENING...',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                  textAlign: TextAlign.center,
+                    ] else ...[
+                      Icon(
+                        _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
+                        size: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _mode == AIMode.image
+                            ? '🎨 IMAGE MODE • Be specific for better results'
+                            : '💬 Chat Mode • Ask anything about BCA studies',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontSize: 10,
+                            ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -1362,52 +1262,21 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
+            
             const SizedBox(height: 32),
-            // Show all 4 suggestions (2 chat + 2 image)
+            // Suggestion chips
             Wrap(
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: [
-                // Chat examples
-                _SuggestionChip(
-                  label: suggestions[0],
-                  icon: Iconsax.message_programming,
-                  onTap: () {
-                    setState(() => _mode = AIMode.chat);
-                    _messageController.text = suggestions[0];
-                    _sendMessage();
-                  },
-                ),
-                _SuggestionChip(
-                  label: suggestions[1],
-                  icon: Iconsax.message_programming,
-                  onTap: () {
-                    setState(() => _mode = AIMode.chat);
-                    _messageController.text = suggestions[1];
-                    _sendMessage();
-                  },
-                ),
-                // Image examples
-                _SuggestionChip(
-                  label: suggestions[2],
-                  icon: Iconsax.gallery,
-                  onTap: () {
-                    setState(() => _mode = AIMode.image);
-                    _messageController.text = suggestions[2];
-                    _sendMessage();
-                  },
-                ),
-                _SuggestionChip(
-                  label: suggestions[3],
-                  icon: Iconsax.gallery,
-                  onTap: () {
-                    setState(() => _mode = AIMode.image);
-                    _messageController.text = suggestions[3];
-                    _sendMessage();
-                  },
-                ),
-              ],
+              children: suggestions.map((suggestion) => _SuggestionChip(
+                label: suggestion,
+                icon: _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
+                onTap: () {
+                  _messageController.text = suggestion;
+                  _sendMessage();
+                },
+              )).toList(),
             ),
           ],
         ),
@@ -1416,6 +1285,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
   }
 }
 
+// Enhanced Message Types and Classes
 enum MessageType { text, image }
 
 class ChatMessage {
@@ -1492,34 +1362,39 @@ class StreamingStatus {
   }
 }
 
+// Enhanced UI Components
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
 
   const _MessageBubble({required this.message});
 
   Widget _buildImageWidget(String imageUrl) {
-    // Check if it's a base64 image
     if (imageUrl.startsWith('data:image')) {
       try {
-        // Extract base64 data
         final base64Data = imageUrl.split(',')[1];
         final bytes = base64Decode(base64Data);
-        return Image.memory(
-          bytes,
-          width: 250,
-          height: 250,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: 250,
-              height: 250,
-              padding: const EdgeInsets.all(16),
-              color: Colors.grey[200],
-              child: const Center(
-                child: Text('Failed to load image'),
-              ),
-            );
-          },
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            bytes,
+            width: 250,
+            height: 250,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 250,
+                height: 250,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text('Failed to load image'),
+                ),
+              );
+            },
+          ),
         );
       } catch (e) {
         debugPrint('Error decoding base64 image: $e');
@@ -1527,7 +1402,10 @@ class _MessageBubble extends StatelessWidget {
           width: 250,
           height: 250,
           padding: const EdgeInsets.all(16),
-          color: Colors.grey[200],
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: const Center(
             child: Text('Invalid image format'),
           ),
@@ -1535,7 +1413,6 @@ class _MessageBubble extends StatelessWidget {
       }
     }
     
-    // It's a URL, use CachedImage
     return CachedImage(
       imageUrl: imageUrl,
       width: 250,
@@ -1546,7 +1423,10 @@ class _MessageBubble extends StatelessWidget {
         width: 250,
         height: 250,
         padding: const EdgeInsets.all(16),
-        color: Colors.grey[200],
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: const Center(
           child: Text('Failed to load image'),
         ),
@@ -1565,17 +1445,17 @@ class _MessageBubble extends StatelessWidget {
         children: [
           if (!message.isUser) ...[
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 gradient: message.type == MessageType.image
                     ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)])
                     : ModernTheme.orangeGradient,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 message.type == MessageType.image ? Iconsax.gallery : Iconsax.message_programming,
-                size: 16,
+                size: 18,
                 color: Colors.white,
               ),
             ),
@@ -1586,14 +1466,17 @@ class _MessageBubble extends StatelessWidget {
               crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
+                    gradient: message.isUser
+                        ? ModernTheme.orangeGradient
+                        : null,
                     color: message.isUser
-                        ? ModernTheme.primaryOrange
+                        ? null
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16).copyWith(
-                      bottomLeft: message.isUser ? const Radius.circular(16) : const Radius.circular(4),
-                      bottomRight: message.isUser ? const Radius.circular(4) : const Radius.circular(16),
+                    borderRadius: BorderRadius.circular(20).copyWith(
+                      bottomLeft: message.isUser ? const Radius.circular(20) : const Radius.circular(4),
+                      bottomRight: message.isUser ? const Radius.circular(4) : const Radius.circular(20),
                     ),
                   ),
                   child: message.type == MessageType.image && message.imageUrl != null
@@ -1604,15 +1487,11 @@ class _MessageBubble extends StatelessWidget {
                               message.text,
                               style: TextStyle(
                                 color: message.isUser ? Colors.white : null,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            // Handle both base64 and URL images
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: _buildImageWidget(message.imageUrl!),
-                            ),
+                            const SizedBox(height: 12),
+                            _buildImageWidget(message.imageUrl!),
                           ],
                         )
                       : MarkdownBody(
@@ -1633,13 +1512,21 @@ class _MessageBubble extends StatelessWidget {
                         ),
                 ),
                 if (!message.isUser && message.provider != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'via ${message.provider}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 10,
-                        ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'via ${message.provider}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.blue,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
                   ),
                 ],
               ],
@@ -1648,15 +1535,15 @@ class _MessageBubble extends StatelessWidget {
           if (message.isUser) ...[
             const SizedBox(width: 12),
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Iconsax.user,
-                size: 16,
+                size: 18,
                 color: ModernTheme.primaryOrange,
               ),
             ),
@@ -1677,32 +1564,34 @@ class _TypingIndicator extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               gradient: ModernTheme.orangeGradient,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Iconsax.message_programming,
-              size: 16,
+              size: 18,
               color: Colors.white,
             ),
           ),
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20).copyWith(
+                bottomLeft: const Radius.circular(4),
+              ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _TypingDot(delay: 0),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _TypingDot(delay: 200),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _TypingDot(delay: 400),
               ],
             ),
@@ -1778,7 +1667,7 @@ class _SuggestionChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(50),
@@ -1789,8 +1678,8 @@ class _SuggestionChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: ModernTheme.primaryOrange),
-            const SizedBox(width: 6),
+            Icon(icon, size: 16, color: ModernTheme.primaryOrange),
+            const SizedBox(width: 8),
             Flexible(
               child: Text(
                 label,
@@ -1805,4 +1694,3 @@ class _SuggestionChip extends StatelessWidget {
     );
   }
 }
-

@@ -18,7 +18,8 @@ class EnhancedSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen> with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
+  final _personalFormKey = GlobalKey<FormState>();
+  final _academicFormKey = GlobalKey<FormState>();
   bool _loading = true;
   bool _saving = false;
   bool _uploadingAvatar = false;
@@ -163,8 +164,8 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
     }
   }
 
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _savePersonalProfile() async {
+    if (!_personalFormKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
 
@@ -181,12 +182,36 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
       await SupabaseConfig.client.from('profiles').update({
         'full_name': _fullNameController.text.trim(),
         'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        'batch': _batchController.text.trim().isEmpty ? null : _batchController.text.trim(),
-        'semester': _isAlumni ? null : _semester,
         'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
         'skills': skills.isEmpty ? null : skills,
         'github_url': _githubController.text.trim().isEmpty ? null : _githubController.text.trim(),
         'linkedin_url': _linkedinController.text.trim().isEmpty ? null : _linkedinController.text.trim(),
+      }).eq('user_id', user.id);
+
+      if (mounted) {
+        setState(() => _saving = false);
+        _showSuccessSnackbar('Personal information updated successfully!');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        _showErrorSnackbar('Error updating personal information: $e');
+      }
+    }
+  }
+
+  Future<void> _saveAcademicProfile() async {
+    if (!_academicFormKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+
+    try {
+      final user = SupabaseConfig.client.auth.currentUser;
+      if (user == null) return;
+
+      await SupabaseConfig.client.from('profiles').update({
+        'batch': _batchController.text.trim().isEmpty ? null : _batchController.text.trim(),
+        'semester': _isAlumni ? null : _semester,
         'is_alumni': _isAlumni,
         'graduation_year': _isAlumni ? _graduationYear : null,
         'current_company': _isAlumni && _currentCompanyController.text.trim().isNotEmpty 
@@ -199,12 +224,12 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
       if (mounted) {
         setState(() => _saving = false);
-        _showSuccessSnackbar('Profile updated successfully!');
+        _showSuccessSnackbar('Academic information updated successfully!');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        _showErrorSnackbar('Error updating profile: $e');
+        _showErrorSnackbar('Error updating academic information: $e');
       }
     }
   }
@@ -515,7 +540,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
   Widget _buildPersonalTab() {
     return Form(
-      key: _formKey,
+      key: _personalFormKey,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -621,7 +646,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _saving ? null : _saveProfile,
+                    onTap: _saving ? null : _savePersonalProfile,
                     borderRadius: BorderRadius.circular(16),
                     child: Center(
                       child: _saving
@@ -662,11 +687,13 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   }
 
   Widget _buildAcademicTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Form(
+      key: _academicFormKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           _AlumniToggle(
             isAlumni: _isAlumni,
             onChanged: (value) {
@@ -771,7 +798,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _saving ? null : _saveProfile,
+                  onTap: _saving ? null : _saveAcademicProfile,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
                     child: _saving
@@ -806,6 +833,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
           const SizedBox(height: 32),
         ],
+        ),
       ),
     );
   }

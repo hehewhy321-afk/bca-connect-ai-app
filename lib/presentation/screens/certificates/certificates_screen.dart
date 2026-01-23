@@ -231,6 +231,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
               const SizedBox(width: 8),
               _buildChip('Competition', 'competition', false),
               const SizedBox(width: 8),
+              _buildChip('Course', 'course', false),
+              const SizedBox(width: 8),
               _buildChip('Hackathon', 'hackathon', false),
               const SizedBox(width: 8),
               _buildChip('Seminar', 'seminar', false),

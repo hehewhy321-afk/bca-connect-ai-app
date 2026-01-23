@@ -272,7 +272,7 @@ class DashboardTab extends ConsumerWidget {
               // Daily Quote/Tip Card
               const DailyQuoteCard(),
 
-              // Quick Actions - Bento Grid
+              // Quick Actions - Enhanced Bento Grid
               Text(
                 'Quick Actions',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -280,110 +280,125 @@ class DashboardTab extends ConsumerWidget {
                     ),
               ),
               const SizedBox(height: 12),
-              // Bento Grid Layout with varying sizes
-              Row(
-                children: [
-                  // Study Planner - Large card (left)
-                  Expanded(
-                    flex: 2,
-                    child: _BentoCard(
-                      icon: Iconsax.book_1,
-                      label: 'Study Planner',
-                      subtitle: 'Plan your studies',
-                      color: const Color(0xFF8B5CF6),
-                      height: 200,
-                      onTap: () => context.push('/study'),
+              // Enhanced Bento Grid Layout with varying sizes
+              SizedBox(
+                height: 240,
+                child: Row(
+                  children: [
+                    // Left Column - Large featured card
+                    Expanded(
+                      flex: 2,
+                      child: _EnhancedBentoCard(
+                        icon: Iconsax.video_play,
+                        label: 'Courses',
+                        subtitle: 'Learn & Grow',
+                        color: const Color(0xFF6366F1),
+                        isLarge: true,
+                        onTap: () => context.push('/courses'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Right column with two smaller cards
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      children: [
-                        _BentoCard(
-                          icon: Iconsax.calendar_2,
-                          label: 'नेपाली पात्रो',
-                          color: const Color(0xFFDC2626),
-                          height: 94,
-                          onTap: () => context.push('/calendar'),
-                        ),
-                        const SizedBox(height: 12),
-                        _BentoCard(
-                          icon: Iconsax.timer_1,
-                          label: 'Pomodoro',
-                          color: const Color(0xFF3B82F6),
-                          height: 94,
-                          onTap: () => context.push('/pomodoro'),
-                        ),
-                      ],
+                    const SizedBox(width: 12),
+                    // Right Column - 4 smaller cards in 2x2 grid
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _EnhancedBentoCard(
+                                  icon: Iconsax.book_1,
+                                  label: 'Study',
+                                  color: const Color(0xFF8B5CF6),
+                                  onTap: () => context.push('/study'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _EnhancedBentoCard(
+                                  icon: Iconsax.document_text,
+                                  label: 'Notices',
+                                  color: const Color(0xFFDC2626),
+                                  onTap: () => context.push('/notices'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _EnhancedBentoCard(
+                                  icon: Iconsax.timer_1,
+                                  label: 'Pomodoro',
+                                  color: const Color(0xFF3B82F6),
+                                  onTap: () => context.push('/pomodoro'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _EnhancedBentoCard(
+                                  icon: Iconsax.wallet_money,
+                                  label: 'Finance',
+                                  color: const Color(0xFFEC4899),
+                                  onTap: () => context.push('/finance'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _BentoCard(
-                      icon: Iconsax.wallet_money,
-                      label: 'Finance',
-                      subtitle: 'Track expenses',
-                      color: const Color(0xFFEC4899),
-                      height: 120,
-                      onTap: () => context.push('/finance'),
+              // Second row - 4 equal cards
+              SizedBox(
+                height: 85,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _EnhancedBentoCard(
+                        icon: Iconsax.calendar_2,
+                        label: 'पात्रो',
+                        color: const Color(0xFFFF6B35),
+                        isSmall: true,
+                        onTap: () => context.push('/calendar'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _BentoCard(
-                      icon: Iconsax.people,
-                      label: 'Community',
-                      subtitle: 'Connect & share',
-                      color: const Color(0xFFFF9500),
-                      height: 120,
-                      onTap: () => context.push('/community'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _EnhancedBentoCard(
+                        icon: Iconsax.people,
+                        label: 'Community',
+                        color: const Color(0xFFFF9500),
+                        isSmall: true,
+                        onTap: () => context.push('/community'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  // Notices - smaller
-                  Expanded(
-                    flex: 1,
-                    child: _BentoCard(
-                      icon: Iconsax.document_text,
-                      label: 'Notices',
-                      color: const Color(0xFF10B981),
-                      height: 110,
-                      onTap: () => context.push('/notices'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _EnhancedBentoCard(
+                        icon: Iconsax.game,
+                        label: 'Algorithm',
+                        color: const Color(0xFF10B981),
+                        isSmall: true,
+                        onTap: () => context.push('/algorithm-game'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Algorithm Game - larger
-                  Expanded(
-                    flex: 2,
-                    child: _BentoCard(
-                      icon: Iconsax.game,
-                      label: 'Algorithm Game',
-                      subtitle: 'Learn & play',
-                      color: const Color(0xFF6366F1),
-                      height: 110,
-                      onTap: () => context.push('/algorithm-game'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _EnhancedBentoCard(
+                        icon: Iconsax.emoji_happy,
+                        label: 'Fun Zone',
+                        color: const Color(0xFFF59E0B),
+                        isSmall: true,
+                        onTap: () => context.push('/fun-zone'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _BentoCard(
-                icon: Iconsax.emoji_happy,
-                label: 'Fun Zone',
-                subtitle: 'Relax and have fun',
-                color: const Color(0xFFEC4899),
-                height: 100,
-                onTap: () => context.push('/fun-zone'),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -585,99 +600,192 @@ class DashboardTab extends ConsumerWidget {
   }
 }
 
-// Bento Card Widget for Quick Actions
-class _BentoCard extends StatelessWidget {
+// Enhanced Bento Card Widget for Quick Actions
+class _EnhancedBentoCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? subtitle;
   final Color color;
-  final double height;
   final VoidCallback onTap;
+  final bool isLarge;
+  final bool isSmall;
 
-  const _BentoCard({
+  const _EnhancedBentoCard({
     required this.icon,
     required this.label,
     this.subtitle,
     required this.color,
-    this.height = 100,
     required this.onTap,
+    this.isLarge = false,
+    this.isSmall = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        height: height,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color,
-              color.withValues(alpha: 0.85),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(isSmall ? 12 : 20),
+        child: Container(
+          height: isLarge ? double.infinity : (isSmall ? 85 : 110),
+          padding: EdgeInsets.all(isSmall ? 12 : (isLarge ? 24 : 16)),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color,
+                color.withValues(alpha: 0.7),
+                color.withValues(alpha: 0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: const [0.0, 0.5, 1.0],
+            ),
+            borderRadius: BorderRadius.circular(isSmall ? 12 : 20),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.3),
+                blurRadius: isLarge ? 16 : (isSmall ? 6 : 10),
+                offset: Offset(0, isLarge ? 6 : (isSmall ? 2 : 4)),
+              ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white, size: 22),
-            ),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        height: 1.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+          child: isLarge ? _buildLargeCardContent() : _buildSmallCardContent(),
         ),
       ),
+    );
+  }
+
+  Widget _buildLargeCardContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Icon container with glow effect
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 28),
+        ),
+        const Spacer(),
+        // Text content
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Arrow indicator
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Iconsax.arrow_right_3,
+            color: Colors.white,
+            size: 16,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmallCardContent() {
+    if (isSmall) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              height: 1.0,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
