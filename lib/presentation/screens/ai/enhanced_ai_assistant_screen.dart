@@ -1051,7 +1051,7 @@ class _EnhancedAIAssistantScreenState extends ConsumerState<EnhancedAIAssistantS
                           _connectionStatus == ConnectionStatus.connecting
                               ? 'Connecting to server...'
                               : _connectionStatus == ConnectionStatus.wakingUp
-                                  ? 'Waking up model... (15-30s)'
+                                  ? 'Thinking...'
                                   : 'Generating response...',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,

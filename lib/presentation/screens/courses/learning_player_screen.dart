@@ -21,7 +21,6 @@ class LearningPlayerScreen extends ConsumerStatefulWidget {
 
 class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
   WebViewController? _webViewController;
-  bool _isFullscreen = false;
   bool _isLoading = true;
   final Set<String> _expandedChapters = {}; // Track expanded chapters
 
@@ -30,22 +29,6 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
-  }
-
-  void _toggleFullscreen() {
-    setState(() {
-      _isFullscreen = !_isFullscreen;
-      if (_isFullscreen) {
-        SystemChrome.setPreferredOrientations([
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      } else {
-        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      }
-    });
   }
 
   void _initializePlayer(String videoUrl) {
@@ -168,45 +151,6 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
               });
             }
 
-            if (_isFullscreen) {
-              // Fullscreen Mode
-              return Scaffold(
-                backgroundColor: Colors.black,
-                body: Stack(
-                  children: [
-                    // Video Player
-                    Center(
-                      child: canPlay && _webViewController != null
-                          ? WebViewWidget(controller: _webViewController!)
-                          : _buildLockedOverlay(context),
-                    ),
-                    // Loading Indicator
-                    if (_isLoading)
-                      const Center(
-                        child: CircularProgressIndicator(color: ModernTheme.primaryOrange),
-                      ),
-                    // Exit Fullscreen Button
-                    SafeArea(
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: IconButton(
-                            onPressed: _toggleFullscreen,
-                            icon: const Icon(Iconsax.maximize_4, color: Colors.white, size: 28),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.black.withValues(alpha: 0.7),
-                              padding: const EdgeInsets.all(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
             // Normal Mode
             return Scaffold(
               backgroundColor: Colors.black,
@@ -233,19 +177,6 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
                         if (_isLoading)
                           const Center(
                             child: CircularProgressIndicator(color: ModernTheme.primaryOrange),
-                          ),
-                        // Fullscreen Button
-                        if (canPlay)
-                          Positioned(
-                            bottom: 8,
-                            right: 8,
-                            child: IconButton(
-                              onPressed: _toggleFullscreen,
-                              icon: const Icon(Iconsax.maximize_1, color: Colors.white),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Colors.black.withValues(alpha: 0.7),
-                              ),
-                            ),
                           ),
                       ],
                     ),

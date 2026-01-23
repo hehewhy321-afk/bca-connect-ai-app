@@ -110,74 +110,90 @@ class AppUpdateService {
       // Check and request storage permission based on Android version
       bool hasPermission = false;
       
-      // For Android 10+ (API 29+), we don't need WRITE_EXTERNAL_STORAGE for Downloads folder
-      // For Android 13+ (API 33+), we need MANAGE_EXTERNAL_STORAGE or use scoped storage
       if (Platform.isAndroid) {
-        // Try to get storage permission
-        var status = await Permission.storage.status;
+        // For Android 13+ (API 33+), we need different permissions
+        // For downloading files, we can use the Downloads folder without special permissions
+        // But we still need to handle the permission properly
         
-        if (status.isDenied) {
-          status = await Permission.storage.request();
-        }
+        // First try to check if we have storage permission
+        var storageStatus = await Permission.storage.status;
+        var manageStorageStatus = await Permission.manageExternalStorage.status;
         
-        if (status.isGranted) {
+        // For Android 11+ (API 30+), try MANAGE_EXTERNAL_STORAGE first
+        if (manageStorageStatus.isGranted) {
           hasPermission = true;
-        } else if (status.isPermanentlyDenied) {
-          // Permission permanently denied, show dialog to open settings
-          if (context.mounted) {
-            final shouldOpenSettings = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Row(
-                  children: [
-                    Icon(Icons.folder_open, color: Colors.orange),
-                    SizedBox(width: 12),
-                    Text('Storage Permission Required'),
-                  ],
-                ),
-                content: const Text(
-                  'Storage permission is required to download updates.\n\n'
-                  'Please enable it in Settings:\n'
-                  'Settings → Apps → BCA MMAMC → Permissions → Storage',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Open Settings'),
-                  ),
-                ],
-              ),
-            );
+        } else if (storageStatus.isGranted) {
+          hasPermission = true;
+        } else {
+          // Try to request MANAGE_EXTERNAL_STORAGE first for better compatibility
+          var requestedStatus = await Permission.manageExternalStorage.request();
+          
+          if (requestedStatus.isGranted) {
+            hasPermission = true;
+          } else {
+            // Fallback to regular storage permission
+            requestedStatus = await Permission.storage.request();
             
-            if (shouldOpenSettings == true) {
-              await openAppSettings();
+            if (requestedStatus.isGranted) {
+              hasPermission = true;
+            } else if (requestedStatus.isPermanentlyDenied || manageStorageStatus.isPermanentlyDenied) {
+              // Permission permanently denied, show dialog to open settings
+              if (context.mounted) {
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Row(
+                      children: [
+                        Icon(Icons.folder_open, color: Colors.orange),
+                        SizedBox(width: 12),
+                        Text('Storage Permission Required'),
+                      ],
+                    ),
+                    content: const Text(
+                      'Storage permission is required to download updates.\n\n'
+                      'Please enable storage permission in Settings:\n'
+                      'Settings → Apps → BCA Connect → Permissions → Files and media (or Storage)',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Open Settings'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              }
+              return;
+            } else {
+              // Permission denied but not permanently
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.warning, color: Colors.white),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Storage permission is required to download updates'),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+              }
+              return;
             }
           }
-          return;
-        } else {
-          // Permission denied but not permanently
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.warning, color: Colors.white),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text('Storage permission is required to download updates'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
-          return;
         }
       } else {
         hasPermission = true; // For non-Android platforms
@@ -209,13 +225,38 @@ class AppUpdateService {
       final dio = Dio();
       final response = await dio.get(
         apkUrl,
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(minutes: 5), // Increase timeout for large files
+          sendTimeout: const Duration(minutes: 5),
+        ),
       );
       
       if (response.statusCode == 200) {
-        // Save to Downloads folder
-        final directory = Directory('/storage/emulated/0/Download');
-        final fileName = 'BCA-Association-Update-${DateTime.now().millisecondsSinceEpoch}.apk';
+        // Try multiple download locations
+        Directory? directory;
+        String fileName = 'BCA-Association-Update-${DateTime.now().millisecondsSinceEpoch}.apk';
+        
+        // Try Downloads folder first
+        try {
+          directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            directory = Directory('/storage/emulated/0/Downloads');
+          }
+          if (!await directory.exists()) {
+            // Fallback to app's external directory
+            directory = Directory('/storage/emulated/0/Android/data/com.bcaconnect.app/files/Downloads');
+            await directory.create(recursive: true);
+          }
+        } catch (e) {
+          debugPrint('Error accessing Downloads folder: $e');
+          // Final fallback to app's documents directory
+          directory = Directory('/storage/emulated/0/Documents');
+          if (!await directory.exists()) {
+            directory = Directory('/storage/emulated/0');
+          }
+        }
+        
         final file = File('${directory.path}/$fileName');
         await file.writeAsBytes(response.data as List<int>);
 
@@ -243,9 +284,26 @@ class AppUpdateService {
                   onPressed: () async {
                     Navigator.pop(context);
                     // Open APK file for installation
-                    final uri = Uri.parse('file://${file.path}');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    try {
+                      final uri = Uri.parse('file://${file.path}');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        // Fallback: try to open file manager
+                        final fileUri = Uri.parse('content://com.android.externalstorage.documents/document/primary:${file.path.split('/').last}');
+                        if (await canLaunchUrl(fileUri)) {
+                          await launchUrl(fileUri, mode: LaunchMode.externalApplication);
+                        }
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Please manually install the APK from: ${file.path}'),
+                            duration: const Duration(seconds: 6),
+                          ),
+                        );
+                      }
                     }
                   },
                   child: const Text('Install'),
@@ -255,15 +313,17 @@ class AppUpdateService {
           );
         }
       } else {
-        throw Exception('Failed to download APK');
+        throw Exception('Failed to download APK: HTTP ${response.statusCode}');
       }
     } catch (e) {
+      debugPrint('Download error: $e');
       if (context.mounted) {
         Navigator.pop(context); // Close downloading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Download failed: $e'),
+            content: Text('Download failed: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

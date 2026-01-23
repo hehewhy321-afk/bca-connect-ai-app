@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/supabase_config.dart';
 
 class AuthRepository {
@@ -35,6 +36,12 @@ class AuthRepository {
   // Sign out
   Future<void> signOut() async {
     await _client.auth.signOut();
+    
+    // Clear saved credentials when user manually logs out
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('remember_me');
+    await prefs.remove('saved_email');
+    await prefs.remove('saved_password');
   }
 
   // Reset password

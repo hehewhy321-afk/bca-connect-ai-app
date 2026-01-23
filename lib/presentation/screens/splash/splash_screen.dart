@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../data/repositories/auth_repository.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -57,8 +58,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         return;
       }
       
-      // Check authentication status
-      final isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
+      // Check if user is already authenticated
+      bool isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
+      
+      // If not authenticated, check for saved credentials and attempt auto-login
+      if (!isAuthenticated) {
+        final rememberMe = prefs.getBool('remember_me') ?? false;
+        
+        if (rememberMe) {
+          final savedEmail = prefs.getString('saved_email') ?? '';
+          final savedPassword = prefs.getString('saved_password') ?? '';
+          
+          if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
+            try {
+              // Attempt auto-login with saved credentials
+              final authRepo = AuthRepository();
+              await authRepo.signIn(savedEmail, savedPassword);
+              isAuthenticated = true;
+            } catch (e) {
+              // If auto-login fails, clear saved credentials
+              await prefs.remove('remember_me');
+              await prefs.remove('saved_email');
+              await prefs.remove('saved_password');
+            }
+          }
+        }
+      }
       
       if (!mounted) return;
       

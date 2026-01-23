@@ -63,44 +63,47 @@ class PermissionService {
   Future<bool> requestStoragePermission(BuildContext context) async {
     if (!Platform.isAndroid) return true;
 
-    // For Android 13+ (API 33+), use new photo/media permissions
-    Permission storagePermission;
-    if (Platform.isAndroid) {
-      // Check Android version
-      storagePermission = Permission.photos;
-    } else {
-      storagePermission = Permission.storage;
-    }
-
-    final status = await storagePermission.status;
+    // For Android 13+ (API 33+), we need different permissions
+    // Try MANAGE_EXTERNAL_STORAGE first, then fallback to regular storage
+    var manageStorageStatus = await Permission.manageExternalStorage.status;
+    var storageStatus = await Permission.storage.status;
     
-    if (status.isGranted) {
+    if (manageStorageStatus.isGranted || storageStatus.isGranted) {
       debugPrint('Storage permission already granted');
       return true;
     }
 
-    if (status.isDenied && context.mounted) {
+    if ((manageStorageStatus.isDenied || storageStatus.isDenied) && context.mounted) {
       // Show explanation dialog
       final shouldRequest = await _showPermissionDialog(
         context,
         title: 'Enable Storage Access',
-        message: 'BCA Connect needs storage permission to save and access photos, documents, and other files for events and resources.',
+        message: 'BCA Connect needs storage permission to save and access photos, documents, downloads, and other files for events and resources.',
         icon: Icons.folder_open,
       );
 
       if (shouldRequest == true) {
-        final result = await storagePermission.request();
+        // Try MANAGE_EXTERNAL_STORAGE first for better compatibility
+        var result = await Permission.manageExternalStorage.request();
         
         if (result.isGranted) {
-          debugPrint('Storage permission granted');
+          debugPrint('Manage external storage permission granted');
           return true;
-        } else if (result.isPermanentlyDenied && context.mounted) {
-          await _showSettingsDialog(context, 'Storage');
+        } else {
+          // Fallback to regular storage permission
+          result = await Permission.storage.request();
+          
+          if (result.isGranted) {
+            debugPrint('Storage permission granted');
+            return true;
+          } else if (result.isPermanentlyDenied && context.mounted) {
+            await _showSettingsDialog(context, 'Storage');
+          }
         }
       }
     }
 
-    if (status.isPermanentlyDenied && context.mounted) {
+    if ((manageStorageStatus.isPermanentlyDenied || storageStatus.isPermanentlyDenied) && context.mounted) {
       await _showSettingsDialog(context, 'Storage');
     }
 
@@ -117,8 +120,12 @@ class PermissionService {
   // Check if storage permission is granted
   Future<bool> hasStoragePermission() async {
     if (!Platform.isAndroid) return true;
-    final status = await Permission.photos.status;
-    return status.isGranted;
+    
+    // Check both MANAGE_EXTERNAL_STORAGE and regular storage permissions
+    final manageStorageStatus = await Permission.manageExternalStorage.status;
+    final storageStatus = await Permission.storage.status;
+    
+    return manageStorageStatus.isGranted || storageStatus.isGranted;
   }
 
   // Show permission explanation dialog
@@ -181,7 +188,9 @@ class PermissionService {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('$permissionName Permission Required'),
         content: Text(
-          'Please enable $permissionName permission in app settings to use this feature.',
+          permissionName == 'Storage' 
+            ? 'Please enable storage permission in app settings:\n\nSettings → Apps → BCA Connect → Permissions → Files and media (or Storage)\n\nThis allows the app to download updates and save files.'
+            : 'Please enable $permissionName permission in app settings to use this feature.',
           style: const TextStyle(fontSize: 15, height: 1.5),
         ),
         actions: [

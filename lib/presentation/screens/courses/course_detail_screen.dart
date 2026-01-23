@@ -240,62 +240,24 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
           final isPending = enrollment?.status == EnrollmentStatus.pending;
           final isFree = course.price == 0;
 
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                stretch: true,
-                automaticallyImplyLeading: true, // Keep back button for detail screen
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          if (course.thumbnailUrl == null || course.thumbnailUrl!.isEmpty) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                    ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                                  ],
-                                ),
-                              ),
-                              child: Icon(
-                                Iconsax.video_play,
-                                size: 80,
-                                color: ModernTheme.primaryOrange.withValues(alpha: 0.5),
-                              ),
-                            );
-                          }
-
-                          return CachedNetworkImage(
-                            imageUrl: course.thumbnailUrl!,
-                            fit: BoxFit.cover,
-                            httpHeaders: const {
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                            },
-                            cacheManager: null,
-                            placeholder: (context, url) => Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                    ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                                  ],
-                                ),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(color: ModernTheme.primaryOrange),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) {
+          return NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverAppBar(
+                  expandedHeight: 200,
+                  pinned: true,
+                  stretch: true,
+                  automaticallyImplyLeading: true,
+                  backgroundColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Builder(
+                          builder: (context) {
+                            if (course.thumbnailUrl == null || course.thumbnailUrl!.isEmpty) {
                               return Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -313,128 +275,172 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                                   color: ModernTheme.primaryOrange.withValues(alpha: 0.5),
                                 ),
                               );
-                            },
-                          );
-                        },
-                      ),
-                      // Gradient Overlay
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
+                            }
+
+                            return CachedNetworkImage(
+                              imageUrl: course.thumbnailUrl!,
+                              fit: BoxFit.cover,
+                              httpHeaders: const {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                              },
+                              cacheManager: null,
+                              placeholder: (context, url) => Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                      ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                    ],
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(color: ModernTheme.primaryOrange),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                        ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Iconsax.video_play,
+                                    size: 80,
+                                    color: ModernTheme.primaryOrange.withValues(alpha: 0.5),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        // Gradient Overlay
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.8),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (course.category != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(gradient: ModernTheme.orangeGradient, borderRadius: BorderRadius.circular(8)),
+                            child: Text(course.category!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        const SizedBox(height: 8),
+                        Text(course.title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+                        const SizedBox(height: 8),
+                        // Show half description (2 lines max)
+                        if (course.description != null) 
+                          Text(
+                            course.description!, 
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                              height: 1.6
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        const SizedBox(height: 16),
+                        // Price and Enroll Section
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [ModernTheme.primaryOrange.withValues(alpha: 0.1), ModernTheme.primaryOrange.withValues(alpha: 0.05)]),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: ModernTheme.primaryOrange.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Course Price', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                    const SizedBox(height: 4),
+                                    Text(course.price > 0 ? 'NPR ${course.price.toStringAsFixed(0)}' : 'FREE', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: ModernTheme.primaryOrange)),
+                                  ],
+                                ),
+                              ),
+                              if (isApproved || isFree)
+                                ElevatedButton.icon(
+                                  onPressed: () => context.push('/courses/${course.id}/learn'),
+                                  icon: const Icon(Iconsax.play_circle),
+                                  label: const Text('Start Learning'),
+                                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                )
+                              else if (isPending)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.orange)),
+                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Iconsax.clock, color: Colors.orange), SizedBox(width: 8), Text('Pending', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
+                                )
+                              else
+                                ElevatedButton.icon(
+                                  onPressed: () => _showEnrollDialog(course),
+                                  icon: const Icon(Iconsax.card),
+                                  label: const Text('Enroll Now'),
+                                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (course.category != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(gradient: ModernTheme.orangeGradient, borderRadius: BorderRadius.circular(8)),
-                          child: Text(course.category!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                        ),
-                      const SizedBox(height: 12),
-                      Text(course.title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-                      const SizedBox(height: 12),
-                      // Show half description (2 lines max)
-                      if (course.description != null) 
-                        Text(
-                          course.description!, 
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant, 
-                            height: 1.6
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      const SizedBox(height: 24),
-                      // Price and Enroll Section
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [ModernTheme.primaryOrange.withValues(alpha: 0.1), ModernTheme.primaryOrange.withValues(alpha: 0.05)]),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: ModernTheme.primaryOrange.withValues(alpha: 0.2)),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Course Price', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                                  const SizedBox(height: 4),
-                                  Text(course.price > 0 ? 'NPR ${course.price.toStringAsFixed(0)}' : 'FREE', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: ModernTheme.primaryOrange)),
-                                ],
-                              ),
-                            ),
-                            if (isApproved || isFree)
-                              ElevatedButton.icon(
-                                onPressed: () => context.push('/courses/${course.id}/learn'),
-                                icon: const Icon(Iconsax.play_circle),
-                                label: const Text('Start Learning'),
-                                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                              )
-                            else if (isPending)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.orange)),
-                                child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Iconsax.clock, color: Colors.orange), SizedBox(width: 8), Text('Pending', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
-                              )
-                            else
-                              ElevatedButton.icon(
-                                onPressed: () => _showEnrollDialog(course),
-                                icon: const Icon(Iconsax.card),
-                                label: const Text('Enroll Now'),
-                                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SliverAppBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: ModernTheme.primaryOrange,
-                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    indicatorColor: ModernTheme.primaryOrange,
-                    indicatorWeight: 3,
-                    tabs: const [Tab(text: 'Course Content'), Tab(text: 'About')],
-                  ),
-                ),
-              ),
-              SliverFillRemaining(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    chaptersAsync.when(
-                      data: (chapters) => _buildCourseContent(chapters, isApproved, isFree),
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(child: Text('Error: $error')),
+                      ],
                     ),
-                    _buildAboutTab(course),
-                  ],
+                  ),
                 ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverAppBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: ModernTheme.primaryOrange,
+                      unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                      indicatorColor: ModernTheme.primaryOrange,
+                      indicatorWeight: 3,
+                      tabs: const [Tab(text: 'Course Content'), Tab(text: 'About')],
+                    ),
+                  ),
+                ),
+              ];
+            },
+            body: Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  chaptersAsync.when(
+                    data: (chapters) => _buildCourseContent(chapters, isApproved, isFree),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (error, stack) => Center(child: Text('Error: $error')),
+                  ),
+                  _buildAboutTab(course),
+                ],
               ),
-            ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -457,73 +463,97 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
       });
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: chapters.length,
-      itemBuilder: (context, index) {
-        final chapter = chapters[index];
-        final isExpanded = _expandedChapters.contains(chapter.id);
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: chapters.length,
+        itemBuilder: (context, index) {
+          final chapter = chapters[index];
+          final isExpanded = _expandedChapters.contains(chapter.id);
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            children: [
-              ListTile(
-                onTap: () => setState(() => isExpanded ? _expandedChapters.remove(chapter.id) : _expandedChapters.add(chapter.id)),
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(gradient: ModernTheme.orangeGradient, borderRadius: BorderRadius.circular(12)),
-                  child: Icon(isExpanded ? Iconsax.arrow_down_1 : Iconsax.arrow_right_3, color: Colors.white, size: 20),
-                ),
-                title: Text(chapter.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
-                  child: Text('${chapter.lessons.length} lessons', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                ),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
               ),
-              if (isExpanded)
-                ...chapter.lessons.map((lesson) {
-                  final canPlay = isApproved || isFree || lesson.isFreePreview;
-                  return ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: canPlay ? ModernTheme.primaryOrange.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(canPlay ? Iconsax.play_circle5 : Iconsax.lock, size: 20, color: canPlay ? ModernTheme.primaryOrange : Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  onTap: () => setState(() => isExpanded ? _expandedChapters.remove(chapter.id) : _expandedChapters.add(chapter.id)),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(gradient: ModernTheme.orangeGradient, borderRadius: BorderRadius.circular(12)),
+                    child: Icon(isExpanded ? Iconsax.arrow_down_1 : Iconsax.arrow_right_3, color: Colors.white, size: 20),
+                  ),
+                  title: Text(chapter.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
+                    child: Text('${chapter.lessons.length} lessons', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                if (isExpanded)
+                  Container(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      children: chapter.lessons.map((lesson) {
+                        final canPlay = isApproved || isFree || lesson.isFreePreview;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: canPlay ? ModernTheme.primaryOrange.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(canPlay ? Iconsax.play_circle5 : Iconsax.lock, size: 20, color: canPlay ? ModernTheme.primaryOrange : Theme.of(context).colorScheme.onSurfaceVariant),
+                            ),
+                            title: Text(lesson.title),
+                            subtitle: lesson.duration != null ? Text(lesson.duration!) : null,
+                            trailing: lesson.isFreePreview && !isApproved && !isFree
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                                    child: const Text('FREE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  )
+                                : null,
+                            onTap: canPlay ? () => context.push('/courses/${widget.courseId}/learn') : null,
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    title: Text(lesson.title),
-                    subtitle: lesson.duration != null ? Text(lesson.duration!) : null,
-                    trailing: lesson.isFreePreview && !isApproved && !isFree
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                            child: const Text('FREE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
-                          )
-                        : null,
-                    onTap: canPlay ? () => context.push('/courses/${widget.courseId}/learn') : null,
-                  );
-                }),
-            ],
-          ),
-        );
-      },
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildAboutTab(Course course) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('About this course', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          if (course.description != null) Text(course.description!, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
-        ],
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('About this course', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            if (course.description != null) Text(course.description!, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
+          ],
+        ),
       ),
     );
   }
@@ -534,13 +564,25 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar);
 
   @override
-  double get minExtent => _tabBar.preferredSize.height;
+  double get minExtent => _tabBar.preferredSize.height + 8; // Add padding
   @override
-  double get maxExtent => _tabBar.preferredSize.height;
+  double get maxExtent => _tabBar.preferredSize.height + 8; // Add padding
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: Theme.of(context).colorScheme.surface, child: _tabBar);
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: _tabBar,
+    );
   }
 
   @override

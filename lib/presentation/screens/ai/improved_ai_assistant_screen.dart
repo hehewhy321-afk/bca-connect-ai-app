@@ -28,7 +28,7 @@ class ImprovedAIAssistantScreen extends ConsumerStatefulWidget {
   ConsumerState<ImprovedAIAssistantScreen> createState() => _ImprovedAIAssistantScreenState();
 }
 
-class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantScreen> {
+class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantScreen> with WidgetsBindingObserver, TickerProviderStateMixin {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -46,24 +46,104 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   String _finalTranscript = '';
   bool _speechAvailable = false;
   Timer? _speechTimer;
+  bool _shouldKeepListening = false; // Flag to control continuous listening
+
+  // Animation controllers for voice input
+  late AnimationController _pulseController;
+  late AnimationController _scaleController;
+  late AnimationController _iconController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _iconRotationAnimation;
+  late Animation<double> _iconScaleAnimation;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Initialize animation controllers
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    // Create animations
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.3,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Icon animations
+    _iconRotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.1, // Slight rotation
+    ).animate(CurvedAnimation(
+      parent: _iconController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _iconScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _iconController,
+      curve: Curves.elasticOut,
+    ));
+    
     _initSpeech();
     _messageController.addListener(() {
       setState(() {}); // Rebuild to update send button color
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // Re-check speech availability when app resumes (e.g., returning from settings)
+      _checkPermissionAndInitSpeech();
+    }
+  }
+
+  Future<void> _checkPermissionAndInitSpeech() async {
+    final status = await Permission.microphone.status;
+    if (status.isGranted && !_speechAvailable) {
+      await _initSpeech();
+    } else if (!status.isGranted) {
+      setState(() {
+        _speechAvailable = false;
+      });
+    }
+  }
+
   Future<void> _initSpeech() async {
     _speech = stt.SpeechToText();
     try {
-      final status = await Permission.microphone.request();
+      final status = await Permission.microphone.status;
+      
       if (status.isGranted) {
         _speechAvailable = await _speech.initialize(
           onError: (error) {
-            debugPrint('Speech error: $error');
             if (mounted) {
               setState(() {
                 _speechAvailable = false;
@@ -72,108 +152,281 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
             }
           },
           onStatus: (status) {
-            debugPrint('Speech status: $status');
-            if (status == 'notListening' && mounted) {
-              setState(() => _isListening = false);
+            if (mounted) {
+              // Only stop if explicitly done, not on temporary pauses
+              if (status == 'done' && _isListening) {
+                // Speech recognition completed, add text to field
+                _stopListening();
+              }
+              // Don't auto-stop on 'notListening' to allow for longer pauses
             }
           },
         );
-        if (mounted) setState(() {});
+        
+        if (_speechAvailable) {
+          final locales = await _speech.locales();
+          if (locales.isEmpty) {
+            _speechAvailable = false;
+          }
+        }
       } else {
-        debugPrint('Microphone permission denied');
         _speechAvailable = false;
       }
+      
+      if (mounted) setState(() {});
     } catch (e) {
-      debugPrint('Speech init error: $e');
       _speechAvailable = false;
       if (mounted) setState(() {});
     }
   }
 
   Future<void> _toggleListening() async {
-    if (!_speechAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Speech recognition not available on this device'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    // Check current permission status
+    final status = await Permission.microphone.status;
+    
+    if (status.isDenied) {
+      // Request permission directly
+      final result = await Permission.microphone.request();
+      
+      if (result.isGranted) {
+        // Permission granted, initialize speech and start listening
+        await _initSpeech();
+        if (_speechAvailable) {
+          _startListening();
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Speech recognition not available on this device'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else if (result.isPermanentlyDenied) {
+        // Permission permanently denied, show settings dialog
+        _showSettingsDialog();
+      } else {
+        // Permission denied
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Microphone permission is required for voice input'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+      return;
+    } else if (status.isPermanentlyDenied) {
+      // Permission permanently denied, show settings dialog
+      _showSettingsDialog();
       return;
     }
 
-    if (_isListening) {
-      await _speech.stop();
-      setState(() {
-        _isListening = false;
-        // Add final transcript to input if available
-        if (_finalTranscript.isNotEmpty) {
-          final newText = _messageController.text.isEmpty
-              ? _finalTranscript
-              : '${_messageController.text} $_finalTranscript';
-          _messageController.text = newText;
-          _finalTranscript = '';
+    // Permission is granted, proceed with speech recognition
+    if (!_speechAvailable) {
+      await _initSpeech();
+      if (!_speechAvailable) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Speech recognition not available on this device'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-        _interimTranscript = '';
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Voice input stopped'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 1),
-          ),
-        );
+        return;
       }
+    }
+
+    if (_isListening) {
+      _stopListening();
     } else {
-      setState(() {
-        _isListening = true;
-        _interimTranscript = '';
-        _finalTranscript = '';
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎤 Listening... Speak now!'),
-          backgroundColor: Colors.blue,
-          duration: Duration(seconds: 2),
+      _startListening();
+    }
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Permission Required'),
+        content: const Text(
+          'Microphone permission is required for voice input. Please enable it in app settings.',
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startListening() async {
+    setState(() {
+      _isListening = true;
+      _shouldKeepListening = true; // Enable continuous listening
+      _interimTranscript = '';
+      _finalTranscript = '';
+    });
+    
+    // Start animations
+    _pulseController.repeat(reverse: true);
+    _scaleController.forward();
+    _iconController.repeat(reverse: true);
+    
+    // Show feedback to user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🎤 Listening... Speak in any language! Tap again to stop.'),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 3),
+      ),
+    );
+    
+    _startSpeechRecognition();
+  }
+
+  Future<void> _startSpeechRecognition() async {
+    if (!_shouldKeepListening || !mounted) return;
+    
+    try {
+      // Get available locales and find the best one for multi-language support
+      final locales = await _speech.locales();
+      String? selectedLocale;
+      
+      // Try to find a locale that supports multiple languages or use system default
+      for (final locale in locales) {
+        // Look for system default or English as fallback
+        if (locale.localeId.contains('en-') || locale.localeId == 'en_US') {
+          selectedLocale = locale.localeId;
+          break;
+        }
+      }
+      
+      // If no English found, use the first available locale
+      if (selectedLocale == null && locales.isNotEmpty) {
+        selectedLocale = locales.first.localeId;
+      }
       
       await _speech.listen(
         onResult: (result) {
-          setState(() {
-            if (result.finalResult) {
-              // Final result - add to transcript
-              _finalTranscript = result.recognizedWords;
-              _interimTranscript = '';
-            } else {
-              // Interim result - show in real-time
-              _interimTranscript = result.recognizedWords;
-            }
-          });
+          if (mounted && _shouldKeepListening) {
+            setState(() {
+              if (result.finalResult) {
+                // Final result - this is the confirmed transcription
+                _finalTranscript = result.recognizedWords;
+                _interimTranscript = '';
+                
+                // Auto-restart listening after getting final result
+                if (_shouldKeepListening) {
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (_shouldKeepListening && mounted) {
+                      _startSpeechRecognition();
+                    }
+                  });
+                }
+              } else {
+                // Interim result - show in real-time but don't clear final
+                _interimTranscript = result.recognizedWords;
+              }
+            });
+          }
         },
-        listenFor: const Duration(seconds: 60), // Extended listening time
-        pauseFor: const Duration(seconds: 5), // Longer pause tolerance
+        // Extended listening configuration for continuous input
+        listenFor: const Duration(seconds: 30), // Reasonable chunk size
+        pauseFor: const Duration(seconds: 2), // Short pause before restarting
+        localeId: selectedLocale, // Use best available locale
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
-          cancelOnError: true,
-          listenMode: stt.ListenMode.confirmation,
+          cancelOnError: false, // Don't cancel on minor errors
+          listenMode: stt.ListenMode.dictation, // Better for continuous speech
+          enableHapticFeedback: true, // Haptic feedback
+          autoPunctuation: true, // Auto add punctuation
         ),
-        onSoundLevelChange: (level) {
-          // Visual feedback for sound level (optional)
-        },
       );
+    } catch (e) {
+      if (mounted && _shouldKeepListening) {
+        // If error occurs, try to restart after a short delay
+        Future.delayed(const Duration(seconds: 1), () {
+          if (_shouldKeepListening && mounted) {
+            _startSpeechRecognition();
+          }
+        });
+      }
     }
+  }
+
+  void _stopListening() {
+    _shouldKeepListening = false; // Disable continuous listening
+    _speech.stop();
+    
+    // Stop animations
+    _pulseController.stop();
+    _scaleController.reverse();
+    _iconController.stop();
+    _iconController.reset();
+    
+    setState(() {
+      _isListening = false;
+      
+      // Add both final and interim transcript to input field
+      String transcriptToAdd = '';
+      if (_finalTranscript.isNotEmpty) {
+        transcriptToAdd = _finalTranscript;
+      } else if (_interimTranscript.isNotEmpty) {
+        transcriptToAdd = _interimTranscript;
+      }
+      
+      if (transcriptToAdd.isNotEmpty) {
+        final currentText = _messageController.text.trim();
+        final newText = currentText.isEmpty
+            ? transcriptToAdd
+            : '$currentText $transcriptToAdd';
+        _messageController.text = newText;
+        
+        // Move cursor to end
+        _messageController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _messageController.text.length),
+        );
+      }
+      
+      // Clear transcripts
+      _finalTranscript = '';
+      _interimTranscript = '';
+    });
+    
+    // Show feedback to user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Voice input stopped'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
     _speech.cancel();
     _wakingUpTimer?.cancel();
     _speechTimer?.cancel();
+    _pulseController.dispose();
+    _scaleController.dispose();
+    _iconController.dispose();
     super.dispose();
   }
 
@@ -887,7 +1140,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                           _connectionStatus == ConnectionStatus.connecting
                               ? 'Connecting...'
                               : _connectionStatus == ConnectionStatus.wakingUp
-                                  ? 'Waking up model... (15-30s)'
+                                  ? 'Thinking...'
                                   : 'Generating response...',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -1061,73 +1314,116 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                             enabled: !_isLoading,
                           ),
                           // Real-time transcript overlay
-                          if (_interimTranscript.isNotEmpty)
+                          if (_isListening && (_interimTranscript.isNotEmpty || _finalTranscript.isNotEmpty))
                             Positioned(
                               left: 20,
                               top: 12,
                               right: 60,
                               child: Text(
-                                '${_messageController.text}$_interimTranscript',
+                                '${_messageController.text}${_messageController.text.isNotEmpty ? ' ' : ''}$_finalTranscript$_interimTranscript',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                  fontStyle: FontStyle.italic,
+                                  color: _interimTranscript.isNotEmpty 
+                                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.7)
+                                      : Theme.of(context).colorScheme.onSurface,
+                                  fontStyle: _interimTranscript.isNotEmpty ? FontStyle.italic : FontStyle.normal,
                                 ),
                               ),
                             ),
-                          // Enhanced Voice Input Button
+                          // Enhanced Voice Input Button with animations
                           Positioned(
                             right: 8,
                             top: 4,
                             bottom: 4,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                gradient: _isListening
-                                    ? const LinearGradient(colors: [Colors.red, Colors.pink])
-                                    : LinearGradient(
-                                        colors: [
-                                          Colors.grey.withValues(alpha: 0.2),
-                                          Colors.grey.withValues(alpha: 0.1),
-                                        ],
+                            child: AnimatedBuilder(
+                              animation: Listenable.merge([_pulseAnimation, _scaleAnimation, _iconController]),
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: _isListening ? _scaleAnimation.value : 1.0,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: _isListening
+                                          ? const LinearGradient(colors: [Colors.red, Colors.pink])
+                                          : LinearGradient(
+                                              colors: [
+                                                Colors.grey.withValues(alpha: 0.2),
+                                                Colors.grey.withValues(alpha: 0.1),
+                                              ],
+                                            ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: _isListening
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.red.withValues(alpha: 0.3),
+                                                blurRadius: 8 * _pulseAnimation.value,
+                                                spreadRadius: 2 * _pulseAnimation.value,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      icon: Transform.rotate(
+                                        angle: _isListening ? _iconRotationAnimation.value : 0.0,
+                                        child: Transform.scale(
+                                          scale: _isListening ? _iconScaleAnimation.value : 1.0,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(milliseconds: 300),
+                                            transitionBuilder: (child, animation) {
+                                              return ScaleTransition(
+                                                scale: animation,
+                                                child: RotationTransition(
+                                                  turns: animation,
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: Icon(
+                                              _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
+                                              key: ValueKey(_isListening),
+                                              color: _isListening
+                                                  ? Colors.white
+                                                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                icon: Icon(
-                                  _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
-                                  color: _isListening
-                                      ? Colors.white
-                                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                                  size: 20,
-                                ),
-                                onPressed: _isLoading ? null : _toggleListening,
-                                tooltip: _speechAvailable
-                                    ? (_isListening ? 'Stop Listening' : 'Voice Input')
-                                    : 'Voice input not available',
-                              ),
+                                      onPressed: _isLoading ? null : _toggleListening,
+                                      tooltip: _speechAvailable
+                                          ? (_isListening ? 'Stop Listening' : 'Voice Input')
+                                          : 'Voice input unavailable',
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          // Voice level indicator
+                          // Animated voice level indicator
                           if (_isListening)
                             Positioned(
                               right: 52,
                               top: 8,
                               bottom: 8,
-                              child: Row(
-                                children: [
-                                  for (int i = 0; i < 3; i++)
-                                    Container(
-                                      width: 2,
-                                      height: 12 + (i * 4),
-                                      margin: const EdgeInsets.symmetric(horizontal: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withValues(alpha: 0.7),
-                                        borderRadius: BorderRadius.circular(1),
-                                      ),
-                                    ),
-                                ],
+                              child: AnimatedBuilder(
+                                animation: _pulseAnimation,
+                                builder: (context, child) {
+                                  return Row(
+                                    children: [
+                                      for (int i = 0; i < 3; i++)
+                                        Container(
+                                          width: 2,
+                                          height: (8 + (i * 3)) * (0.5 + 0.5 * _pulseAnimation.value),
+                                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withValues(alpha: 0.8),
+                                            borderRadius: BorderRadius.circular(1),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                         ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 
@@ -21,12 +22,49 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+    
+    if (rememberMe) {
+      final savedEmail = prefs.getString('saved_email') ?? '';
+      final savedPassword = prefs.getString('saved_password') ?? '';
+      
+      setState(() {
+        _rememberMe = rememberMe;
+        _emailController.text = savedEmail;
+        _passwordController.text = savedPassword;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (_rememberMe) {
+      await prefs.setBool('remember_me', true);
+      await prefs.setString('saved_email', _emailController.text.trim());
+      await prefs.setString('saved_password', _passwordController.text);
+    } else {
+      await prefs.remove('remember_me');
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -37,6 +75,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
     try {
       final authRepo = ref.read(authRepositoryProvider);
       await authRepo.signIn(_emailController.text.trim(), _passwordController.text);
+      
+      // Save credentials if remember me is checked
+      await _saveCredentials();
       
       if (mounted) {
         context.go('/home');
@@ -271,26 +312,63 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           ),
                         ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.2, end: 0),
                         
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         
-                        // Forgot Password
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => context.push('/auth/forgot-password'),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            ),
-                            child: Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                color: ModernTheme.primaryOrange,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                        // Remember Me Checkbox
+                        Row(
+                          children: [
+                            Transform.scale(
+                              scale: 1.1,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                onChanged: (value) async {
+                                  setState(() => _rememberMe = value ?? false);
+                                  
+                                  // If unchecked, immediately clear saved credentials
+                                  if (!_rememberMe) {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.remove('remember_me');
+                                    await prefs.remove('saved_email');
+                                    await prefs.remove('saved_password');
+                                  }
+                                },
+                                activeColor: ModernTheme.primaryOrange,
+                                checkColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
                             ),
-                          ),
-                        ).animate().fadeIn(delay: 600.ms),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Remember me',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            // Forgot Password
+                            TextButton(
+                              onPressed: () => context.push('/auth/forgot-password'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              ),
+                              child: Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  color: ModernTheme.primaryOrange,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 550.ms),
+                        
+                        const SizedBox(height: 8),
                         
                         const SizedBox(height: 24),
                         
