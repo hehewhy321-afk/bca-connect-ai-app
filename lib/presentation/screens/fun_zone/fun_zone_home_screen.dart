@@ -15,10 +15,7 @@ import 'number_rush_game_screen.dart';
 import 'snake_game_screen.dart';
 import 'game_2048_screen.dart';
 import 'brick_breaker_game_screen.dart';
-import 'target_shooter_game_screen.dart';
 import 'spin_match_game_screen.dart';
-import 'balloon_pop_game_screen.dart';
-import 'reflex_duel_game_screen.dart';
 
 class FunZoneHomeScreen extends StatefulWidget {
   const FunZoneHomeScreen({super.key});
@@ -50,10 +47,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
     final snakeGameStats = await _repository.getStats('snake_game');
     final game2048Stats = await _repository.getStats('game_2048');
     final brickBreakerStats = await _repository.getStats('brick_breaker');
-    final targetShooterStats = await _repository.getStats('target_shooter');
     final spinMatchStats = await _repository.getStats('spin_match');
-    final balloonPopStats = await _repository.getStats('balloon_pop');
-    final reflexDuelStats = await _repository.getStats('reflex_duel');
     
     setState(() {
       _stats = {
@@ -66,10 +60,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
         'snake_game': snakeGameStats,
         'game_2048': game2048Stats,
         'brick_breaker': brickBreakerStats,
-        'target_shooter': targetShooterStats,
         'spin_match': spinMatchStats,
-        'balloon_pop': balloonPopStats,
-        'reflex_duel': reflexDuelStats,
       };
       _isLoading = false;
     });
@@ -216,7 +207,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                   Expanded(
                     child: _buildStatCard(
                       icon: Iconsax.star5,
-                      value: '14',
+                      value: '10',
                       label: 'Games',
                       color: const Color(0xFFEC4899),
                     ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.2),
@@ -361,17 +352,6 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                   ),
                   _buildModernGameCard(
                     context,
-                    title: 'Target Shooter',
-                    emoji: '🎯',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
-                    ),
-                    stats: _stats['target_shooter'],
-                    onTap: () => _navigateToGame(context, const TargetShooterGameScreen()),
-                    index: 9,
-                  ),
-                  _buildModernGameCard(
-                    context,
                     title: 'Spin Match',
                     emoji: '🔄',
                     gradient: const LinearGradient(
@@ -379,29 +359,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                     ),
                     stats: _stats['spin_match'],
                     onTap: () => _navigateToGame(context, const SpinMatchGameScreen()),
-                    index: 10,
-                  ),
-                  _buildModernGameCard(
-                    context,
-                    title: 'Balloon Pop',
-                    emoji: '🎈',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
-                    ),
-                    stats: _stats['balloon_pop'],
-                    onTap: () => _navigateToGame(context, const BalloonPopGameScreen()),
-                    index: 11,
-                  ),
-                  _buildModernGameCard(
-                    context,
-                    title: 'Reflex Duel',
-                    emoji: '⚔️',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF232526), Color(0xFF414345)],
-                    ),
-                    stats: _stats['reflex_duel'],
-                    onTap: () => _navigateToGame(context, const ReflexDuelGameScreen()),
-                    index: 12,
+                    index: 9,
                   ),
                 ]),
               ),

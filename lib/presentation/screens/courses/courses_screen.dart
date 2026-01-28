@@ -175,48 +175,83 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+        error: (error, stack) {
+          // Convert technical errors to user-friendly messages
+          String userMessage;
+          IconData errorIcon;
+          
+          final errorString = error.toString().toLowerCase();
+          
+          if (errorString.contains('no internet') || 
+              errorString.contains('network') || 
+              errorString.contains('connection') ||
+              errorString.contains('timeout')) {
+            userMessage = 'No Internet Connection\nPlease check your network and try again';
+            errorIcon = Iconsax.wifi;
+          } else if (errorString.contains('server') || 
+                     errorString.contains('503') || 
+                     errorString.contains('502')) {
+            userMessage = 'Server Temporarily Unavailable\nPlease try again in a few minutes';
+            errorIcon = Iconsax.cloud_minus;
+          } else if (errorString.contains('cached') || 
+                     errorString.contains('cache')) {
+            userMessage = 'Unable to Load Courses\nPlease check your connection';
+            errorIcon = Iconsax.refresh;
+          } else {
+            userMessage = 'Something Went Wrong\nPlease try again later';
+            errorIcon = Iconsax.danger;
+          }
+          
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      errorIcon, 
+                      size: 48, 
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
-                  child: const Icon(Iconsax.danger, size: 48, color: Colors.red),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Failed to load courses',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => ref.invalidate(publishedCoursesProvider),
-                  icon: const Icon(Iconsax.refresh),
-                  label: const Text('Retry'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  const SizedBox(height: 24),
+                  Text(
+                    userMessage.split('\n').first,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    userMessage.split('\n').length > 1 ? userMessage.split('\n')[1] : '',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => ref.invalidate(publishedCoursesProvider),
+                    icon: const Icon(Iconsax.refresh),
+                    label: const Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -59,6 +59,11 @@ class CacheService {
     await _cacheBox?.delete('${key}_timestamp');
   }
 
+  // Remove specific cache (alias for clearCache)
+  static Future<void> remove(String key) async {
+    await clearCache(key);
+  }
+
   // Clear all cache
   static Future<void> clearAllCache() async {
     await _cacheBox?.clear();
@@ -73,6 +78,7 @@ class CacheKeys {
   static const String resources = 'resources_cache';
   static const String forumPosts = 'forum_posts_cache';
   static const String profile = 'profile_cache';
+  static const String courses = 'courses_cache';
   
   // Cache durations
   static const Duration shortCache = Duration(minutes: 5);

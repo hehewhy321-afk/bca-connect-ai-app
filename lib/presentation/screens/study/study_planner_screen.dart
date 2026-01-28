@@ -235,6 +235,12 @@ class _StudyPlannerScreenState extends ConsumerState<StudyPlannerScreen> with Si
           message: EasterEggs.study.message,
           child: const Text('Study Planner'),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Iconsax.info_circle),
+            onPressed: () => _showHelpDialog(context),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -252,6 +258,65 @@ class _StudyPlannerScreenState extends ConsumerState<StudyPlannerScreen> with Si
           AssignmentsTab(),
           ExamsTab(),
           SubjectsTab(),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Iconsax.info_circle),
+            SizedBox(width: 12),
+            Text('How to Use Study Planner'),
+          ],
+        ),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '📚 Getting Started:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              Text('1. Start by adding your subjects in the "Subjects" tab'),
+              Text('2. Set your current semester using the semester selector'),
+              Text('3. Add your class schedule in the "Timetable" tab'),
+              Text('4. Track assignments and exams in their respective tabs'),
+              SizedBox(height: 16),
+              Text(
+                '🎯 Features:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              Text('• Color-coded subjects for easy identification'),
+              Text('• Weekly timetable with class timings'),
+              Text('• Assignment tracking with due dates'),
+              Text('• Exam scheduling with countdown timers'),
+              Text('• Semester-wise subject organization'),
+              SizedBox(height: 16),
+              Text(
+                '💡 Tips:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              Text('• Use different colors for each subject'),
+              Text('• Add room numbers for easy navigation'),
+              Text('• Set assignment due dates to get reminders'),
+              Text('• Check the timetable daily for your schedule'),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it!'),
+          ),
         ],
       ),
     );
@@ -280,6 +345,19 @@ class TimetableTab extends ConsumerWidget {
                   Text('No subjects added', style: TextStyle(color: Colors.grey[600])),
                   const SizedBox(height: 8),
                   Text('Add subjects first to create timetable', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      // Switch to subjects tab
+                      final tabController = DefaultTabController.of(context);
+                      tabController.animateTo(3);
+                    },
+                    icon: const Icon(Iconsax.add),
+                    label: const Text('Add Subjects'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFDA7809),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -308,35 +386,72 @@ class TimetableTab extends ConsumerWidget {
                         title: Text(day.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('${daySchedules.length} classes'),
                         children: daySchedules.isEmpty
-                            ? [const Padding(padding: EdgeInsets.all(16), child: Text('No classes', style: TextStyle(color: Colors.grey)))]
-                            : daySchedules.map((schedule) {
-                                final subject = subjectMap[schedule.subjectId];
-                                return ListTile(
-                                  leading: Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: subject?.color.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        subject?.code.substring(0, 2).toUpperCase() ?? '??',
-                                        style: TextStyle(color: subject?.color, fontWeight: FontWeight.bold),
+                            ? [
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    children: [
+                                      const Text('No classes', style: TextStyle(color: Colors.grey)),
+                                      const SizedBox(height: 8),
+                                      TextButton.icon(
+                                        onPressed: () => _showAddScheduleDialog(context, ref, subjects, day),
+                                        icon: const Icon(Iconsax.add),
+                                        label: const Text('Add Class'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ]
+                            : [
+                                ...daySchedules.map((schedule) {
+                                  final subject = subjectMap[schedule.subjectId];
+                                  return ListTile(
+                                    leading: Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: subject?.color.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          subject?.code.substring(0, 2).toUpperCase() ?? '??',
+                                          style: TextStyle(color: subject?.color, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
+                                    title: Text(subject?.name ?? 'Unknown'),
+                                    subtitle: Text('${schedule.startTime.format(context)} - ${schedule.endTime.format(context)} • ${schedule.room}'),
+                                    trailing: IconButton(
+                                      icon: const Icon(Iconsax.trash, color: Colors.red),
+                                      onPressed: () => ref.read(schedulesProvider.notifier).deleteSchedule(schedule.id),
+                                    ),
+                                  );
+                                }),
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: TextButton.icon(
+                                    onPressed: () => _showAddScheduleDialog(context, ref, subjects, day),
+                                    icon: const Icon(Iconsax.add),
+                                    label: const Text('Add Class'),
                                   ),
-                                  title: Text(subject?.name ?? 'Unknown'),
-                                  subtitle: Text('${schedule.startTime.format(context)} - ${schedule.endTime.format(context)} • ${schedule.room}'),
-                                  trailing: IconButton(
-                                    icon: const Icon(Iconsax.trash, color: Colors.red),
-                                    onPressed: () => ref.read(schedulesProvider.notifier).deleteSchedule(schedule.id),
-                                  ),
-                                );
-                              }).toList(),
+                                ),
+                              ],
                       ),
                     );
                   },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton.icon(
+                  onPressed: () => _showAddScheduleDialog(context, ref, subjects, null),
+                  icon: const Icon(Iconsax.add),
+                  label: const Text('Add Class Schedule'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    backgroundColor: const Color(0xFFDA7809),
+                  ),
                 ),
               ),
             ],
@@ -347,6 +462,114 @@ class TimetableTab extends ConsumerWidget {
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  void _showAddScheduleDialog(BuildContext context, WidgetRef ref, List<Subject> subjects, DayOfWeek? preselectedDay) {
+    final roomController = TextEditingController();
+    String? selectedSubjectId = subjects.first.id;
+    DayOfWeek selectedDay = preselectedDay ?? DayOfWeek.monday;
+    TimeOfDay startTime = const TimeOfDay(hour: 9, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 10, minute: 30);
+    String classType = 'Lecture';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Class Schedule'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: selectedSubjectId,
+                  decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder()),
+                  items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
+                  onChanged: (val) => setState(() => selectedSubjectId = val),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<DayOfWeek>(
+                  initialValue: selectedDay,
+                  decoration: const InputDecoration(labelText: 'Day', border: OutlineInputBorder()),
+                  items: DayOfWeek.values.map((day) => DropdownMenuItem(value: day, child: Text(day.displayName))).toList(),
+                  onChanged: (val) => setState(() => selectedDay = val!),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ListTile(
+                        title: const Text('Start Time'),
+                        subtitle: Text(startTime.format(context)),
+                        trailing: const Icon(Iconsax.clock),
+                        onTap: () async {
+                          final time = await showTimePicker(context: context, initialTime: startTime);
+                          if (time != null) setState(() => startTime = time);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: ListTile(
+                        title: const Text('End Time'),
+                        subtitle: Text(endTime.format(context)),
+                        trailing: const Icon(Iconsax.clock),
+                        onTap: () async {
+                          final time = await showTimePicker(context: context, initialTime: endTime);
+                          if (time != null) setState(() => endTime = time);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: roomController,
+                  decoration: const InputDecoration(labelText: 'Room/Location', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: classType,
+                  decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                  items: ['Lecture', 'Lab', 'Tutorial', 'Seminar'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (val) => setState(() => classType = val!),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () {
+                if (selectedSubjectId == null || roomController.text.isEmpty) return;
+                
+                // Validate time order
+                final startMinutes = startTime.hour * 60 + startTime.minute;
+                final endMinutes = endTime.hour * 60 + endTime.minute;
+                if (startMinutes >= endMinutes) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('End time must be after start time')),
+                  );
+                  return;
+                }
+                
+                final schedule = ClassSchedule(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  subjectId: selectedSubjectId!,
+                  day: selectedDay,
+                  startTime: startTime,
+                  endTime: endTime,
+                  room: roomController.text,
+                  type: classType,
+                );
+                ref.read(schedulesProvider.notifier).addSchedule(schedule);
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -10,6 +10,7 @@ import '../../providers/announcement_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../../core/services/notification_listener_service.dart';
 import '../../../core/services/permission_service.dart';
+import '../../../core/services/quick_actions_service.dart';
 import '../events/enhanced_events_screen.dart';
 import '../forum/enhanced_forum_screen.dart';
 import '../resources/enhanced_resources_screen.dart';
@@ -18,11 +19,20 @@ import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/offline_indicator.dart';
 import '../../widgets/daily_quote_card.dart';
+import '../../widgets/reorderable_bento_grid.dart';
 import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
 
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
 final lastBackPressProvider = StateProvider<DateTime?>((ref) => null);
+
+// Quick Actions Provider
+final quickActionsProvider = FutureProvider<List<QuickAction>>((ref) async {
+  final service = QuickActionsService();
+  return await service.getOrderedQuickActions();
+});
+
+final quickActionsCustomizationProvider = StateProvider<bool>((ref) => false);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -272,195 +282,65 @@ class DashboardTab extends ConsumerWidget {
               // Daily Quote/Tip Card
               const DailyQuoteCard(),
 
-              // Quick Actions - Perfect Bento Grid Layout
-              Text(
-                'Quick Actions',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              // Quick Actions - Reorderable Bento Grid
+              Consumer(
+                builder: (context, ref, child) {
+                  final quickActionsAsync = ref.watch(quickActionsProvider);
+                  final isCustomizationMode = ref.watch(quickActionsCustomizationProvider);
+
+                  return quickActionsAsync.when(
+                    data: (actions) => ReorderableBentoGrid(
+                      actions: actions,
+                      isCustomizationMode: isCustomizationMode,
+                      onReorder: (reorderedActions) async {
+                        final service = QuickActionsService();
+                        await service.saveOrderedQuickActions(reorderedActions);
+                        ref.invalidate(quickActionsProvider);
+                      },
+                      onToggleCustomization: () {
+                        ref.read(quickActionsCustomizationProvider.notifier).state = !isCustomizationMode;
+                      },
                     ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Bento Grid Layout matching the exact image design
-              Column(
-                children: [
-                  // First Row - Large square left + 2 horizontal right
-                  SizedBox(
-                    height: 160,
-                    child: Row(
+                    loading: () => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Large square card (Courses)
-                        Expanded(
-                          flex: 1,
-                          child: _BentoGridCard(
-                            icon: Iconsax.video_play,
-                            title: 'Courses',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            isLarge: true,
-                            onTap: () => context.push('/courses'),
-                          ),
+                        Text(
+                          'Quick Actions',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
-                        const SizedBox(width: 8),
-                        // Right column with 2 horizontal cards
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: _BentoGridCard(
-                                  icon: Iconsax.book_1,
-                                  title: 'Study Planner',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF8B5CF6), Color(0xFFA855F7)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  isHorizontal: true,
-                                  onTap: () => context.push('/study'),
-                                ),
+                        const SizedBox(height: 12),
+                        const Center(child: CircularProgressIndicator()),
+                      ],
+                    ),
+                    error: (error, stack) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quick Actions',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: _BentoGridCard(
-                                  icon: Iconsax.document_text,
-                                  title: 'Notices',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  isHorizontal: true,
-                                  onTap: () => context.push('/notices'),
-                                ),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Failed to load quick actions',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Second Row - 2 horizontal left + Large square right
-                  SizedBox(
-                    height: 160,
-                    child: Row(
-                      children: [
-                        // Left column with 2 horizontal cards
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: _BentoGridCard(
-                                  icon: Iconsax.timer_1,
-                                  title: 'Pomodoro Timer',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  isHorizontal: true,
-                                  onTap: () => context.push('/pomodoro'),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: _BentoGridCard(
-                                  icon: Iconsax.wallet_money,
-                                  title: 'Finance Tracker',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFEC4899), Color(0xFFF97316)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  isHorizontal: true,
-                                  onTap: () => context.push('/finance'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Large square card (Fun Zone)
-                        Expanded(
-                          flex: 1,
-                          child: _BentoGridCard(
-                            icon: Iconsax.emoji_happy,
-                            title: 'Fun Zone-Games',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFF59E0B), Color(0xFFEAB308)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            isLarge: true,
-                            onTap: () => context.push('/fun-zone'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Third Row - 2 unequal horizontal cards (नेपाली पात्रो smaller, Community Hub larger)
-                  SizedBox(
-                    height: 76,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 2, // Smaller width for नेपाली पात्रो
-                          child: _BentoGridCard(
-                            icon: Iconsax.calendar_2,
-                            title: 'नेपाली पात्रो',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B35), Color(0xFFFF8A50)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            isHorizontal: true,
-                            onTap: () => context.push('/calendar'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 3, // Larger width for Community Hub
-                          child: _BentoGridCard(
-                            icon: Iconsax.people,
-                            title: 'Community Hub',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF10B981), Color(0xFF059669)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            isHorizontal: true,
-                            onTap: () => context.push('/community'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Fourth Row - Full width horizontal card
-                  SizedBox(
-                    height: 76,
-                    child: _BentoGridCard(
-                      icon: Iconsax.game,
-                      title: 'Algorithm Games',
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8B5CF6), Color(0xFFA855F7)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      isWide: true,
-                      onTap: () => context.push('/algorithm-game'),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
@@ -659,180 +539,6 @@ class DashboardTab extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-// Perfect Bento Grid Card Widget matching the image layout
-class _BentoGridCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Gradient gradient;
-  final VoidCallback onTap;
-  final bool isLarge;
-  final bool isHorizontal;
-  final bool isWide;
-
-  const _BentoGridCard({
-    required this.icon,
-    required this.title,
-    required this.gradient,
-    required this.onTap,
-    this.isLarge = false,
-    this.isHorizontal = false,
-    this.isWide = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Background pattern/texture
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.1),
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                ),
-              ),
-              
-              // Content based on card type
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildContent(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (isWide) {
-      // Full width horizontal card
-      return Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(icon, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                height: 1.2,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      );
-    } else if (isLarge) {
-      // Large square card
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      );
-    } else {
-      // Horizontal rectangular card
-      return Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                height: 1.2,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      );
-    }
   }
 }
 

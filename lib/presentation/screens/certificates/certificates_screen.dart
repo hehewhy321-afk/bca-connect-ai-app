@@ -46,7 +46,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
     final filteredCertificatesAsync = ref.watch(filteredCertificatesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // Purple Gradient Header
@@ -134,21 +134,23 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Iconsax.search_normal,
-            color: Colors.grey[500],
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -159,10 +161,10 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                 setState(() {});
                 ref.read(certificateSearchQueryProvider.notifier).state = value;
               },
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search certificates...',
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -170,7 +172,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
           ),
           if (_searchController.text.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.close, color: Colors.grey[500], size: 20),
+              icon: Icon(Icons.close, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 20),
               onPressed: () {
                 setState(() {
                   _searchController.clear();
@@ -275,7 +277,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                 colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
               )
             : null,
-          color: isSelected ? null : const Color(0xFF1F1F1F),
+          color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: isSelected 
@@ -286,7 +288,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[400],
+            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 14,
           ),
@@ -335,11 +337,11 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'No Certificates Yet',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 20,
             ),
           ),
@@ -350,7 +352,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
               'Participate in events and activities to earn certificates!',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
@@ -378,11 +380,11 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         children: [
           Icon(Iconsax.info_circle, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Oops! Something went wrong',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
             ),
           ),
@@ -392,7 +394,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             child: Text(
               error.toString(),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[400]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(height: 24),
@@ -508,9 +510,9 @@ class _CertificateCard extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               ),
@@ -521,8 +523,8 @@ class _CertificateCard extends StatelessWidget {
                 // Title
                 Text(
                   certificate.title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -535,7 +537,7 @@ class _CertificateCard extends StatelessWidget {
                   Text(
                     certificate.description!,
                     style: TextStyle(
-                      color: Colors.grey[400],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 14,
                     ),
                     maxLines: 2,
@@ -551,10 +553,10 @@ class _CertificateCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: Colors.grey.withValues(alpha: 0.2),
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Row(
@@ -568,8 +570,8 @@ class _CertificateCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             DateFormat('MMM dd, yyyy').format(certificate.issueDate),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 12,
                             ),
                           ),
@@ -581,7 +583,7 @@ class _CertificateCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: Colors.grey.withValues(alpha: 0.2),
@@ -599,8 +601,8 @@ class _CertificateCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 certificate.verificationCode,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontSize: 12,
                                 ),
                                 maxLines: 1,

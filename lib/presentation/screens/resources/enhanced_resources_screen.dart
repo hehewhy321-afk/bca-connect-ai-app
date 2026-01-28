@@ -10,6 +10,7 @@ import '../../../data/models/resource.dart';
 import '../../../data/repositories/resource_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
@@ -57,6 +58,35 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
   Future<void> _handleResourceView(BuildContext context, Resource resource) async {
     try {
+      // Check connectivity first
+      final connectivity = ConnectivityService();
+      final isOnline = await connectivity.isOnline();
+      
+      if (!isOnline) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Iconsax.wifi_square, color: Colors.white),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('No Internet Connection')),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: () => _handleResourceView(context, resource),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
       final user = SupabaseConfig.client.auth.currentUser;
 
       // Increment view count
@@ -104,18 +134,52 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       ref.invalidate(allResourcesProvider);
     } catch (e) {
       if (context.mounted) {
+        String errorMessage;
+        Color errorColor = Colors.red;
+        IconData errorIcon = Iconsax.close_circle;
+        
+        final errorString = e.toString();
+        if (errorString.contains('No internet connection') || 
+            errorString.contains('SocketException') ||
+            errorString.contains('Failed host lookup')) {
+          errorMessage = 'No internet connection. Please check your network.';
+          errorIcon = Iconsax.wifi_square;
+          errorColor = Colors.orange;
+        } else if (errorString.contains('Storage permission')) {
+          errorMessage = 'Storage permission required to download files.';
+          errorIcon = Iconsax.folder_minus;
+          errorColor = Colors.blue;
+        } else if (errorString.contains('Could not launch')) {
+          errorMessage = 'Unable to open this link. Please try again.';
+          errorIcon = Iconsax.link_21;
+          errorColor = Colors.orange;
+        } else if (errorString.contains('No URL available')) {
+          errorMessage = 'This resource is not available for download.';
+          errorIcon = Iconsax.info_circle;
+          errorColor = Colors.blue;
+        } else {
+          errorMessage = 'Unable to access this resource. Please try again.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Iconsax.close_circle, color: Colors.white),
+                Icon(errorIcon, color: Colors.white),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Error: ${e.toString()}')),
+                Expanded(child: Text(errorMessage)),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            action: errorString.contains('No internet connection') || errorString.contains('try again')
+                ? SnackBarAction(
+                    label: 'Retry',
+                    textColor: Colors.white,
+                    onPressed: () => _handleResourceView(context, resource),
+                  )
+                : null,
           ),
         );
       }
@@ -138,6 +202,14 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
   Future<void> _downloadFile(BuildContext context, Resource resource, String url) async {
     try {
+      // Check connectivity before starting download
+      final connectivity = ConnectivityService();
+      final isOnline = await connectivity.isOnline();
+      
+      if (!isOnline) {
+        throw 'No internet connection available for download';
+      }
+
       // Request storage permission for Android
       if (Platform.isAndroid) {
         PermissionStatus status;
@@ -297,8 +369,11 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
         );
       }
 
-      // Download file
+      // Download file with timeout and error handling
       final dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 30);
+      dio.options.receiveTimeout = const Duration(minutes: 5);
+      
       await dio.download(
         downloadUrl,
         filePath,
@@ -364,7 +439,22 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       setState(() {
         _downloadProgress.remove(resource.id);
       });
-      rethrow;
+      
+      // Handle specific download errors
+      String errorMessage;
+      if (e.toString().contains('No internet connection')) {
+        errorMessage = 'No internet connection available for download';
+      } else if (e.toString().contains('DioException') || e.toString().contains('timeout')) {
+        errorMessage = 'Download failed due to network timeout. Please try again.';
+      } else if (e.toString().contains('Storage permission')) {
+        errorMessage = 'Storage permission required to download files';
+      } else if (e.toString().contains('Could not access storage')) {
+        errorMessage = 'Unable to access device storage for download';
+      } else {
+        errorMessage = 'Download failed. Please check your connection and try again.';
+      }
+      
+      throw errorMessage;
     }
   }
 

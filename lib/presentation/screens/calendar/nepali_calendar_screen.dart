@@ -13,7 +13,7 @@ final selectedViewProvider = StateProvider<CalendarView>((ref) => CalendarView.m
 enum CalendarView { month, year }
 
 // Helper function to get correct Nepali day name from AD date
-String getNepaliDayName(DateTime adDate) {
+String _getNepaliDayName(DateTime adDate) {
   const nepaliDays = ['आइतबार', 'सोमबार', 'मंगलबार', 'बुधबार', 'बिहिबार', 'शुक्रबार', 'शनिबार'];
   // DateTime.weekday: 1=Monday, 2=Tuesday, ..., 7=Sunday
   // We need: 0=Sunday, 1=Monday, ..., 6=Saturday
@@ -36,12 +36,12 @@ class NepaliCalendarScreen extends ConsumerStatefulWidget {
 
 class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
   late PageController _pageController;
-  final int _currentPageIndex = 1200; // Start from middle to allow backward navigation
+  static const int _initialPageIndex = 1200; // Start from middle to allow backward navigation
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentPageIndex);
+    _pageController = PageController(initialPage: _initialPageIndex);
   }
 
   @override
@@ -155,7 +155,7 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    getNepaliDayName(today.toDateTime()),
+                                    _getNepaliDayName(today.toDateTime()),
                                     style: TextStyle(
                                       color: Colors.white.withValues(alpha: 0.9),
                                       fontSize: 14,
@@ -235,71 +235,7 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                   const SizedBox(height: 20),
 
                   // Calendar Navigation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          if (selectedView == CalendarView.month) {
-                            // Handle month navigation with year transition
-                            final newYear = selectedDate.month == 1 
-                                ? selectedDate.year - 1 
-                                : selectedDate.year;
-                            final newMonth = selectedDate.month == 1 
-                                ? 12 
-                                : selectedDate.month - 1;
-                            final newDate = NepaliDateTime(newYear, newMonth);
-                            ref.read(selectedDateProvider.notifier).state = newDate;
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          } else {
-                            final newDate = NepaliDateTime(selectedDate.year - 1);
-                            ref.read(selectedDateProvider.notifier).state = newDate;
-                          }
-                        },
-                        icon: const Icon(Iconsax.arrow_left_2),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        ),
-                      ),
-                      Text(
-                        selectedView == CalendarView.month
-                            ? NepaliDateFormat('MMMM yyyy', Language.nepali).format(selectedDate)
-                            : NepaliDateFormat('yyyy', Language.nepali).format(selectedDate),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          if (selectedView == CalendarView.month) {
-                            // Handle month navigation with year transition
-                            final newYear = selectedDate.month == 12 
-                                ? selectedDate.year + 1 
-                                : selectedDate.year;
-                            final newMonth = selectedDate.month == 12 
-                                ? 1 
-                                : selectedDate.month + 1;
-                            final newDate = NepaliDateTime(newYear, newMonth);
-                            ref.read(selectedDateProvider.notifier).state = newDate;
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          } else {
-                            final newDate = NepaliDateTime(selectedDate.year + 1);
-                            ref.read(selectedDateProvider.notifier).state = newDate;
-                          }
-                        },
-                        icon: const Icon(Iconsax.arrow_right_3),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 150.ms),
+                  _buildNavigationRow(context, selectedDate, selectedView),
 
                   const SizedBox(height: 20),
 
@@ -330,31 +266,7 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                   const SizedBox(height: 16),
 
                   // Info Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.blue.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Iconsax.info_circle,
-                          color: Colors.blue,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Nepali calendar is based on Bikram Sambat (BS) system',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 350.ms),
+                  _buildInfoCard(context),
                 ],
               ),
             ),
@@ -362,6 +274,96 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildNavigationRow(BuildContext context, NepaliDateTime selectedDate, CalendarView selectedView) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: () => _navigatePrevious(selectedDate, selectedView),
+          icon: const Icon(Iconsax.arrow_left_2),
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+        ),
+        Text(
+          selectedView == CalendarView.month
+              ? NepaliDateFormat('MMMM yyyy', Language.nepali).format(selectedDate)
+              : NepaliDateFormat('yyyy', Language.nepali).format(selectedDate),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        IconButton(
+          onPressed: () => _navigateNext(selectedDate, selectedView),
+          icon: const Icon(Iconsax.arrow_right_3),
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 150.ms);
+  }
+
+  void _navigatePrevious(NepaliDateTime selectedDate, CalendarView selectedView) {
+    if (selectedView == CalendarView.month) {
+      final newYear = selectedDate.month == 1 ? selectedDate.year - 1 : selectedDate.year;
+      final newMonth = selectedDate.month == 1 ? 12 : selectedDate.month - 1;
+      final newDate = NepaliDateTime(newYear, newMonth);
+      ref.read(selectedDateProvider.notifier).state = newDate;
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      final newDate = NepaliDateTime(selectedDate.year - 1);
+      ref.read(selectedDateProvider.notifier).state = newDate;
+    }
+  }
+
+  void _navigateNext(NepaliDateTime selectedDate, CalendarView selectedView) {
+    if (selectedView == CalendarView.month) {
+      final newYear = selectedDate.month == 12 ? selectedDate.year + 1 : selectedDate.year;
+      final newMonth = selectedDate.month == 12 ? 1 : selectedDate.month + 1;
+      final newDate = NepaliDateTime(newYear, newMonth);
+      ref.read(selectedDateProvider.notifier).state = newDate;
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      final newDate = NepaliDateTime(selectedDate.year + 1);
+      ref.read(selectedDateProvider.notifier).state = newDate;
+    }
+  }
+
+  Widget _buildInfoCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.blue.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Iconsax.info_circle,
+            color: Colors.blue,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Nepali calendar is based on Bikram Sambat (BS) system',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 350.ms);
   }
 
   Widget _buildViewButton(BuildContext context, String label, CalendarView view, bool isSelected) {
@@ -387,20 +389,8 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
   }
 
   Widget _buildMonthView(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today) {
-    final firstDayOfMonth = NepaliDateTime(selectedDate.year, selectedDate.month, 1);
-    // Get days in month by checking the last day of the month
-    final nextMonth = selectedDate.month == 12 
-        ? NepaliDateTime(selectedDate.year + 1, 1, 1)
-        : NepaliDateTime(selectedDate.year, selectedDate.month + 1, 1);
-    final lastDayOfMonth = nextMonth.subtract(const Duration(days: 1));
-    final daysInMonth = lastDayOfMonth.day;
+    final monthData = _getMonthData(selectedDate);
     
-    // Convert to AD date to get correct weekday
-    final firstDayAD = firstDayOfMonth.toDateTime();
-    // weekday: 1=Monday, 2=Tuesday, ..., 7=Sunday
-    // We need: 0=Sunday, 1=Monday, ..., 6=Saturday
-    final startWeekday = firstDayAD.weekday == 7 ? 0 : firstDayAD.weekday;
-
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -420,99 +410,143 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
       child: Column(
         children: [
           // Weekday Headers
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['आइत', 'सोम', 'मंगल', 'बुध', 'बिहि', 'शुक्र', 'शनि']
-                .map((day) => Expanded(
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ))
-                .toList(),
-          ),
+          _buildWeekdayHeaders(context),
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 12),
 
           // Calendar Days
-          ...List.generate((daysInMonth + startWeekday) ~/ 7 + 1, (weekIndex) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(7, (dayIndex) {
-                  final dayNumber = weekIndex * 7 + dayIndex - startWeekday + 1;
-                  
-                  if (dayNumber < 1 || dayNumber > daysInMonth) {
-                    return const Expanded(child: SizedBox(height: 44));
-                  }
-
-                  final isToday = today.year == selectedDate.year &&
-                      today.month == selectedDate.month &&
-                      today.day == dayNumber;
-
-                  // Check if this specific date is Saturday by converting to AD
-                  final currentDate = NepaliDateTime(selectedDate.year, selectedDate.month, dayNumber);
-                  final currentDateAD = currentDate.toDateTime();
-                  final isSaturday = currentDateAD.weekday == 6; // 6 = Saturday in Dart DateTime
-
-                  return Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        ref.read(selectedDateProvider.notifier).state = NepaliDateTime(
-                          selectedDate.year,
-                          selectedDate.month,
-                          dayNumber,
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        height: 44,
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: isToday
-                              ? ModernTheme.primaryOrange
-                              : isSaturday
-                                  ? Colors.red.withValues(alpha: 0.1)
-                                  : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isToday
-                                ? ModernTheme.primaryOrange
-                                : Colors.transparent,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            NepaliUnicode.convert('$dayNumber'),
-                            style: TextStyle(
-                              color: isToday
-                                  ? Colors.white
-                                  : isSaturday
-                                      ? Colors.red
-                                      : Theme.of(context).colorScheme.onSurface,
-                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            );
-          }),
+          ..._buildCalendarWeeks(context, selectedDate, today, monthData),
         ],
       ),
     ).animate().fadeIn(delay: 200.ms).scale(delay: 200.ms, begin: const Offset(0.95, 0.95));
+  }
+
+  ({int daysInMonth, int startWeekday}) _getMonthData(NepaliDateTime selectedDate) {
+    final firstDayOfMonth = NepaliDateTime(selectedDate.year, selectedDate.month, 1);
+    // Get days in month by checking the last day of the month
+    final nextMonth = selectedDate.month == 12 
+        ? NepaliDateTime(selectedDate.year + 1, 1, 1)
+        : NepaliDateTime(selectedDate.year, selectedDate.month + 1, 1);
+    final lastDayOfMonth = nextMonth.subtract(const Duration(days: 1));
+    final daysInMonth = lastDayOfMonth.day;
+    
+    // Convert to AD date to get correct weekday
+    final firstDayAD = firstDayOfMonth.toDateTime();
+    // weekday: 1=Monday, 2=Tuesday, ..., 7=Sunday
+    // We need: 0=Sunday, 1=Monday, ..., 6=Saturday
+    final startWeekday = firstDayAD.weekday == 7 ? 0 : firstDayAD.weekday;
+    
+    return (daysInMonth: daysInMonth, startWeekday: startWeekday);
+  }
+
+  Widget _buildWeekdayHeaders(BuildContext context) {
+    const weekdays = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिहि', 'शुक्र', 'शनि'];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: weekdays
+          .map((day) => Expanded(
+                child: Center(
+                  child: Text(
+                    day,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  List<Widget> _buildCalendarWeeks(
+    BuildContext context, 
+    NepaliDateTime selectedDate, 
+    NepaliDateTime today, 
+    ({int daysInMonth, int startWeekday}) monthData,
+  ) {
+    final weeks = <Widget>[];
+    final totalCells = monthData.daysInMonth + monthData.startWeekday;
+    final numberOfWeeks = (totalCells / 7).ceil();
+
+    for (int weekIndex = 0; weekIndex < numberOfWeeks; weekIndex++) {
+      weeks.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (dayIndex) {
+              final dayNumber = weekIndex * 7 + dayIndex - monthData.startWeekday + 1;
+              
+              if (dayNumber < 1 || dayNumber > monthData.daysInMonth) {
+                return const Expanded(child: SizedBox(height: 44));
+              }
+
+              return _buildDayCell(context, selectedDate, today, dayNumber);
+            }),
+          ),
+        ),
+      );
+    }
+    
+    return weeks;
+  }
+
+  Widget _buildDayCell(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today, int dayNumber) {
+    final isToday = today.year == selectedDate.year &&
+        today.month == selectedDate.month &&
+        today.day == dayNumber;
+
+    // Check if this specific date is Saturday by converting to AD
+    final currentDate = NepaliDateTime(selectedDate.year, selectedDate.month, dayNumber);
+    final currentDateAD = currentDate.toDateTime();
+    final isSaturday = currentDateAD.weekday == 6; // 6 = Saturday in Dart DateTime
+
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          ref.read(selectedDateProvider.notifier).state = NepaliDateTime(
+            selectedDate.year,
+            selectedDate.month,
+            dayNumber,
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 44,
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: isToday
+                ? ModernTheme.primaryOrange
+                : isSaturday
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isToday
+                  ? ModernTheme.primaryOrange
+                  : Colors.transparent,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              NepaliUnicode.convert('$dayNumber'),
+              style: TextStyle(
+                color: isToday
+                    ? Colors.white
+                    : isSaturday
+                        ? Colors.red
+                        : Theme.of(context).colorScheme.onSurface,
+                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildYearView(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today) {
@@ -530,45 +564,49 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
         final month = index + 1;
         final isCurrentMonth = today.year == selectedDate.year && today.month == month;
 
-        return InkWell(
-          onTap: () {
-            ref.read(selectedDateProvider.notifier).state = NepaliDateTime(
-              selectedDate.year,
-              month,
-            );
-            ref.read(selectedViewProvider.notifier).state = CalendarView.month;
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isCurrentMonth
-                  ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isCurrentMonth
-                    ? ModernTheme.primaryOrange
-                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                NepaliDateFormat('MMMM', Language.nepali).format(
-                  NepaliDateTime(selectedDate.year, month),
-                ),
-                style: TextStyle(
-                  color: isCurrentMonth
-                      ? ModernTheme.primaryOrange
-                      : Theme.of(context).colorScheme.onSurface,
-                  fontWeight: isCurrentMonth ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ).animate(delay: Duration(milliseconds: 50 * index)).fadeIn().scale();
+        return _buildMonthCard(context, selectedDate, month, isCurrentMonth, index);
       },
     );
+  }
+
+  Widget _buildMonthCard(BuildContext context, NepaliDateTime selectedDate, int month, bool isCurrentMonth, int index) {
+    return InkWell(
+      onTap: () {
+        ref.read(selectedDateProvider.notifier).state = NepaliDateTime(
+          selectedDate.year,
+          month,
+        );
+        ref.read(selectedViewProvider.notifier).state = CalendarView.month;
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isCurrentMonth
+              ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCurrentMonth
+                ? ModernTheme.primaryOrange
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            NepaliDateFormat('MMMM', Language.nepali).format(
+              NepaliDateTime(selectedDate.year, month),
+            ),
+            style: TextStyle(
+              color: isCurrentMonth
+                  ? ModernTheme.primaryOrange
+                  : Theme.of(context).colorScheme.onSurface,
+              fontWeight: isCurrentMonth ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    ).animate(delay: Duration(milliseconds: 50 * index)).fadeIn().scale();
   }
 }

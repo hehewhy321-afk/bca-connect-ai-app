@@ -9,6 +9,7 @@ import 'core/config/supabase_config.dart';
 import 'core/theme/modern_theme.dart';
 import 'core/services/cache_service.dart';
 import 'core/services/notification_service.dart';
+import 'data/services/task_storage_service.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/widgets/offline_indicator.dart';
@@ -17,7 +18,6 @@ import 'presentation/widgets/offline_indicator.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('Handling background message: ${message.messageId}');
   
   // Show notification
   final notification = message.notification;
@@ -43,6 +43,9 @@ void main() async {
     // Initialize Cache Service
     await CacheService().initialize();
     
+    // Initialize Task Storage Service
+    await TaskStorageService.initialize();
+    
     // Initialize Supabase
     await SupabaseConfig.initialize();
     
@@ -53,7 +56,6 @@ void main() async {
       // Initialize Firebase Analytics
       FirebaseAnalytics analytics = FirebaseAnalytics.instance;
       await analytics.setAnalyticsCollectionEnabled(true);
-      debugPrint('Firebase Analytics initialized successfully');
       
       // Set background message handler
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -61,13 +63,11 @@ void main() async {
       // Initialize Notification Service
       await NotificationService().initialize();
     } catch (e) {
-      debugPrint('Firebase initialization skipped: $e');
       // App will work without push notifications and analytics
     }
     
     runApp(const ProviderScope(child: MyApp()));
   } catch (e) {
-    debugPrint('Initialization error: $e');
     runApp(const ProviderScope(child: ErrorApp()));
   }
 }

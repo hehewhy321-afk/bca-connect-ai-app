@@ -12,10 +12,8 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 final eventsProvider = FutureProvider<List<Event>>((ref) async {
   try {
     final events = await ref.watch(eventRepositoryProvider).getEvents();
-    debugPrint('Events Provider: Loaded ${events.length} events');
     return events;
   } catch (e) {
-    debugPrint('Events Provider Error: $e');
     rethrow;
   }
 });
@@ -33,10 +31,8 @@ final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
       return isNotCompletedByStatus && isNotCompletedByDate;
     }).toList();
     
-    debugPrint('Upcoming Events Provider: Loaded ${upcomingOnly.length} events (filtered out completed)');
     return upcomingOnly;
   } catch (e) {
-    debugPrint('Upcoming Events Provider Error: $e');
     rethrow;
   }
 });
@@ -45,7 +41,6 @@ final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
 final featuredEventsProvider = FutureProvider<List<Event>>((ref) async {
   try {
     final events = await ref.watch(eventRepositoryProvider).getFeaturedEvents();
-    debugPrint('Featured Events Provider: Loaded ${events.length} events');
     return events;
   } catch (e) {
     debugPrint('Featured Events Provider Error: $e');

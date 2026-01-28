@@ -1,10 +1,5 @@
 # BCA Association - Mobile App
 
-**Version:** 1.3.0  
-**Build:** 5  
-**Platform:** Android  
-**Framework:** Flutter 3.10.4
-
 A comprehensive mobile application for BCA students at MMAMC College, featuring AI-powered study assistance, event management, forum discussions, resource hub, study planner, finance tracker, algorithm learning game, and 13 fun arcade games.
 
 ---

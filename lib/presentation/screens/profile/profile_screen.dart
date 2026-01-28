@@ -163,7 +163,7 @@ class ProfileScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -182,7 +182,7 @@ class ProfileScreen extends ConsumerWidget {
               child: Text(
                 'Update Available',
                 style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -468,10 +468,10 @@ class ProfileScreen extends ConsumerWidget {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -511,7 +511,7 @@ class ProfileScreen extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFF1A1A1A),
+                                  color: Theme.of(context).colorScheme.surface,
                                   width: 4,
                                 ),
                               ),
@@ -564,10 +564,10 @@ class ProfileScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
                               profile?.fullName ?? user?.email?.split('@').first ?? 'User',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 letterSpacing: -0.5,
                               ),
                               textAlign: TextAlign.center,
@@ -602,16 +602,16 @@ class ProfileScreen extends ConsumerWidget {
                                   return Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF2A2A2A),
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.1),
+                                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
                                       ),
                                     ),
                                     child: Text(
                                       skill,
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.9),
+                                        color: Theme.of(context).colorScheme.onSurface,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -639,7 +639,7 @@ class ProfileScreen extends ConsumerWidget {
                                   Container(
                                     width: 1,
                                     height: 40,
-                                    color: Colors.white.withValues(alpha: 0.1),
+                                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                                   ),
                                   _CompactStatItem(
                                     icon: Iconsax.award5,
@@ -651,7 +651,7 @@ class ProfileScreen extends ConsumerWidget {
                                     Container(
                                       width: 1,
                                       height: 40,
-                                      color: Colors.white.withValues(alpha: 0.1),
+                                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                                     ),
                                     _CompactStatItem(
                                       icon: Iconsax.book_1,
@@ -1129,10 +1129,10 @@ class ProfileScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Column(
@@ -1171,7 +1171,7 @@ class ProfileScreen extends ConsumerWidget {
                           user.email ?? '',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1348,17 +1348,17 @@ class _CompactStatItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

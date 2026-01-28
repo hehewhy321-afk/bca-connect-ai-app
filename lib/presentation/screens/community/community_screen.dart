@@ -200,7 +200,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     final alumni = _members.where((m) => m['is_alumni'] == true).length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -382,30 +382,32 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Iconsax.search_normal,
-            color: Colors.grey[500],
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search by name, batch, or skills...',
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -438,6 +440,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Widget _buildFilterChip(String label, bool selected, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -448,18 +452,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                 colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
               )
             : null,
-          color: selected ? null : const Color(0xFF1F1F1F),
+          color: selected ? null : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: selected 
               ? Colors.transparent 
-              : Colors.grey.withValues(alpha: 0.3),
+              : theme.colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.grey[400],
+            color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             fontSize: 14,
           ),
@@ -469,25 +473,27 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Widget _buildAdvancedFilters() {
+    final theme = Theme.of(context);
+    
     return Row(
       children: [
         Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.2),
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _batchFilter,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                icon: Icon(Iconsax.arrow_down_1, color: Colors.grey[500], size: 16),
+                dropdownColor: theme.colorScheme.surface,
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                icon: Icon(Iconsax.arrow_down_1, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 16),
                 items: [
                   const DropdownMenuItem(
                     value: 'all',
@@ -507,19 +513,19 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.2),
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _semesterFilter,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                icon: Icon(Iconsax.arrow_down_1, color: Colors.grey[500], size: 16),
+                dropdownColor: theme.colorScheme.surface,
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                icon: Icon(Iconsax.arrow_down_1, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 16),
                 items: const [
                   DropdownMenuItem(value: 'all', child: Text('All Semesters')),
                   DropdownMenuItem(value: '1', child: Text('Semester 1')),
@@ -541,6 +547,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    
     return Center(
       child: Column(
         children: [
@@ -563,11 +571,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'No Members Found',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: theme.colorScheme.onSurface,
               fontSize: 20,
             ),
           ),
@@ -578,7 +586,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
               'Try adjusting your search or filter criteria',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
@@ -667,14 +675,7 @@ class _MemberCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A1A1A),
-            const Color(0xFF0F0F0F),
-          ],
-        ),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFFDA7809).withValues(alpha: 0.1),
@@ -682,7 +683,7 @@ class _MemberCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -767,8 +768,8 @@ class _MemberCard extends StatelessWidget {
                       children: [
                         Text(
                           fullName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             letterSpacing: -0.5,
@@ -790,7 +791,7 @@ class _MemberCard extends StatelessWidget {
                                   batch,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey[300],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -878,14 +879,14 @@ class _MemberCard extends StatelessWidget {
                         Icon(
                           Iconsax.book_1,
                           size: 14,
-                          color: Colors.grey[400],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           'Semester $semester',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[400],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -930,7 +931,7 @@ class _MemberCard extends StatelessWidget {
                           Icon(
                             Iconsax.building,
                             size: 14,
-                            color: Colors.grey[400],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -938,7 +939,7 @@ class _MemberCard extends StatelessWidget {
                               currentCompany,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[300],
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
@@ -990,7 +991,7 @@ class _MemberCard extends StatelessWidget {
                       bio,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[300],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
                       ),
                       maxLines: 2,
@@ -1003,7 +1004,7 @@ class _MemberCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1019,7 +1020,7 @@ class _MemberCard extends StatelessWidget {
                           '$xpPoints XP',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1037,7 +1038,7 @@ class _MemberCard extends StatelessWidget {
                         ...skills.take(3).map((skill) => Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: const Color(0xFFDA7809).withValues(alpha: 0.2),
@@ -1047,7 +1048,7 @@ class _MemberCard extends StatelessWidget {
                                 skill,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[300],
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -1086,10 +1087,10 @@ class _MemberCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2),
+                                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Row(
@@ -1098,14 +1099,14 @@ class _MemberCard extends StatelessWidget {
                                   Icon(
                                     Iconsax.code_circle,
                                     size: 18,
-                                    color: Colors.grey[400],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'GitHub',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.grey[300],
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1125,10 +1126,10 @@ class _MemberCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2),
+                                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Row(
@@ -1137,14 +1138,14 @@ class _MemberCard extends StatelessWidget {
                                   Icon(
                                     Iconsax.profile_2user,
                                     size: 18,
-                                    color: Colors.grey[400],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'LinkedIn',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.grey[300],
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1164,10 +1165,10 @@ class _MemberCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2),
+                                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Row(
@@ -1176,14 +1177,14 @@ class _MemberCard extends StatelessWidget {
                                   Icon(
                                     Iconsax.sms,
                                     size: 18,
-                                    color: Colors.grey[400],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Email',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.grey[300],
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),

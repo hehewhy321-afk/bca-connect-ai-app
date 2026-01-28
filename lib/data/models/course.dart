@@ -80,6 +80,17 @@ class CourseChapter {
           [],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'course_id': courseId,
+      'title': title,
+      'order_index': orderIndex,
+      'created_at': createdAt.toIso8601String(),
+      'lessons': lessons.map((e) => e.toJson()).toList(),
+    };
+  }
 }
 
 class CourseLesson {
@@ -114,6 +125,19 @@ class CourseLesson {
       orderIndex: json['order_index'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'chapter_id': chapterId,
+      'title': title,
+      'video_url': videoUrl,
+      'duration': duration,
+      'is_free_preview': isFreePreview,
+      'order_index': orderIndex,
+      'created_at': createdAt.toIso8601String(),
+    };
   }
 }
 
@@ -177,5 +201,18 @@ class CourseEnrollment {
       enrolledAt: DateTime.parse(json['enrolled_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'course_id': courseId,
+      'status': status.value,
+      'payment_screenshot_url': paymentScreenshotUrl,
+      'transaction_id': transactionId,
+      'enrolled_at': enrolledAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
   }
 }

@@ -39,26 +39,20 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
   }
 
   Future<void> _handleTap() async {
-    debugPrint('🎯 Easter Egg Tapped! Count: $_tapCount');
     final now = DateTime.now();
     
     // Reset counter if more than 2 seconds since last tap
     if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds > 2) {
-      debugPrint('⏰ Resetting tap count (timeout)');
       _tapCount = 0;
     }
     
     _lastTapTime = now;
     _tapCount++;
-    debugPrint('📊 Current tap count: $_tapCount');
     
     // Easter egg: Trigger after 3-4 taps
     if (_tapCount >= 3 && _tapCount <= 4) {
-      debugPrint('🎉 EASTER EGG TRIGGERED!');
       HapticFeedback.heavyImpact();
       try {
-        // Play sound - soundFile should include the full path from assets/
-        debugPrint('🔊 Playing sound: ${widget.soundFile}');
         await _audioPlayer.play(AssetSource(widget.soundFile));
         
         // Show emoji rainfall
@@ -91,7 +85,7 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
         // Reset counter after playing
         _tapCount = 0;
       } catch (e) {
-        debugPrint('❌ Error playing sound: $e');
+        // Silent error handling for production
       }
     }
   }

@@ -58,7 +58,7 @@ class Subject {
       'name': name,
       'code': code,
       'teacher': teacher,
-      'color': '0x${color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+      'color': color.toARGB32().toRadixString(16).padLeft(8, '0'),
       'semester': semester,
       'credits': credits,
     };
@@ -66,9 +66,18 @@ class Subject {
 
   factory Subject.fromJson(Map<String, dynamic> json) {
     final colorValue = json['color'];
-    final color = colorValue is String 
-        ? Color(int.parse(colorValue, radix: 16))
-        : Color(colorValue as int);
+    Color color;
+    
+    if (colorValue is String) {
+      // Handle both "0xff4caf50" and "ff4caf50" formats
+      String hexString = colorValue;
+      if (hexString.startsWith('0x')) {
+        hexString = hexString.substring(2);
+      }
+      color = Color(int.parse(hexString, radix: 16));
+    } else {
+      color = Color(colorValue as int);
+    }
     
     return Subject(
       id: json['id'] as String,

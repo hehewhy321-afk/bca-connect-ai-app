@@ -36,6 +36,7 @@ import '../screens/fun_zone/fun_zone_home_screen.dart';
 import '../screens/courses/courses_screen.dart';
 import '../screens/courses/course_detail_screen.dart';
 import '../screens/courses/learning_player_screen.dart';
+import '../screens/tasks/task_manager_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -260,6 +261,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return LearningPlayerScreen(courseId: id);
         },
+      ),
+      
+      // Task Manager
+      GoRoute(
+        path: '/tasks',
+        builder: (context, state) => const TaskManagerScreen(),
       ),
       
       // Debug

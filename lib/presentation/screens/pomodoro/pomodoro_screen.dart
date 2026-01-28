@@ -236,12 +236,13 @@ class PomodoroScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(pomodoroSessionProvider);
+    final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Purple Gradient Header with Settings
+          // Orange Gradient Header with Settings
           _buildGradientHeader(context, ref),
           
           // Main Content
@@ -352,13 +353,15 @@ class PomodoroScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickPresets(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Quick Presets',
           style: TextStyle(
-            color: Colors.grey[400],
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -432,6 +435,8 @@ class PomodoroScreen extends ConsumerWidget {
     required String subtitle,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    
     return InkWell(
       onTap: () {
         ref.read(pomodoroSettingsProvider.notifier).state = PomodoroSettings.fromPreset(preset);
@@ -441,10 +446,10 @@ class PomodoroScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -460,8 +465,8 @@ class PomodoroScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -470,7 +475,7 @@ class PomodoroScreen extends ConsumerWidget {
             Text(
               subtitle,
               style: TextStyle(
-                color: Colors.grey[500],
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 10,
               ),
             ),
@@ -538,7 +543,7 @@ class PomodoroScreen extends ConsumerWidget {
                   _getStateLabel(session.state),
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -551,6 +556,8 @@ class PomodoroScreen extends ConsumerWidget {
   }
 
   Widget _buildControlButtons(BuildContext context, PomodoroSession session, WidgetRef ref) {
+    final theme = Theme.of(context);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -559,15 +566,15 @@ class PomodoroScreen extends ConsumerWidget {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F1F1F),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
             child: IconButton(
               onPressed: () => ref.read(pomodoroSessionProvider.notifier).reset(),
-              icon: const Icon(Iconsax.refresh, color: Colors.white),
+              icon: Icon(Iconsax.refresh, color: theme.colorScheme.onSurface),
               iconSize: 24,
               padding: const EdgeInsets.all(16),
             ),
@@ -615,10 +622,10 @@ class PomodoroScreen extends ConsumerWidget {
           Container(
             margin: const EdgeInsets.only(left: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F1F1F),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
             child: IconButton(
@@ -629,7 +636,7 @@ class PomodoroScreen extends ConsumerWidget {
                   ref.read(pomodoroSessionProvider.notifier).reset();
                 }
               },
-              icon: const Icon(Iconsax.forward, color: Colors.white),
+              icon: Icon(Iconsax.forward, color: theme.colorScheme.onSurface),
               iconSize: 24,
               padding: const EdgeInsets.all(16),
             ),
@@ -680,13 +687,15 @@ class PomodoroScreen extends ConsumerWidget {
     required String value,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -702,8 +711,8 @@ class PomodoroScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -712,7 +721,7 @@ class PomodoroScreen extends ConsumerWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 12,
             ),
           ),
@@ -868,9 +877,9 @@ class PomodoroScreen extends ConsumerWidget {
           
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: Column(
               children: [
@@ -880,7 +889,7 @@ class PomodoroScreen extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -906,21 +915,20 @@ class PomodoroScreen extends ConsumerWidget {
                       const Text(
                         'Timer Settings',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Iconsax.close_circle, color: Colors.white),
+                        icon: Icon(Iconsax.close_circle, color: Theme.of(context).colorScheme.onSurface),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
                 ),
                 
-                const Divider(height: 1, color: Color(0xFF2A2A2A)),
+                const Divider(height: 1),
                 
                 // Settings Content
                 Expanded(
@@ -1055,8 +1063,8 @@ class PomodoroScreen extends ConsumerWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -1082,7 +1090,7 @@ class PomodoroScreen extends ConsumerWidget {
         SliderTheme(
           data: SliderThemeData(
             activeTrackColor: const Color(0xFFDA7809),
-            inactiveTrackColor: const Color(0xFF2A2A2A),
+            inactiveTrackColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             thumbColor: const Color(0xFFDA7809),
             overlayColor: const Color(0xFFDA7809).withValues(alpha: 0.2),
             trackHeight: 4,
@@ -1107,10 +1115,12 @@ class PomodoroScreen extends ConsumerWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1121,8 +1131,8 @@ class PomodoroScreen extends ConsumerWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1131,7 +1141,7 @@ class PomodoroScreen extends ConsumerWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 13,
                   ),
                 ),

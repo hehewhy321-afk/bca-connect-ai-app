@@ -9,25 +9,25 @@ class ModernTheme {
   static const backgroundColor = Color(0xFFFFFFFF);
   static const surfaceColor = Colors.white;
   static const errorColor = Color(0xFFFF6B6B);
-  
+
   // Dark Mode Colors
   static const darkBackgroundColor = Color(0xFF0A0A0B); // hsl(240 10% 4%)
   static const darkSurfaceColor = Color(0xFF0F0F11); // hsl(240 10% 6%)
   static const darkCardColor = Color(0xFF14141A);
-  
+
   // Gradients - Orange themed
   static const primaryGradient = LinearGradient(
     colors: [Color(0xFFDA7809), Color(0xFFB85F00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const orangeGradient = LinearGradient(
     colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const glassGradient = LinearGradient(
     colors: [
       Color(0x1ADA7809), // rgba(218, 120, 9, 0.1)
@@ -57,7 +57,7 @@ class ModernTheme {
     ),
     scaffoldBackgroundColor: backgroundColor,
     fontFamily: GoogleFonts.inter().fontFamily,
-    
+
     // AppBar Theme
     appBarTheme: AppBarTheme(
       elevation: 0,
@@ -70,17 +70,15 @@ class ModernTheme {
         color: const Color(0xFF1C1B1F),
       ),
     ),
-    
+
     // Card Theme
     cardTheme: CardThemeData(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       color: surfaceColor,
       shadowColor: primaryOrange.withValues(alpha: 0.1),
     ),
-    
+
     // Elevated Button Theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -88,26 +86,19 @@ class ModernTheme {
         backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        textStyle: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
-    
+
     // Floating Action Button Theme
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: primaryOrange,
       foregroundColor: Colors.white,
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
-    
+
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -130,13 +121,25 @@ class ModernTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
-    
-    // Bottom Navigation Bar Theme
+
+    // Bottom Navigation Bar Theme (for older BottomNavigationBar)
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       selectedItemColor: primaryOrange,
       unselectedItemColor: Color(0xFF79747E),
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
+    ),
+
+    // Navigation Bar Theme (Modern M3)
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: backgroundColor,
+      indicatorColor: primaryOrange,
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(color: Colors.white, size: 24);
+        }
+        return const IconThemeData(color: Color(0xFF79747E), size: 24);
+      }),
     ),
   );
 
@@ -160,7 +163,7 @@ class ModernTheme {
     ),
     scaffoldBackgroundColor: darkBackgroundColor,
     fontFamily: GoogleFonts.inter().fontFamily,
-    
+
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: false,
@@ -172,41 +175,32 @@ class ModernTheme {
         color: Colors.white,
       ),
     ),
-    
+
     cardTheme: CardThemeData(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       color: darkCardColor,
       shadowColor: primaryOrange.withValues(alpha: 0.2),
     ),
-    
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 0,
         backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        textStyle: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
-    
+
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: primaryOrange,
       foregroundColor: Colors.white,
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
-    
+
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: darkCardColor,
@@ -228,13 +222,26 @@ class ModernTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
-    
+
+    // Bottom Navigation Bar Theme (for older BottomNavigationBar)
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       selectedItemColor: primaryOrange,
       unselectedItemColor: Color(0xFF938F99),
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
       backgroundColor: Color(0xFF14141A),
+    ),
+
+    // Navigation Bar Theme (Modern M3)
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: darkSurfaceColor,
+      indicatorColor: primaryOrange,
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(color: Colors.white, size: 24);
+        }
+        return const IconThemeData(color: Color(0xFF938F99), size: 24);
+      }),
     ),
   );
 }
