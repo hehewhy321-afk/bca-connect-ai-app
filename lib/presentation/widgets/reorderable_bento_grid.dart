@@ -263,7 +263,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
         },
         builder: (context, candidateData, rejectedData) {
           return Container(
-            margin: const EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 4),
             height: isLarge ? 160 : (isHorizontal ? 76 : (isWide ? 76 : 100)),
             child: LongPressDraggable<int>(
               data: index,
@@ -295,7 +295,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       height: isLarge ? 160 : (isHorizontal ? 76 : (isWide ? 76 : 100)),
       child: GestureDetector(
         onLongPress: () {
@@ -310,14 +310,14 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
   Widget _buildPatternLargeLeft(int startIndex) {
     return Container(
       height: 160,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           Expanded(
             flex: 1,
             child: _buildCardWrapper(_actions[startIndex], isLarge: true),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Expanded(
             flex: 1,
             child: Column(
@@ -328,7 +328,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
                     isHorizontal: true,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Expanded(
                   child: _buildCardWrapper(
                     _actions[startIndex + 2],
@@ -346,7 +346,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
   Widget _buildPatternLargeRight(int startIndex) {
     return Container(
       height: 160,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           Expanded(
@@ -359,7 +359,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
                     isHorizontal: true,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Expanded(
                   child: _buildCardWrapper(
                     _actions[startIndex + 1],
@@ -369,7 +369,7 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Expanded(
             flex: 1,
             child: _buildCardWrapper(_actions[startIndex + 2], isLarge: true),
@@ -385,11 +385,11 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid>
 
     return Container(
       height: 76,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           Expanded(child: _buildCardWrapper(leftAction, isHorizontal: true)),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Expanded(child: _buildCardWrapper(rightAction, isHorizontal: true)),
         ],
       ),
