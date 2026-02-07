@@ -8,7 +8,9 @@ import '../../../core/theme/modern_theme.dart';
 import '../../providers/course_provider.dart';
 
 // Provider for current lesson - persists across rebuilds
-final currentLessonIndexProvider = StateProvider.family<int, String>((ref, courseId) => 0);
+final currentLessonIndexProvider = StateProvider.family<int, String>(
+  (ref, courseId) => 0,
+);
 
 class LearningPlayerScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -16,12 +18,14 @@ class LearningPlayerScreen extends ConsumerStatefulWidget {
   const LearningPlayerScreen({super.key, required this.courseId});
 
   @override
-  ConsumerState<LearningPlayerScreen> createState() => _LearningPlayerScreenState();
+  ConsumerState<LearningPlayerScreen> createState() =>
+      _LearningPlayerScreenState();
 }
 
 class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
   WebViewController? _webViewController;
   bool _isLoading = true;
+  bool _isFullScreen = false;
   final Set<String> _expandedChapters = {}; // Track expanded chapters
 
   @override
@@ -33,9 +37,10 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
 
   void _initializePlayer(String videoUrl) {
     setState(() => _isLoading = true);
-    
+
     // Create HTML with iframe to embed Abyss video
-    final html = '''
+    final html =
+        '''
       <!DOCTYPE html>
       <html>
       <head>
@@ -74,11 +79,13 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
       </body>
       </html>
     ''';
-    
+
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
-      ..setUserAgent('Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36')
+      ..setUserAgent(
+        'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -93,7 +100,7 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
           onNavigationRequest: (NavigationRequest request) {
             // Prevent opening external browser
             // Only allow the initial load and iframe content
-            if (request.url.startsWith('data:') || 
+            if (request.url.startsWith('data:') ||
                 request.url.startsWith('about:') ||
                 request.url.contains('short.ink') ||
                 request.url.contains('abyss')) {
@@ -106,13 +113,36 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
       ..loadHtmlString(html, baseUrl: 'https://short.ink');
   }
 
-  void _switchLesson(int newIndex, List<CourseLesson> allLessons, bool isApproved, bool isFree) {
+  void _switchLesson(
+    int newIndex,
+    List<CourseLesson> allLessons,
+    bool isApproved,
+    bool isFree,
+  ) {
     final lesson = allLessons[newIndex];
     final canPlay = isApproved || isFree || lesson.isFreePreview;
-    
+
     if (canPlay && lesson.videoUrl != null) {
-      ref.read(currentLessonIndexProvider(widget.courseId).notifier).state = newIndex;
+      ref.read(currentLessonIndexProvider(widget.courseId).notifier).state =
+          newIndex;
       _initializePlayer(lesson.videoUrl!);
+    }
+  }
+
+  void _toggleFullScreen() {
+    setState(() {
+      _isFullScreen = !_isFullScreen;
+    });
+
+    if (_isFullScreen) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
   }
 
@@ -120,8 +150,12 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
   Widget build(BuildContext context) {
     final courseAsync = ref.watch(courseDetailProvider(widget.courseId));
     final chaptersAsync = ref.watch(courseChaptersProvider(widget.courseId));
-    final enrollmentAsync = ref.watch(enrollmentStatusProvider(widget.courseId));
-    final currentLessonIndex = ref.watch(currentLessonIndexProvider(widget.courseId));
+    final enrollmentAsync = ref.watch(
+      enrollmentStatusProvider(widget.courseId),
+    );
+    final currentLessonIndex = ref.watch(
+      currentLessonIndexProvider(widget.courseId),
+    );
 
     return courseAsync.when(
       data: (course) {
@@ -140,188 +174,336 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
               );
             }
 
-            final validIndex = currentLessonIndex.clamp(0, allLessons.length - 1);
+            final validIndex = currentLessonIndex.clamp(
+              0,
+              allLessons.length - 1,
+            );
             final currentLesson = allLessons[validIndex];
             final canPlay = isApproved || isFree || currentLesson.isFreePreview;
 
             // Initialize player on first build
-            if (_webViewController == null && canPlay && currentLesson.videoUrl != null) {
+            if (_webViewController == null &&
+                canPlay &&
+                currentLesson.videoUrl != null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _initializePlayer(currentLesson.videoUrl!);
               });
             }
 
-            // Normal Mode
-            return Scaffold(
-              backgroundColor: Colors.black,
-              appBar: AppBar(
+            return PopScope(
+              canPop: !_isFullScreen,
+              onPopInvokedWithResult: (didPop, result) {
+                if (!didPop && _isFullScreen) {
+                  _toggleFullScreen();
+                }
+              },
+              child: Scaffold(
                 backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                title: Text(course.title, style: const TextStyle(fontSize: 16)),
-                elevation: 0,
-              ),
-              body: Column(
-                children: [
-                  // Video Player Section
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Stack(
-                      children: [
-                        Container(
-                          color: Colors.black,
-                          child: canPlay && _webViewController != null
-                              ? WebViewWidget(controller: _webViewController!)
-                              : _buildLockedOverlay(context),
+                appBar: _isFullScreen
+                    ? null
+                    : AppBar(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        title: Text(
+                          course.title,
+                          style: const TextStyle(fontSize: 16),
                         ),
-                        // Loading Indicator
-                        if (_isLoading)
-                          const Center(
-                            child: CircularProgressIndicator(color: ModernTheme.primaryOrange),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // Content Area
-                  Expanded(
-                    child: Container(
-                      color: Theme.of(context).colorScheme.surface,
-                      child: Column(
+                        elevation: 0,
+                      ),
+                body: _isFullScreen
+                    ? Stack(
+                        fit: StackFit.expand,
                         children: [
-                          // Progress Bar
-                          LinearProgressIndicator(
-                            value: (validIndex + 1) / allLessons.length,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            valueColor: const AlwaysStoppedAnimation<Color>(ModernTheme.primaryOrange),
-                            minHeight: 3,
-                          ),
-
-                          // Lesson Info Header
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                          WebViewWidget(controller: _webViewController!),
+                          Positioned(
+                            top: 20,
+                            right: 20,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black45,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Iconsax.arrow_left_1,
+                                  color: Colors.white,
                                 ),
+                                onPressed: _toggleFullScreen,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          // Video Player Section
+                          AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: Stack(
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            currentLesson.title,
-                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  'Lesson ${validIndex + 1}/${allLessons.length}',
-                                                  style: const TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: ModernTheme.primaryOrange,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (currentLesson.duration != null) ...[
-                                                const SizedBox(width: 8),
-                                                Icon(Iconsax.clock, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                                const SizedBox(width: 4),
-                                                Text(currentLesson.duration!, style: Theme.of(context).textTheme.bodySmall),
-                                              ],
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Course Progress Badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        gradient: ModernTheme.orangeGradient,
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        '${((validIndex + 1) / allLessons.length * 100).toStringAsFixed(0)}%',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                Container(
+                                  color: Colors.black,
+                                  child: canPlay && _webViewController != null
+                                      ? WebViewWidget(
+                                          controller: _webViewController!,
+                                        )
+                                      : _buildLockedOverlay(context),
                                 ),
-                                const SizedBox(height: 12),
-                                // Navigation Buttons
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: validIndex > 0
-                                            ? () => _switchLesson(validIndex - 1, allLessons, isApproved, isFree)
-                                            : null,
-                                        icon: const Icon(Iconsax.arrow_left_2, size: 18),
-                                        label: const Text('Previous'),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
-                                        ),
+                                if (canPlay && _webViewController != null)
+                                  Positioned(
+                                    bottom: 10,
+                                    right: 10,
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Iconsax.maximize_3,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      onPressed: _toggleFullScreen,
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Colors.black45,
+                                        padding: const EdgeInsets.all(8),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: validIndex < allLessons.length - 1
-                                            ? () => _switchLesson(validIndex + 1, allLessons, isApproved, isFree)
-                                            : null,
-                                        icon: const Icon(Iconsax.arrow_right_3, size: 18),
-                                        label: const Text('Next'),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
-                                        ),
-                                      ),
+                                  ),
+                                // Loading Indicator
+                                if (_isLoading)
+                                  const Center(
+                                    child: CircularProgressIndicator(
+                                      color: ModernTheme.primaryOrange,
                                     ),
-                                  ],
-                                ),
+                                  ),
                               ],
                             ),
                           ),
 
-                          // Always Show Lessons List
+                          // Content Area
                           Expanded(
-                            child: _buildLessonsList(chapters, validIndex, allLessons, isApproved, isFree),
+                            child: Container(
+                              color: Theme.of(context).colorScheme.surface,
+                              child: Column(
+                                children: [
+                                  // Progress Bar
+                                  LinearProgressIndicator(
+                                    value: (validIndex + 1) / allLessons.length,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          ModernTheme.primaryOrange,
+                                        ),
+                                    minHeight: 3,
+                                  ),
+
+                                  // Lesson Info Header
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .outline
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    currentLesson.title,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 4,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: ModernTheme
+                                                              .primaryOrange
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                6,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          'Lesson ${validIndex + 1}/${allLessons.length}',
+                                                          style: const TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: ModernTheme
+                                                                .primaryOrange,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      if (currentLesson
+                                                              .duration !=
+                                                          null) ...[
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Icon(
+                                                          Iconsax.clock,
+                                                          size: 14,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          currentLesson
+                                                              .duration!,
+                                                          style: Theme.of(
+                                                            context,
+                                                          ).textTheme.bodySmall,
+                                                        ),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Course Progress Badge
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                gradient:
+                                                    ModernTheme.orangeGradient,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: ModernTheme
+                                                        .primaryOrange
+                                                        .withValues(alpha: 0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Text(
+                                                '${((validIndex + 1) / allLessons.length * 100).toStringAsFixed(0)}%',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        // Navigation Buttons
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: validIndex > 0
+                                                    ? () => _switchLesson(
+                                                        validIndex - 1,
+                                                        allLessons,
+                                                        isApproved,
+                                                        isFree,
+                                                      )
+                                                    : null,
+                                                icon: const Icon(
+                                                  Iconsax.arrow_left_2,
+                                                  size: 18,
+                                                ),
+                                                label: const Text('Previous'),
+                                                style: OutlinedButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                onPressed:
+                                                    validIndex <
+                                                        allLessons.length - 1
+                                                    ? () => _switchLesson(
+                                                        validIndex + 1,
+                                                        allLessons,
+                                                        isApproved,
+                                                        isFree,
+                                                      )
+                                                    : null,
+                                                icon: const Icon(
+                                                  Iconsax.arrow_right_3,
+                                                  size: 18,
+                                                ),
+                                                label: const Text('Next'),
+                                                style: ElevatedButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Always Show Lessons List
+                                  Expanded(
+                                    child: _buildLessonsList(
+                                      chapters,
+                                      validIndex,
+                                      allLessons,
+                                      isApproved,
+                                      isFree,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ],
               ),
             );
           },
@@ -335,12 +517,10 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
           ),
         );
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        body: Center(child: Text('Error: $error')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stack) =>
+          Scaffold(body: Center(child: Text('Error: $error'))),
     );
   }
 
@@ -362,7 +542,11 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
             const SizedBox(height: 16),
             const Text(
               'This lesson is locked',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -375,7 +559,10 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
               icon: const Icon(Iconsax.arrow_left),
               label: const Text('Back to Course'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -409,7 +596,9 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
           end: Alignment.bottomCenter,
           colors: [
             Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ],
         ),
       ),
@@ -434,7 +623,8 @@ class _LearningPlayerScreenState extends ConsumerState<LearningPlayerScreen> {
                 }
               });
             },
-            onLessonTap: (lessonIndex) => _switchLesson(lessonIndex, allLessons, isApproved, isFree),
+            onLessonTap: (lessonIndex) =>
+                _switchLesson(lessonIndex, allLessons, isApproved, isFree),
           );
         },
       ),
@@ -469,7 +659,9 @@ class _ChapterItem extends StatelessWidget {
       final idx = allLessons.indexOf(lesson);
       return idx < currentIndex;
     }).length;
-    final progress = chapter.lessons.isEmpty ? 0.0 : completedLessons / chapter.lessons.length;
+    final progress = chapter.lessons.isEmpty
+        ? 0.0
+        : completedLessons / chapter.lessons.length;
 
     return RepaintBoundary(
       child: AnimatedContainer(
@@ -480,17 +672,17 @@ class _ChapterItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: isExpanded 
-                ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
+              color: isExpanded
+                  ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
               blurRadius: isExpanded ? 15 : 10,
               offset: const Offset(0, 4),
             ),
           ],
           border: Border.all(
-            color: isExpanded 
-              ? ModernTheme.primaryOrange.withValues(alpha: 0.2)
-              : Colors.transparent,
+            color: isExpanded
+                ? ModernTheme.primaryOrange.withValues(alpha: 0.2)
+                : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -518,7 +710,8 @@ class _ChapterItem extends StatelessWidget {
                   ? Column(
                       children: chapter.lessons.map((lesson) {
                         final lessonIndex = allLessons.indexOf(lesson);
-                        final canPlay = isApproved || isFree || lesson.isFreePreview;
+                        final canPlay =
+                            isApproved || isFree || lesson.isFreePreview;
                         final isCurrentLesson = lessonIndex == currentIndex;
                         final isCompleted = lessonIndex < currentIndex;
 
@@ -529,7 +722,9 @@ class _ChapterItem extends StatelessWidget {
                           isCompleted: isCompleted,
                           isApproved: isApproved,
                           isFree: isFree,
-                          onTap: canPlay ? () => onLessonTap(lessonIndex) : null,
+                          onTap: canPlay
+                              ? () => onLessonTap(lessonIndex)
+                              : null,
                         );
                       }).toList(),
                     )
@@ -546,14 +741,14 @@ class _ChapterItem extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: isExpanded 
-          ? ModernTheme.orangeGradient
-          : LinearGradient(
-              colors: [
-                ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                ModernTheme.primaryOrange.withValues(alpha: 0.1),
-              ],
-            ),
+        gradient: isExpanded
+            ? ModernTheme.orangeGradient
+            : LinearGradient(
+                colors: [
+                  ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                  ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                ],
+              ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: isExpanded
             ? [
@@ -597,8 +792,8 @@ class _ChapterItem extends StatelessWidget {
             Text(
               '${chapter.lessons.length} lessons',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (progress > 0) ...[
               const SizedBox(width: 12),
@@ -631,17 +826,17 @@ class _ChapterItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isExpanded 
-            ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
-            : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: isExpanded
+              ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           Iconsax.arrow_down_1,
           size: 20,
-          color: isExpanded 
-            ? ModernTheme.primaryOrange 
-            : Theme.of(context).colorScheme.onSurfaceVariant,
+          color: isExpanded
+              ? ModernTheme.primaryOrange
+              : Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -686,7 +881,10 @@ class _LessonItem extends StatelessWidget {
           ),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
           leading: _buildLeadingIcon(context),
           title: Text(
             lesson.title,
@@ -713,25 +911,25 @@ class _LessonItem extends StatelessWidget {
         gradient: isCurrentLesson
             ? ModernTheme.orangeGradient
             : isCompleted
-                ? LinearGradient(
-                    colors: [
-                      Colors.green.withValues(alpha: 0.2),
-                      Colors.green.withValues(alpha: 0.1),
-                    ],
-                  )
-                : canPlay
-                    ? LinearGradient(
-                        colors: [
-                          ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                          ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                        ],
-                      )
-                    : LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                        ],
-                      ),
+            ? LinearGradient(
+                colors: [
+                  Colors.green.withValues(alpha: 0.2),
+                  Colors.green.withValues(alpha: 0.1),
+                ],
+              )
+            : canPlay
+            ? LinearGradient(
+                colors: [
+                  ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                  ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                ],
+              )
+            : LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+                ],
+              ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: isCurrentLesson
             ? [
@@ -747,16 +945,16 @@ class _LessonItem extends StatelessWidget {
         isCompleted
             ? Iconsax.tick_circle5
             : canPlay
-                ? Iconsax.play5
-                : Iconsax.lock_1,
+            ? Iconsax.play5
+            : Iconsax.lock_1,
         size: 20,
         color: isCurrentLesson
             ? Colors.white
             : isCompleted
-                ? Colors.green
-                : canPlay
-                    ? ModernTheme.primaryOrange
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
+            ? Colors.green
+            : canPlay
+            ? ModernTheme.primaryOrange
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -774,9 +972,9 @@ class _LessonItem extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             lesson.duration!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontSize: 12),
           ),
         ],
       ),
@@ -811,7 +1009,7 @@ class _LessonItem extends StatelessWidget {
         ),
       );
     }
-    
+
     if (isCurrentLesson) {
       return Container(
         width: 32,
@@ -821,14 +1019,10 @@ class _LessonItem extends StatelessWidget {
           gradient: ModernTheme.orangeGradient,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Iconsax.music_play5,
-          size: 16,
-          color: Colors.white,
-        ),
+        child: const Icon(Iconsax.music_play5, size: 16, color: Colors.white),
       );
     }
-    
+
     return null;
   }
 }

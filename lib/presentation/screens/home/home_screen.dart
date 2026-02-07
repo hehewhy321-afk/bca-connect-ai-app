@@ -8,6 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/announcement_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/course_provider.dart';
+import '../../../data/models/course.dart';
+
 import '../../../core/services/notification_listener_service.dart';
 import '../../../core/services/permission_service.dart';
 import '../../../core/services/quick_actions_service.dart';
@@ -49,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     // Start listening for notifications
     NotificationListenerService().startListening();
-    
+
     // Request permissions after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _requestPermissions();
@@ -59,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _requestPermissions() async {
     if (_permissionsRequested) return;
     _permissionsRequested = true;
-    
+
     // Request all necessary permissions
     await PermissionService().requestInitialPermissions(context);
   }
@@ -87,18 +90,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        
+
         // If not on dashboard, go to dashboard first
         if (selectedIndex != 0) {
           ref.read(selectedIndexProvider.notifier).state = 0;
           return;
         }
-        
+
         // If on dashboard, check for double back press
         final lastBackPress = ref.read(lastBackPressProvider);
         final now = DateTime.now();
-        
-        if (lastBackPress == null || now.difference(lastBackPress) > const Duration(seconds: 2)) {
+
+        if (lastBackPress == null ||
+            now.difference(lastBackPress) > const Duration(seconds: 2)) {
           // First back press or timeout - show toast
           ref.read(lastBackPressProvider.notifier).state = now;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -114,10 +118,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: selectedIndex,
-          children: screens,
-        ),
+        body: IndexedStack(index: selectedIndex, children: screens),
         bottomNavigationBar: NavigationBar(
           selectedIndex: selectedIndex,
           onDestinationSelected: (index) {
@@ -164,6 +165,7 @@ class DashboardTab extends ConsumerWidget {
     final upcomingEventsAsync = ref.watch(upcomingEventsProvider);
     final announcementsAsync = ref.watch(activeAnnouncementsProvider);
     final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
+    final coursesAsync = ref.watch(publishedCoursesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -251,26 +253,30 @@ class DashboardTab extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              
                               const SizedBox(width: 8),
                               Text(
                                 'Notices',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                           TextButton(
                             onPressed: () => context.push('/notices'),
-                            child: const Text('See all', style: TextStyle(fontSize: 12)),
+                            child: const Text(
+                              'See all',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      ...announcements.take(3).map((announcement) => _NoticeCard(
-                            announcement: announcement,
-                          )),
+                      ...announcements
+                          .take(3)
+                          .map(
+                            (announcement) =>
+                                _NoticeCard(announcement: announcement),
+                          ),
                       const SizedBox(height: 24),
                     ],
                   );
@@ -286,7 +292,9 @@ class DashboardTab extends ConsumerWidget {
               Consumer(
                 builder: (context, ref, child) {
                   final quickActionsAsync = ref.watch(quickActionsProvider);
-                  final isCustomizationMode = ref.watch(quickActionsCustomizationProvider);
+                  final isCustomizationMode = ref.watch(
+                    quickActionsCustomizationProvider,
+                  );
 
                   return quickActionsAsync.when(
                     data: (actions) => ReorderableBentoGrid(
@@ -298,7 +306,12 @@ class DashboardTab extends ConsumerWidget {
                         ref.invalidate(quickActionsProvider);
                       },
                       onToggleCustomization: () {
-                        ref.read(quickActionsCustomizationProvider.notifier).state = !isCustomizationMode;
+                        ref
+                                .read(
+                                  quickActionsCustomizationProvider.notifier,
+                                )
+                                .state =
+                            !isCustomizationMode;
                       },
                     ),
                     loading: () => Column(
@@ -306,9 +319,8 @@ class DashboardTab extends ConsumerWidget {
                       children: [
                         Text(
                           'Quick Actions',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         const Center(child: CircularProgressIndicator()),
@@ -319,9 +331,8 @@ class DashboardTab extends ConsumerWidget {
                       children: [
                         Text(
                           'Quick Actions',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         Container(
@@ -333,7 +344,9 @@ class DashboardTab extends ConsumerWidget {
                           child: Text(
                             'Failed to load quick actions',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onErrorContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
                             ),
                           ),
                         ),
@@ -350,19 +363,21 @@ class DashboardTab extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                    
                       const SizedBox(width: 8),
                       Text(
                         'Upcoming Events',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   TextButton(
-                    onPressed: () => ref.read(selectedIndexProvider.notifier).state = 1,
-                    child: const Text('See all', style: TextStyle(fontSize: 12)),
+                    onPressed: () =>
+                        ref.read(selectedIndexProvider.notifier).state = 1,
+                    child: const Text(
+                      'See all',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -376,7 +391,9 @@ class DashboardTab extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                           style: BorderStyle.solid,
                           width: 1,
                         ),
@@ -387,13 +404,19 @@ class DashboardTab extends ConsumerWidget {
                             Icon(
                               Iconsax.calendar_remove,
                               size: 32,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withValues(alpha: 0.3),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'No upcoming events',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -403,7 +426,10 @@ class DashboardTab extends ConsumerWidget {
                   }
 
                   return Column(
-                    children: events.take(2).map((event) => _FullEventCard(event: event)).toList(),
+                    children: events
+                        .take(2)
+                        .map((event) => _FullEventCard(event: event))
+                        .toList(),
                   );
                 },
                 loading: () => const Column(
@@ -426,6 +452,45 @@ class DashboardTab extends ConsumerWidget {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              // Recent Course Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Iconsax.play_circle,
+                        color: Color(0xFFFF9500),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Recent Course',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () => context.push('/courses'),
+                    child: const Text(
+                      'See all',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              coursesAsync.when(
+                data: (courses) {
+                  if (courses.isEmpty) return const SizedBox.shrink();
+                  final recentCourse = courses.first;
+                  return _HomeCourseCard(course: recentCourse);
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 24),
 
@@ -505,13 +570,22 @@ class DashboardTab extends ConsumerWidget {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              final url = Uri.parse('https://mmamc-bca.vercel.app');
+                              final url = Uri.parse(
+                                'https://mmamc-bca.vercel.app',
+                              );
                               try {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                                await launchUrl(
+                                  url,
+                                  mode: LaunchMode.externalApplication,
+                                );
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to open website: $e')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to open website: $e',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -561,7 +635,11 @@ class _FullEventCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
+            ),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -631,8 +709,8 @@ class _FullEventCard extends StatelessWidget {
                     Text(
                       event.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -647,8 +725,11 @@ class _FullEventCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${dateFormat.format(event.startDate)} • ${timeFormat.format(event.startDate)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 fontSize: 11,
                               ),
                         ),
@@ -661,14 +742,19 @@ class _FullEventCard extends StatelessWidget {
                           Icon(
                             Iconsax.location,
                             size: 14,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               event.location!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                     fontSize: 11,
                                   ),
                               maxLines: 1,
@@ -735,7 +821,8 @@ class _NoticeCard extends StatelessWidget {
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (context) => _NoticeDetailSheet(announcement: announcement),
+            builder: (context) =>
+                _NoticeDetailSheet(announcement: announcement),
           );
         },
         borderRadius: BorderRadius.circular(16),
@@ -772,8 +859,8 @@ class _NoticeCard extends StatelessWidget {
                     Text(
                       announcement.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -781,8 +868,8 @@ class _NoticeCard extends StatelessWidget {
                     Text(
                       announcement.content,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -802,6 +889,7 @@ class _NoticeCard extends StatelessWidget {
   }
 }
 
+// Notice Detail Sheet
 // Notice Detail Sheet
 class _NoticeDetailSheet extends StatelessWidget {
   final dynamic announcement;
@@ -853,11 +941,13 @@ class _NoticeDetailSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
+
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -876,8 +966,8 @@ class _NoticeDetailSheet extends StatelessWidget {
                   child: Text(
                     announcement.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -887,22 +977,98 @@ class _NoticeDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const Divider(height: 1),
-          
+
           // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Text(
                 announcement.content,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      height: 1.6,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(height: 1.6),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HomeCourseCard extends StatelessWidget {
+  final Course course;
+
+  const _HomeCourseCard({required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/courses/${course.id}'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 100,
+                height: 60,
+                child:
+                    course.thumbnailUrl != null &&
+                        course.thumbnailUrl!.isNotEmpty
+                    ? CachedImage(
+                        imageUrl: course.thumbnailUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        color: const Color(0xFFFF9500).withValues(alpha: 0.1),
+                        child: const Icon(
+                          Iconsax.video_play,
+                          color: Color(0xFFFF9500),
+                          size: 24,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    course.category ?? 'Course',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Iconsax.arrow_right_3, size: 16),
+          ],
+        ),
       ),
     );
   }

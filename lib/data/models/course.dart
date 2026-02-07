@@ -4,6 +4,10 @@ class Course {
   final String? description;
   final String? thumbnailUrl;
   final double price;
+  final double? originalPrice;
+  final double? offerPrice;
+  final String? language;
+  final String? resourcesUrl;
   final String? category;
   final bool isPublished;
   final DateTime createdAt;
@@ -15,6 +19,10 @@ class Course {
     this.description,
     this.thumbnailUrl,
     required this.price,
+    this.originalPrice,
+    this.offerPrice,
+    this.language,
+    this.resourcesUrl,
     this.category,
     required this.isPublished,
     required this.createdAt,
@@ -28,6 +36,10 @@ class Course {
       description: json['description'] as String?,
       thumbnailUrl: json['thumbnail_url'] as String?,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      originalPrice: (json['original_price'] as num?)?.toDouble(),
+      offerPrice: (json['offer_price'] as num?)?.toDouble(),
+      language: json['language'] as String?,
+      resourcesUrl: json['resources_url'] as String?,
       category: json['category'] as String?,
       isPublished: json['is_published'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -42,6 +54,10 @@ class Course {
       'description': description,
       'thumbnail_url': thumbnailUrl,
       'price': price,
+      'original_price': originalPrice,
+      'offer_price': offerPrice,
+      'language': language,
+      'resources_url': resourcesUrl,
       'category': category,
       'is_published': isPublished,
       'created_at': createdAt.toIso8601String(),
@@ -55,6 +71,7 @@ class CourseChapter {
   final String courseId;
   final String title;
   final int orderIndex;
+  final String? resourcesUrl;
   final DateTime createdAt;
   final List<CourseLesson> lessons;
 
@@ -63,6 +80,7 @@ class CourseChapter {
     required this.courseId,
     required this.title,
     required this.orderIndex,
+    this.resourcesUrl,
     required this.createdAt,
     this.lessons = const [],
   });
@@ -73,8 +91,10 @@ class CourseChapter {
       courseId: json['course_id'] as String,
       title: json['title'] as String,
       orderIndex: json['order_index'] as int? ?? 0,
+      resourcesUrl: json['resources_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
-      lessons: (json['lessons'] as List?)
+      lessons:
+          (json['lessons'] as List?)
               ?.map((e) => CourseLesson.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -87,6 +107,7 @@ class CourseChapter {
       'course_id': courseId,
       'title': title,
       'order_index': orderIndex,
+      'resources_url': resourcesUrl,
       'created_at': createdAt.toIso8601String(),
       'lessons': lessons.map((e) => e.toJson()).toList(),
     };

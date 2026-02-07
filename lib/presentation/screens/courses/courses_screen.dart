@@ -28,20 +28,28 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
 
   List<Course> _filterCourses(List<Course> courses) {
     return courses.where((course) {
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           course.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (course.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
-          (course.category?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          (course.description?.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ??
+              false) ||
+          (course.category?.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ??
+              false);
 
-      final matchesPrice = _priceFilter == 'all' ||
+      final matchesPrice =
+          _priceFilter == 'all' ||
           (_priceFilter == 'free' && course.price == 0) ||
           (_priceFilter == 'paid' && course.price > 0);
 
-      final matchesCategory = _categoryFilter == 'all' || course.category == _categoryFilter;
+      final matchesCategory =
+          _categoryFilter == 'all' || course.category == _categoryFilter;
 
       return matchesSearch && matchesPrice && matchesCategory;
-    }).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   @override
@@ -53,12 +61,13 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: coursesAsync.when(
         data: (courses) {
-          final categories = courses
-              .map((c) => c.category)
-              .where((c) => c != null && c.isNotEmpty)
-              .toSet()
-              .toList()
-            ..sort();
+          final categories =
+              courses
+                  .map((c) => c.category)
+                  .where((c) => c != null && c.isNotEmpty)
+                  .toSet()
+                  .toList()
+                ..sort();
 
           final filteredCourses = _filterCourses(courses);
 
@@ -91,7 +100,11 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildHeader(context, courses.length, filteredCourses.length),
+                            _buildHeader(
+                              context,
+                              courses.length,
+                              filteredCourses.length,
+                            ),
                             const SizedBox(height: 20),
                             _buildSearchBar(context),
                             const SizedBox(height: 16),
@@ -114,27 +127,34 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Iconsax.search_normal,
                             size: 64,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           'No courses found',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Try adjusting your filters',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -160,8 +180,10 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                         ),
                       );
 
-                      final isEnrolled = enrollment != null && enrollment.id.isNotEmpty;
-                      final isApproved = enrollment?.status == EnrollmentStatus.approved;
+                      final isEnrolled =
+                          enrollment != null && enrollment.id.isNotEmpty;
+                      final isApproved =
+                          enrollment?.status == EnrollmentStatus.approved;
 
                       return _BigCourseCard(
                         course: course,
@@ -179,29 +201,32 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
           // Convert technical errors to user-friendly messages
           String userMessage;
           IconData errorIcon;
-          
+
           final errorString = error.toString().toLowerCase();
-          
-          if (errorString.contains('no internet') || 
-              errorString.contains('network') || 
+
+          if (errorString.contains('no internet') ||
+              errorString.contains('network') ||
               errorString.contains('connection') ||
               errorString.contains('timeout')) {
-            userMessage = 'No Internet Connection\nPlease check your network and try again';
+            userMessage =
+                'No Internet Connection\nPlease check your network and try again';
             errorIcon = Iconsax.wifi;
-          } else if (errorString.contains('server') || 
-                     errorString.contains('503') || 
-                     errorString.contains('502')) {
-            userMessage = 'Server Temporarily Unavailable\nPlease try again in a few minutes';
+          } else if (errorString.contains('server') ||
+              errorString.contains('503') ||
+              errorString.contains('502')) {
+            userMessage =
+                'Server Temporarily Unavailable\nPlease try again in a few minutes';
             errorIcon = Iconsax.cloud_minus;
-          } else if (errorString.contains('cached') || 
-                     errorString.contains('cache')) {
-            userMessage = 'Unable to Load Courses\nPlease check your connection';
+          } else if (errorString.contains('cached') ||
+              errorString.contains('cache')) {
+            userMessage =
+                'Unable to Load Courses\nPlease check your connection';
             errorIcon = Iconsax.refresh;
           } else {
             userMessage = 'Something Went Wrong\nPlease try again later';
             errorIcon = Iconsax.danger;
           }
-          
+
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -211,12 +236,14 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      errorIcon, 
-                      size: 48, 
+                      errorIcon,
+                      size: 48,
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
@@ -224,16 +251,18 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                   Text(
                     userMessage.split('\n').first,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    userMessage.split('\n').length > 1 ? userMessage.split('\n')[1] : '',
+                    userMessage.split('\n').length > 1
+                        ? userMessage.split('\n')[1]
+                        : '',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -242,7 +271,10 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                     icon: const Icon(Iconsax.refresh),
                     label: const Text('Try Again'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
@@ -256,7 +288,11 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, int totalCourses, int filteredCount) {
+  Widget _buildHeader(
+    BuildContext context,
+    int totalCourses,
+    int filteredCount,
+  ) {
     return Row(
       children: [
         Container(
@@ -282,15 +318,15 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
               Text(
                 'Video Courses',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
               ),
               Text(
                 '$totalCourses courses • $filteredCount results',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -302,7 +338,9 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
           },
           icon: const Icon(Iconsax.refresh),
           style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
           ),
         ),
       ],
@@ -343,7 +381,10 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
           ),
           filled: true,
           fillColor: Theme.of(context).colorScheme.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -370,11 +411,13 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
             context: context,
             value: _categoryFilter,
             items: [
-              const DropdownMenuItem(value: 'all', child: Text('All Categories')),
-              ...categories.map((cat) => DropdownMenuItem(
-                    value: cat,
-                    child: Text('📁 $cat'),
-                  )),
+              const DropdownMenuItem(
+                value: 'all',
+                child: Text('All Categories'),
+              ),
+              ...categories.map(
+                (cat) => DropdownMenuItem(value: cat, child: Text('📁 $cat')),
+              ),
             ],
             onChanged: (value) => setState(() => _categoryFilter = value!),
           ),
@@ -440,10 +483,7 @@ class _BigCourseCard extends StatelessWidget {
           onTap: () => context.push('/courses/${course.id}'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildThumbnail(context),
-              _buildContent(context),
-            ],
+            children: [_buildThumbnail(context), _buildContent(context)],
           ),
         ),
       ),
@@ -473,7 +513,10 @@ class _BigCourseCard extends StatelessWidget {
                       ),
                     ),
                     child: const Center(
-                      child: CircularProgressIndicator(color: ModernTheme.primaryOrange, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: ModernTheme.primaryOrange,
+                        strokeWidth: 2,
+                      ),
                     ),
                   ),
                   errorWidget: (context, url, error) => _buildPlaceholder(),
@@ -538,7 +581,9 @@ class _BigCourseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: (isApproved ? Colors.green : Colors.orange).withValues(alpha: 0.3),
+            color: (isApproved ? Colors.green : Colors.orange).withValues(
+              alpha: 0.3,
+            ),
             blurRadius: 8,
           ),
         ],
@@ -584,28 +629,70 @@ class _BigCourseCard extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
+    // Strip HTML tags from description
+    String? cleanDescription;
+    if (course.description != null && course.description!.isNotEmpty) {
+      cleanDescription = course.description!
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+    }
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            course.title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  course.title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+              ),
+              if (course.language != null && course.language!.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: ModernTheme.orangeGradient,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Iconsax.global, size: 12, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        course.language!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          if (course.description != null && course.description!.isNotEmpty) ...[
+          if (cleanDescription != null && cleanDescription.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              course.description!,
+              cleanDescription,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -613,10 +700,7 @@ class _BigCourseCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPriceBadge(),
-              _buildActionButton(),
-            ],
+            children: [_buildPriceBadge(), _buildActionButton()],
           ),
         ],
       ),
@@ -624,19 +708,115 @@ class _BigCourseCard extends StatelessWidget {
   }
 
   Widget _buildPriceBadge() {
+    // Determine effective price and discount
+    final double effectivePrice =
+        course.offerPrice ?? course.originalPrice ?? course.price;
+    final bool hasDiscount =
+        course.offerPrice != null &&
+        course.originalPrice != null &&
+        course.offerPrice! < course.originalPrice!;
+    final int? discountPercent = hasDiscount
+        ? (((course.originalPrice! - course.offerPrice!) /
+                      course.originalPrice!) *
+                  100)
+              .round()
+        : null;
+
+    if (effectivePrice == 0) {
+      // Free course
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          'FREE',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
+        ),
+      );
+    }
+
+    if (hasDiscount) {
+      // Course with discount
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original price (strikethrough)
+          Text(
+            'NPR ${course.originalPrice!.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontSize: 13,
+              decoration: TextDecoration.lineThrough,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              // Offer price
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  gradient: ModernTheme.orangeGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'NPR ${course.offerPrice!.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Discount badge
+              if (discountPercent != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$discountPercent% OFF',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Regular price (no discount)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        gradient: course.price > 0 ? ModernTheme.orangeGradient : null,
-        color: course.price == 0 ? Colors.green.withValues(alpha: 0.15) : null,
+        gradient: ModernTheme.orangeGradient,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        course.price > 0 ? 'NPR ${course.price.toStringAsFixed(0)}' : 'FREE',
-        style: TextStyle(
+        'NPR ${effectivePrice.toStringAsFixed(0)}',
+        style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: course.price > 0 ? Colors.white : Colors.green,
+          color: Colors.white,
         ),
       ),
     );
@@ -656,11 +836,7 @@ class _BigCourseCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(
-        Iconsax.arrow_right_3,
-        size: 20,
-        color: Colors.white,
-      ),
+      child: const Icon(Iconsax.arrow_right_3, size: 20, color: Colors.white),
     );
   }
 }
