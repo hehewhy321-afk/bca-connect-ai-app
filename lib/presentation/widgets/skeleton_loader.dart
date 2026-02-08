@@ -6,12 +6,7 @@ class SkeletonLoader extends StatelessWidget {
   final double? height;
   final BorderRadius? borderRadius;
 
-  const SkeletonLoader({
-    super.key,
-    this.width,
-    this.height,
-    this.borderRadius,
-  });
+  const SkeletonLoader({super.key, this.width, this.height, this.borderRadius});
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +144,9 @@ class ForumPostSkeleton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Divider(
               height: 1,
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.1),
             ),
           ),
 

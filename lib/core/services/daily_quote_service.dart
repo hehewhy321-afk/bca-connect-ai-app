@@ -8,7 +8,7 @@ class DailyQuoteService {
   static const String _lastShownDateKey = 'daily_quote_last_shown_date';
   static const String _dismissedTodayKey = 'daily_quote_dismissed_today';
   static const String _currentIndexKey = 'daily_quote_current_index';
-  
+
   static List<DailyQuote>? _cachedQuotes;
 
   /// Load all quotes from JSON file
@@ -18,11 +18,15 @@ class DailyQuoteService {
     }
 
     try {
-      final String jsonString = await rootBundle.loadString('assets/data/daily_quotes.json');
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/daily_quotes.json',
+      );
       final Map<String, dynamic> jsonData = jsonDecode(jsonString);
       final List<dynamic> quotesJson = jsonData['quotes'];
-      
-      _cachedQuotes = quotesJson.map((json) => DailyQuote.fromJson(json)).toList();
+
+      _cachedQuotes = quotesJson
+          .map((json) => DailyQuote.fromJson(json))
+          .toList();
       debugPrint('Loaded ${_cachedQuotes!.length} daily quotes');
       return _cachedQuotes!;
     } catch (e) {
@@ -35,7 +39,7 @@ class DailyQuoteService {
   static Future<DailyQuote?> getTodayQuote() async {
     final prefs = await SharedPreferences.getInstance();
     final quotes = await loadQuotes();
-    
+
     if (quotes.isEmpty) return null;
 
     // Check if we need to reset (new day)
@@ -47,12 +51,12 @@ class DailyQuoteService {
       // New day - reset dismissed status and move to next quote
       await prefs.setBool(_dismissedTodayKey, false);
       await prefs.setString(_lastShownDateKey, todayString);
-      
+
       // Increment index for new quote
       int currentIndex = prefs.getInt(_currentIndexKey) ?? 0;
       currentIndex = (currentIndex + 1) % quotes.length;
       await prefs.setInt(_currentIndexKey, currentIndex);
-      
+
       debugPrint('New day! Showing quote #$currentIndex');
     }
 
@@ -79,13 +83,13 @@ class DailyQuoteService {
   static Future<DailyQuote?> getNextQuote() async {
     final prefs = await SharedPreferences.getInstance();
     final quotes = await loadQuotes();
-    
+
     if (quotes.isEmpty) return null;
 
     int currentIndex = prefs.getInt(_currentIndexKey) ?? 0;
     currentIndex = (currentIndex + 1) % quotes.length;
     await prefs.setInt(_currentIndexKey, currentIndex);
-    
+
     debugPrint('Moved to next quote #$currentIndex');
     return quotes[currentIndex];
   }
@@ -94,13 +98,13 @@ class DailyQuoteService {
   static Future<DailyQuote?> getPreviousQuote() async {
     final prefs = await SharedPreferences.getInstance();
     final quotes = await loadQuotes();
-    
+
     if (quotes.isEmpty) return null;
 
     int currentIndex = prefs.getInt(_currentIndexKey) ?? 0;
     currentIndex = (currentIndex - 1 + quotes.length) % quotes.length;
     await prefs.setInt(_currentIndexKey, currentIndex);
-    
+
     debugPrint('Moved to previous quote #$currentIndex');
     return quotes[currentIndex];
   }

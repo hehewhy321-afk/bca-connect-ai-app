@@ -14,10 +14,11 @@ class ColorMatchGameScreen extends StatefulWidget {
   State<ColorMatchGameScreen> createState() => _ColorMatchGameScreenState();
 }
 
-class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with TickerProviderStateMixin {
+class _ColorMatchGameScreenState extends State<ColorMatchGameScreen>
+    with TickerProviderStateMixin {
   final _repository = GameRepository();
   final _random = Random();
-  
+
   // Game state
   bool _isPlaying = false;
   int _score = 0;
@@ -25,16 +26,16 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
   int _timeLeft = 60;
   int _combo = 0;
   Timer? _gameTimer;
-  
+
   // Current question
   String _currentWord = '';
   Color _currentColor = Colors.red;
   List<ColorOption> _options = [];
-  
+
   // Animation
   late AnimationController _pulseController;
   late AnimationController _shakeController;
-  
+
   // Colors and words
   final List<ColorData> _colors = [
     ColorData('RED', Colors.red),
@@ -52,7 +53,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
       duration: const Duration(milliseconds: 500),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -75,7 +76,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
       _timeLeft = 60;
       _combo = 0;
     });
-    
+
     _generateQuestion();
     _startTimer();
   }
@@ -95,17 +96,18 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
   void _generateQuestion() {
     final wordData = _colors[_random.nextInt(_colors.length)];
     final colorData = _colors[_random.nextInt(_colors.length)];
-    
+
     setState(() {
       _currentWord = wordData.name;
       _currentColor = colorData.color;
-      _options = _colors.map((c) => ColorOption(c.name, c.color)).toList()..shuffle();
+      _options = _colors.map((c) => ColorOption(c.name, c.color)).toList()
+        ..shuffle();
     });
   }
 
   void _checkAnswer(Color selectedColor) {
     HapticFeedback.lightImpact();
-    
+
     if (selectedColor == _currentColor) {
       // Correct!
       setState(() {
@@ -133,15 +135,17 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
   void _endGame() {
     _gameTimer?.cancel();
     setState(() => _isPlaying = false);
-    
+
     // Save score
-    _repository.saveScore(GameScore(
-      gameId: 'color_match',
-      score: _score,
-      timestamp: DateTime.now(),
-      accuracy: ((_score / 10) * 100 / 60).round(),
-    ));
-    
+    _repository.saveScore(
+      GameScore(
+        gameId: 'color_match',
+        score: _score,
+        timestamp: DateTime.now(),
+        accuracy: ((_score / 10) * 100 / 60).round(),
+      ),
+    );
+
     _showGameOverDialog();
   }
 
@@ -151,11 +155,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Row(
-          children: [
-            Text('🎮'),
-            SizedBox(width: 8),
-            Text('Game Over!'),
-          ],
+          children: [Text('🎮'), SizedBox(width: 8), Text('Game Over!')],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -212,10 +212,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
               Text(label),
             ],
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -226,7 +223,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
     if (!_isPlaying) {
       return _buildStartScreen();
     }
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -257,9 +254,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
 
   Widget _buildStartScreen() {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Color Match Madness'),
-      ),
+      appBar: AppBar(title: const Text('Color Match Madness')),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -277,17 +272,11 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '🎨',
-                  style: TextStyle(fontSize: 80),
-                ),
+                const Text('🎨', style: TextStyle(fontSize: 80)),
                 const SizedBox(height: 20),
                 const Text(
                   'Color Match Madness',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -303,7 +292,9 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -317,10 +308,22 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildInstruction('1️⃣', 'A color word appears (e.g., "RED")'),
-                      _buildInstruction('2️⃣', 'But it\'s written in a different color'),
-                      _buildInstruction('3️⃣', 'Tap the actual COLOR, not the word!'),
-                      _buildInstruction('⏱️', '60 seconds to score as much as you can'),
+                      _buildInstruction(
+                        '1️⃣',
+                        'A color word appears (e.g., "RED")',
+                      ),
+                      _buildInstruction(
+                        '2️⃣',
+                        'But it\'s written in a different color',
+                      ),
+                      _buildInstruction(
+                        '3️⃣',
+                        'Tap the actual COLOR, not the word!',
+                      ),
+                      _buildInstruction(
+                        '⏱️',
+                        '60 seconds to score as much as you can',
+                      ),
                       _buildInstruction('❤️', 'You have 3 lives'),
                       _buildInstruction('🔥', '5+ combo = 2x points!'),
                     ],
@@ -329,14 +332,20 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
                 const SizedBox(height: 40),
                 ScaleTransition(
                   scale: Tween<double>(begin: 1.0, end: 1.1).animate(
-                    CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+                    CurvedAnimation(
+                      parent: _pulseController,
+                      curve: Curves.easeInOut,
+                    ),
                   ),
                   child: ElevatedButton(
                     onPressed: _startGame,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ModernTheme.primaryOrange,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 60,
+                        vertical: 20,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -374,12 +383,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
         children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
@@ -392,14 +396,17 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
         children: [
           // Lives
           Row(
-            children: List.generate(3, (index) => Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Icon(
-                index < _lives ? Iconsax.heart5 : Iconsax.heart,
-                color: index < _lives ? Colors.red : Colors.grey,
-                size: 24,
+            children: List.generate(
+              3,
+              (index) => Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  index < _lives ? Iconsax.heart5 : Iconsax.heart,
+                  color: index < _lives ? Colors.red : Colors.grey,
+                  size: 24,
+                ),
               ),
-            )),
+            ),
           ),
           const Spacer(),
           // Score
@@ -431,7 +438,9 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _timeLeft <= 10 ? Colors.red : Theme.of(context).colorScheme.surfaceContainerHighest,
+              color: _timeLeft <= 10
+                  ? Colors.red
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -463,10 +472,7 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
       animation: _shakeController,
       builder: (context, child) {
         final shake = sin(_shakeController.value * pi * 4) * 10;
-        return Transform.translate(
-          offset: Offset(shake, 0),
-          child: child,
-        );
+        return Transform.translate(offset: Offset(shake, 0), child: child);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -486,7 +492,10 @@ class _ColorMatchGameScreenState extends State<ColorMatchGameScreen> with Ticker
           children: [
             if (_combo >= 5)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Colors.orange, Colors.red],

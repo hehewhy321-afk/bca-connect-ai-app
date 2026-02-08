@@ -11,7 +11,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -19,19 +20,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
     _checkAuthAndNavigate();
@@ -40,35 +43,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _checkAuthAndNavigate() async {
     // Wait for splash animation
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
-    
+
     try {
       // Use SharedPreferences instead of Hive (clears on uninstall)
       final prefs = await SharedPreferences.getInstance();
-      
+
       if (!mounted) return;
-      
-      final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
-      
+
+      final onboardingCompleted =
+          prefs.getBool('onboarding_completed') ?? false;
+
       // If onboarding not completed, show onboarding
       if (!onboardingCompleted) {
         if (!mounted) return;
         context.go('/onboarding');
         return;
       }
-      
+
       // Check if user is already authenticated
       bool isAuthenticated = SupabaseConfig.client.auth.currentUser != null;
-      
+
       // If not authenticated, check for saved credentials and attempt auto-login
       if (!isAuthenticated) {
         final rememberMe = prefs.getBool('remember_me') ?? false;
-        
+
         if (rememberMe) {
           final savedEmail = prefs.getString('saved_email') ?? '';
           final savedPassword = prefs.getString('saved_password') ?? '';
-          
+
           if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
             try {
               // Attempt auto-login with saved credentials
@@ -84,9 +88,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           }
         }
       }
-      
+
       if (!mounted) return;
-      
+
       // Navigate based on authentication
       if (isAuthenticated) {
         context.go('/home');
@@ -152,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // App Name
                   Text(
                     'BCA MMAMC',
@@ -163,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Tagline
                   Text(
                     'Student Association Platform',

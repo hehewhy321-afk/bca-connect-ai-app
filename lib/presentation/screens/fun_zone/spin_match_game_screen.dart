@@ -14,9 +14,10 @@ class SpinMatchGameScreen extends StatefulWidget {
   State<SpinMatchGameScreen> createState() => _SpinMatchGameScreenState();
 }
 
-class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerProviderStateMixin {
+class _SpinMatchGameScreenState extends State<SpinMatchGameScreen>
+    with TickerProviderStateMixin {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
@@ -24,7 +25,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
   int _bestScore = 0;
   int _timeLeft = 45;
   Timer? _timer;
-  
+
   // Symbols
   final List<String> _symbols = ['🎮', '🎯', '🎨', '🎭', '🎪', '🎸'];
   String _targetSymbol = '🎮';
@@ -62,12 +63,12 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
       _initializeWheels();
       _setNewTarget();
     });
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _timeLeft--;
       });
-      
+
       if (_timeLeft <= 0) {
         _endGame();
       }
@@ -78,7 +79,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
     for (var wheel in _wheels) {
       wheel.controller.dispose();
     }
-    
+
     _wheels = List.generate(3, (index) {
       final controller = AnimationController(
         duration: const Duration(seconds: 2),
@@ -99,27 +100,27 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
 
   void _spinWheel(int index) {
     if (!_isPlaying) return;
-    
+
     final wheel = _wheels[index];
     wheel.controller.reset();
     wheel.controller.forward();
-    
+
     HapticFeedback.lightImpact();
-    
+
     Future.delayed(const Duration(seconds: 2), () {
       if (!_isPlaying) return;
-      
+
       setState(() {
         wheel.currentSymbol = _symbols[_random.nextInt(_symbols.length)];
       });
-      
+
       _checkMatch();
     });
   }
 
   void _checkMatch() {
     final allMatch = _wheels.every((w) => w.currentSymbol == _targetSymbol);
-    
+
     if (allMatch) {
       setState(() {
         _score += 50;
@@ -136,7 +137,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -147,12 +148,10 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'spin_match',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(gameId: 'spin_match', score: _score, timestamp: DateTime.now()),
+    );
   }
 
   @override
@@ -163,10 +162,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFDA22FF),
-              const Color(0xFF9733EE),
-            ],
+            colors: [const Color(0xFFDA22FF), const Color(0xFF9733EE)],
           ),
         ),
         child: SafeArea(
@@ -259,26 +255,17 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🔄',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🔄', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 'Spin Match',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Match all symbols to the target!',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -295,17 +282,17 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -313,7 +300,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
         ),
       );
     }
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -334,22 +321,16 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
             children: [
               const Text(
                 'Match This:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              Text(
-                _targetSymbol,
-                style: const TextStyle(fontSize: 60),
-              ),
+              Text(_targetSymbol, style: const TextStyle(fontSize: 60)),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 40),
-        
+
         // Wheels
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -366,7 +347,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
 
   Widget _buildWheel(int index) {
     final wheel = _wheels[index];
-    
+
     return GestureDetector(
       onTap: () => _spinWheel(index),
       child: AnimatedBuilder(
@@ -380,10 +361,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: ModernTheme.primaryOrange,
-                  width: 4,
-                ),
+                border: Border.all(color: ModernTheme.primaryOrange, width: 4),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.2),
@@ -418,10 +396,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '⏰',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('⏰', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Time\'s Up!',
@@ -514,10 +489,7 @@ class _SpinMatchGameScreenState extends State<SpinMatchGameScreen> with TickerPr
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -529,8 +501,5 @@ class SpinWheel {
   final AnimationController controller;
   String currentSymbol;
 
-  SpinWheel({
-    required this.controller,
-    required this.currentSymbol,
-  });
+  SpinWheel({required this.controller, required this.currentSymbol});
 }

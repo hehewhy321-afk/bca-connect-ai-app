@@ -16,27 +16,27 @@ class FlappyCodeGameScreen extends StatefulWidget {
 
 class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
   int _score = 0;
   int _bestScore = 0;
-  
+
   // Bird physics
   double _birdY = 0.0;
   double _velocity = 0.0;
   final double _gravity = 0.25; // Reduced gravity (was 0.5)
   final double _jumpPower = -6.0; // Reduced jump power (was -10.0)
-  
+
   // Pipes
   final List<Map<String, double>> _pipes = [];
   final double _pipeGap = 0.8; // Increased gap (was 0.5)
   int _frameCount = 0;
-  
+
   // Game loop
   Timer? _gameTimer;
-  
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +67,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
       _pipes.clear();
       _addPipe();
     });
-    
+
     _gameTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       _updateGame();
     });
@@ -78,27 +78,27 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
 
     setState(() {
       _frameCount++;
-      
+
       // Update bird physics
       _velocity += _gravity;
       _birdY += _velocity * 0.01;
-      
+
       // Check boundaries
       if (_birdY > 1.0 || _birdY < -1.0) {
         _endGame();
         return;
       }
-      
+
       // Update all pipes (slower speed)
       for (var pipe in _pipes) {
         pipe['x'] = pipe['x']! - 0.02; // Reduced speed (was 0.03)
       }
-      
+
       // Add new pipe every 90 frames (more time between pipes)
       if (_frameCount % 90 == 0) {
         _addPipe();
       }
-      
+
       // Remove off-screen pipes and add score
       _pipes.removeWhere((pipe) {
         if (pipe['x']! < -0.5 && pipe['scored'] == 0) {
@@ -108,16 +108,16 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
         }
         return false;
       });
-      
+
       // Check collision with all pipes
       for (var pipe in _pipes) {
         final pipeX = pipe['x']!;
         final pipeHeight = pipe['height']!;
-        
+
         // Bird is in pipe's x range
         if (pipeX < 0.2 && pipeX > -0.3) {
           // Check if bird hit pipe
-          if (_birdY < pipeHeight - _pipeGap / 2 || 
+          if (_birdY < pipeHeight - _pipeGap / 2 ||
               _birdY > pipeHeight + _pipeGap / 2) {
             _endGame();
             return;
@@ -129,12 +129,9 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
 
   void _addPipe() {
     final random = Random();
-    final height = -0.3 + random.nextDouble() * 0.6; // -0.3 to 0.3 (more centered)
-    _pipes.add({
-      'x': 1.5,
-      'height': height,
-      'scored': 0,
-    });
+    final height =
+        -0.3 + random.nextDouble() * 0.6; // -0.3 to 0.3 (more centered)
+    _pipes.add({'x': 1.5, 'height': height, 'scored': 0});
   }
 
   void _jump() {
@@ -142,9 +139,9 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
       _startGame();
       return;
     }
-    
+
     if (_isGameOver) return;
-    
+
     setState(() {
       _velocity = _jumpPower;
     });
@@ -157,7 +154,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -168,12 +165,14 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'flappy_code',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(
+        gameId: 'flappy_code',
+        score: _score,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -195,34 +194,22 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
           child: Stack(
             children: [
               // Clouds decoration
-              Positioned(
-                top: 100,
-                left: 50,
-                child: _buildCloud(),
-              ),
-              Positioned(
-                top: 200,
-                right: 80,
-                child: _buildCloud(),
-              ),
-              Positioned(
-                top: 350,
-                left: 150,
-                child: _buildCloud(),
-              ),
-              
+              Positioned(top: 100, left: 50, child: _buildCloud()),
+              Positioned(top: 200, right: 80, child: _buildCloud()),
+              Positioned(top: 350, left: 150, child: _buildCloud()),
+
               // Pipes
               ..._pipes.map((pipe) => _buildPipe(pipe)),
-              
+
               // Bird
               _buildBird(),
-              
+
               // Ground
               _buildGround(),
-              
+
               // UI Overlay
               _buildUI(),
-              
+
               // Game Over Dialog
               if (_isGameOver) _buildGameOverDialog(),
             ],
@@ -264,10 +251,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
             ],
           ),
           child: const Center(
-            child: Text(
-              '🐦',
-              style: TextStyle(fontSize: 30),
-            ),
+            child: Text('🐦', style: TextStyle(fontSize: 30)),
           ),
         ),
       ),
@@ -278,11 +262,13 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
     final pipeX = pipe['x']!;
     final pipeHeight = pipe['height']!;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     // Calculate pipe heights
-    final topPipeHeight = screenHeight * 0.5 * (1 - (pipeHeight + _pipeGap / 2));
-    final bottomPipeHeight = screenHeight * 0.5 * (1 + (pipeHeight - _pipeGap / 2));
-    
+    final topPipeHeight =
+        screenHeight * 0.5 * (1 - (pipeHeight + _pipeGap / 2));
+    final bottomPipeHeight =
+        screenHeight * 0.5 * (1 + (pipeHeight - _pipeGap / 2));
+
     return Stack(
       children: [
         // Top pipe
@@ -294,10 +280,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
             height: topPipeHeight,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF4CAF50),
-                  const Color(0xFF66BB6A),
-                ],
+                colors: [const Color(0xFF4CAF50), const Color(0xFF66BB6A)],
               ),
               border: Border.all(color: const Color(0xFF2E7D32), width: 3),
               borderRadius: const BorderRadius.only(
@@ -316,10 +299,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
             height: bottomPipeHeight,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF66BB6A),
-                  const Color(0xFF4CAF50),
-                ],
+                colors: [const Color(0xFF66BB6A), const Color(0xFF4CAF50)],
               ),
               border: Border.all(color: const Color(0xFF2E7D32), width: 3),
               borderRadius: const BorderRadius.only(
@@ -342,10 +322,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF8B4513),
-              const Color(0xFF654321),
-            ],
+            colors: [const Color(0xFF8B4513), const Color(0xFF654321)],
           ),
           border: Border(
             top: BorderSide(color: const Color(0xFF654321), width: 3),
@@ -387,17 +364,17 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
-                      const Text(
-                        '🏆',
-                        style: TextStyle(fontSize: 20),
-                      ),
+                      const Text('🏆', style: TextStyle(fontSize: 20)),
                       const SizedBox(width: 8),
                       Text(
                         '$_bestScore',
@@ -413,7 +390,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
               ],
             ),
           ),
-          
+
           // Score
           if (_isPlaying)
             Container(
@@ -437,9 +414,9 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
                 ),
               ),
             ),
-          
+
           const Spacer(),
-          
+
           // Start instruction
           if (!_isPlaying && !_isGameOver)
             Container(
@@ -458,10 +435,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '🐦',
-                    style: TextStyle(fontSize: 60),
-                  ),
+                  const Text('🐦', style: TextStyle(fontSize: 60)),
                   const SizedBox(height: 16),
                   const Text(
                     'Flappy Code',
@@ -474,14 +448,14 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Tap anywhere to fly!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
@@ -526,10 +500,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '💥',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('💥', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Game Over!',
@@ -609,10 +580,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 30),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 30)),
           const SizedBox(height: 8),
           Text(
             value,
@@ -625,10 +593,7 @@ class _FlappyCodeGameScreenState extends State<FlappyCodeGameScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

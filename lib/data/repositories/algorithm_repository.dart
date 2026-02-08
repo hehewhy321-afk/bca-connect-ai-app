@@ -5,10 +5,12 @@ import '../models/algorithm_model.dart';
 
 class AlgorithmRepository {
   static const String _progressKey = 'algorithm_progress';
-  
+
   Future<List<AlgorithmModel>> loadAlgorithms() async {
     try {
-      final String jsonString = await rootBundle.loadString('assets/data/algorithms.json');
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/algorithms.json',
+      );
       final List<dynamic> jsonList = json.decode(jsonString);
       return jsonList.map((json) => AlgorithmModel.fromJson(json)).toList();
     } catch (e) {
@@ -21,7 +23,9 @@ class AlgorithmRepository {
     return algorithms.where((algo) => algo.category == category).toList();
   }
 
-  Future<List<AlgorithmModel>> getAlgorithmsByDifficulty(String difficulty) async {
+  Future<List<AlgorithmModel>> getAlgorithmsByDifficulty(
+    String difficulty,
+  ) async {
     final algorithms = await loadAlgorithms();
     return algorithms.where((algo) => algo.difficulty == difficulty).toList();
   }
@@ -44,13 +48,13 @@ class AlgorithmRepository {
   Future<void> saveProgress(GameProgress progress) async {
     final prefs = await SharedPreferences.getInstance();
     final progressList = await getAllProgress();
-    
+
     // Remove existing progress for this algorithm
     progressList.removeWhere((p) => p.algorithmId == progress.algorithmId);
-    
+
     // Add new progress
     progressList.add(progress);
-    
+
     // Save to SharedPreferences
     final jsonList = progressList.map((p) => p.toJson()).toList();
     await prefs.setString(_progressKey, json.encode(jsonList));
@@ -59,9 +63,9 @@ class AlgorithmRepository {
   Future<List<GameProgress>> getAllProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_progressKey);
-    
+
     if (jsonString == null) return [];
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
     return jsonList.map((json) => GameProgress.fromJson(json)).toList();
   }

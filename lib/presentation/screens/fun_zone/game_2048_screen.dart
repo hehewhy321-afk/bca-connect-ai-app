@@ -15,13 +15,13 @@ class Game2048Screen extends StatefulWidget {
 
 class _Game2048ScreenState extends State<Game2048Screen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
   int _score = 0;
   int _bestScore = 0;
-  
+
   // Grid
   List<List<int>> _grid = [];
   final int _gridSize = 4;
@@ -57,7 +57,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
 
   void _addRandomTile() {
     final emptyCells = <Point<int>>[];
-    
+
     for (int i = 0; i < _gridSize; i++) {
       for (int j = 0; j < _gridSize; j++) {
         if (_grid[i][j] == 0) {
@@ -65,13 +65,13 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         }
       }
     }
-    
+
     if (emptyCells.isEmpty) return;
-    
+
     final random = Random();
     final cell = emptyCells[random.nextInt(emptyCells.length)];
     final value = random.nextDouble() < 0.9 ? 2 : 4;
-    
+
     setState(() {
       _grid[cell.x][cell.y] = value;
     });
@@ -79,9 +79,9 @@ class _Game2048ScreenState extends State<Game2048Screen> {
 
   void _move(String direction) {
     if (!_isPlaying || _isGameOver) return;
-    
+
     bool moved = false;
-    
+
     switch (direction) {
       case 'left':
         moved = _moveLeft();
@@ -96,11 +96,11 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         moved = _moveDown();
         break;
     }
-    
+
     if (moved) {
       _addRandomTile();
       HapticFeedback.lightImpact();
-      
+
       if (_checkGameOver()) {
         _endGame();
       }
@@ -109,10 +109,10 @@ class _Game2048ScreenState extends State<Game2048Screen> {
 
   bool _moveLeft() {
     bool moved = false;
-    
+
     for (int i = 0; i < _gridSize; i++) {
       final row = _grid[i].where((cell) => cell != 0).toList();
-      
+
       for (int j = 0; j < row.length - 1; j++) {
         if (row[j] == row[j + 1]) {
           row[j] *= 2;
@@ -121,18 +121,18 @@ class _Game2048ScreenState extends State<Game2048Screen> {
           moved = true;
         }
       }
-      
+
       while (row.length < _gridSize) {
         row.add(0);
       }
-      
+
       if (_grid[i].toString() != row.toString()) {
         moved = true;
       }
-      
+
       _grid[i] = row;
     }
-    
+
     return moved;
   }
 
@@ -160,8 +160,9 @@ class _Game2048ScreenState extends State<Game2048Screen> {
   }
 
   void _transpose() {
-    final newGrid = List.generate(_gridSize, (i) => 
-      List.generate(_gridSize, (j) => _grid[j][i])
+    final newGrid = List.generate(
+      _gridSize,
+      (i) => List.generate(_gridSize, (j) => _grid[j][i]),
     );
     _grid = newGrid;
   }
@@ -179,7 +180,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         if (_grid[i][j] == 0) return false;
       }
     }
-    
+
     // Check for possible merges
     for (int i = 0; i < _gridSize; i++) {
       for (int j = 0; j < _gridSize; j++) {
@@ -187,7 +188,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         if (i < _gridSize - 1 && _grid[i][j] == _grid[i + 1][j]) return false;
       }
     }
-    
+
     return true;
   }
 
@@ -196,7 +197,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -207,28 +208,38 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'game_2048',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(gameId: 'game_2048', score: _score, timestamp: DateTime.now()),
+    );
   }
 
   Color _getTileColor(int value) {
     switch (value) {
-      case 2: return const Color(0xFFEEE4DA);
-      case 4: return const Color(0xFFEDE0C8);
-      case 8: return const Color(0xFFF2B179);
-      case 16: return const Color(0xFFF59563);
-      case 32: return const Color(0xFFF67C5F);
-      case 64: return const Color(0xFFF65E3B);
-      case 128: return const Color(0xFFEDCF72);
-      case 256: return const Color(0xFFEDCC61);
-      case 512: return const Color(0xFFEDC850);
-      case 1024: return const Color(0xFFEDC53F);
-      case 2048: return const Color(0xFFEDC22E);
-      default: return const Color(0xFFCDC1B4);
+      case 2:
+        return const Color(0xFFEEE4DA);
+      case 4:
+        return const Color(0xFFEDE0C8);
+      case 8:
+        return const Color(0xFFF2B179);
+      case 16:
+        return const Color(0xFFF59563);
+      case 32:
+        return const Color(0xFFF67C5F);
+      case 64:
+        return const Color(0xFFF65E3B);
+      case 128:
+        return const Color(0xFFEDCF72);
+      case 256:
+        return const Color(0xFFEDCC61);
+      case 512:
+        return const Color(0xFFEDC850);
+      case 1024:
+        return const Color(0xFFEDC53F);
+      case 2048:
+        return const Color(0xFFEDC22E);
+      default:
+        return const Color(0xFFCDC1B4);
     }
   }
 
@@ -259,10 +270,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFFFAD961),
-                const Color(0xFFF76B1C),
-              ],
+              colors: [const Color(0xFFFAD961), const Color(0xFFF76B1C)],
             ),
           ),
           child: SafeArea(
@@ -357,25 +365,16 @@ class _Game2048ScreenState extends State<Game2048Screen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🎲',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🎲', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 '2048',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Swipe to merge tiles!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -392,17 +391,17 @@ class _Game2048ScreenState extends State<Game2048Screen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -410,7 +409,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
         ),
       );
     }
-    
+
     return Center(
       child: AspectRatio(
         aspectRatio: 1,
@@ -433,7 +432,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
               final i = index ~/ _gridSize;
               final j = index % _gridSize;
               final value = _grid[i][j];
-              
+
               return Container(
                 decoration: BoxDecoration(
                   color: _getTileColor(value),
@@ -527,10 +526,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '😢',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('😢', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Game Over!',
@@ -623,10 +619,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

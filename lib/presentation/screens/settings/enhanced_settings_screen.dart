@@ -14,10 +14,12 @@ class EnhancedSettingsScreen extends ConsumerStatefulWidget {
   const EnhancedSettingsScreen({super.key});
 
   @override
-  ConsumerState<EnhancedSettingsScreen> createState() => _EnhancedSettingsScreenState();
+  ConsumerState<EnhancedSettingsScreen> createState() =>
+      _EnhancedSettingsScreenState();
 }
 
-class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen> with SingleTickerProviderStateMixin {
+class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
+    with SingleTickerProviderStateMixin {
   final _personalFormKey = GlobalKey<FormState>();
   final _academicFormKey = GlobalKey<FormState>();
   bool _loading = true;
@@ -25,7 +27,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   bool _uploadingAvatar = false;
   bool _changingPassword = false;
   late TabController _tabController;
-  
+
   // Form fields
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -36,7 +38,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   final _linkedinController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   String? _avatarUrl;
   String? _email;
   int? _semester;
@@ -44,7 +46,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   int? _graduationYear;
   final _currentCompanyController = TextEditingController();
   final _jobTitleController = TextEditingController();
-  
+
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
 
@@ -98,12 +100,12 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
           _graduationYear = response['graduation_year'];
           _currentCompanyController.text = response['current_company'] ?? '';
           _jobTitleController.text = response['job_title'] ?? '';
-          
+
           final skills = response['skills'] as List?;
           if (skills != null) {
             _skillsController.text = skills.join(', ');
           }
-          
+
           _loading = false;
         });
       }
@@ -133,7 +135,8 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
       final bytes = await File(image.path).readAsBytes();
       final fileExt = image.path.split('.').last;
-      final fileName = '${user.id}-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final fileName =
+          '${user.id}-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = '${user.id}/$fileName';
 
       await SupabaseConfig.client.storage
@@ -179,14 +182,25 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
           .where((s) => s.isNotEmpty)
           .toList();
 
-      await SupabaseConfig.client.from('profiles').update({
-        'full_name': _fullNameController.text.trim(),
-        'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
-        'skills': skills.isEmpty ? null : skills,
-        'github_url': _githubController.text.trim().isEmpty ? null : _githubController.text.trim(),
-        'linkedin_url': _linkedinController.text.trim().isEmpty ? null : _linkedinController.text.trim(),
-      }).eq('user_id', user.id);
+      await SupabaseConfig.client
+          .from('profiles')
+          .update({
+            'full_name': _fullNameController.text.trim(),
+            'phone': _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            'bio': _bioController.text.trim().isEmpty
+                ? null
+                : _bioController.text.trim(),
+            'skills': skills.isEmpty ? null : skills,
+            'github_url': _githubController.text.trim().isEmpty
+                ? null
+                : _githubController.text.trim(),
+            'linkedin_url': _linkedinController.text.trim().isEmpty
+                ? null
+                : _linkedinController.text.trim(),
+          })
+          .eq('user_id', user.id);
 
       if (mounted) {
         setState(() => _saving = false);
@@ -209,18 +223,24 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
       final user = SupabaseConfig.client.auth.currentUser;
       if (user == null) return;
 
-      await SupabaseConfig.client.from('profiles').update({
-        'batch': _batchController.text.trim().isEmpty ? null : _batchController.text.trim(),
-        'semester': _isAlumni ? null : _semester,
-        'is_alumni': _isAlumni,
-        'graduation_year': _isAlumni ? _graduationYear : null,
-        'current_company': _isAlumni && _currentCompanyController.text.trim().isNotEmpty 
-            ? _currentCompanyController.text.trim() 
-            : null,
-        'job_title': _isAlumni && _jobTitleController.text.trim().isNotEmpty 
-            ? _jobTitleController.text.trim() 
-            : null,
-      }).eq('user_id', user.id);
+      await SupabaseConfig.client
+          .from('profiles')
+          .update({
+            'batch': _batchController.text.trim().isEmpty
+                ? null
+                : _batchController.text.trim(),
+            'semester': _isAlumni ? null : _semester,
+            'is_alumni': _isAlumni,
+            'graduation_year': _isAlumni ? _graduationYear : null,
+            'current_company':
+                _isAlumni && _currentCompanyController.text.trim().isNotEmpty
+                ? _currentCompanyController.text.trim()
+                : null,
+            'job_title': _isAlumni && _jobTitleController.text.trim().isNotEmpty
+                ? _jobTitleController.text.trim()
+                : null,
+          })
+          .eq('user_id', user.id);
 
       if (mounted) {
         setState(() => _saving = false);
@@ -235,7 +255,8 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
   }
 
   Future<void> _changePassword() async {
-    if (_newPasswordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+    if (_newPasswordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       _showErrorSnackbar('Please fill in all password fields');
       return;
     }
@@ -254,9 +275,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
 
     try {
       final response = await SupabaseConfig.client.auth.updateUser(
-        UserAttributes(
-          password: _newPasswordController.text,
-        ),
+        UserAttributes(password: _newPasswordController.text),
       );
 
       if (response.user == null) throw Exception('Failed to update password');
@@ -441,7 +460,9 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 child: const Center(
-                                  child: CircularProgressIndicator(color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -449,18 +470,28 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                             bottom: 0,
                             right: 0,
                             child: GestureDetector(
-                              onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+                              onTap: _uploadingAvatar
+                                  ? null
+                                  : _pickAndUploadAvatar,
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+                                    colors: [
+                                      Color(0xFF8B5CF6),
+                                      Color(0xFFA78BFA),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white, width: 3),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 3,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -479,7 +510,9 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                       const SizedBox(height: 16),
                       // Name and Email
                       Text(
-                        _fullNameController.text.isNotEmpty ? _fullNameController.text : 'Your Name',
+                        _fullNameController.text.isNotEmpty
+                            ? _fullNameController.text
+                            : 'Your Name',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -510,7 +543,9 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
               TabBar(
                 controller: _tabController,
                 labelColor: ModernTheme.primaryOrange,
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                unselectedLabelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant,
                 indicatorColor: ModernTheme.primaryOrange,
                 indicatorWeight: 3,
                 tabs: const [
@@ -582,102 +617,117 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
             const SizedBox(height: 20),
 
             _ModernCard(
-              child: Column(
-                children: [
-                  _ModernTextField(
-                    controller: _bioController,
-                    label: 'Bio',
-                    icon: Iconsax.document_text,
-                    hintText: 'Tell us about yourself...',
-                    maxLines: 4,
+                  child: Column(
+                    children: [
+                      _ModernTextField(
+                        controller: _bioController,
+                        label: 'Bio',
+                        icon: Iconsax.document_text,
+                        hintText: 'Tell us about yourself...',
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 20),
+                      _ModernTextField(
+                        controller: _skillsController,
+                        label: 'Skills',
+                        icon: Iconsax.code,
+                        hintText: 'Flutter, Java, Python',
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  _ModernTextField(
-                    controller: _skillsController,
-                    label: 'Skills',
-                    icon: Iconsax.code,
-                    hintText: 'Flutter, Java, Python',
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 100.ms)
+                .slideY(begin: 0.1),
 
             const SizedBox(height: 20),
 
             _ModernCard(
-              child: Column(
-                children: [
-                  _ModernTextField(
-                    controller: _githubController,
-                    label: 'GitHub URL',
-                    icon: Iconsax.code_circle,
-                    hintText: 'https://github.com/username',
+                  child: Column(
+                    children: [
+                      _ModernTextField(
+                        controller: _githubController,
+                        label: 'GitHub URL',
+                        icon: Iconsax.code_circle,
+                        hintText: 'https://github.com/username',
+                      ),
+                      const SizedBox(height: 20),
+                      _ModernTextField(
+                        controller: _linkedinController,
+                        label: 'LinkedIn URL',
+                        icon: Iconsax.link,
+                        hintText: 'https://linkedin.com/in/username',
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  _ModernTextField(
-                    controller: _linkedinController,
-                    label: 'LinkedIn URL',
-                    icon: Iconsax.link,
-                    hintText: 'https://linkedin.com/in/username',
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 200.ms)
+                .slideY(begin: 0.1),
 
             const SizedBox(height: 32),
 
             SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
+                  width: double.infinity,
+                  height: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: ModernTheme.primaryOrange.withValues(
+                            alpha: 0.3,
+                          ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _saving ? null : _savePersonalProfile,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Center(
-                      child: _saving
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Save Changes',
-                                  style: TextStyle(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _saving ? null : _savePersonalProfile,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Center(
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
                                     color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    strokeWidth: 2.5,
                                   ),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Iconsax.tick_circle,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Save Changes',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideY(begin: 0.1),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 300.ms)
+                .slideY(begin: 0.1),
 
             const SizedBox(height: 32),
           ],
@@ -694,145 +744,162 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          _AlumniToggle(
-            isAlumni: _isAlumni,
-            onChanged: (value) {
-              setState(() {
-                _isAlumni = value;
-                if (!value) {
-                  _graduationYear = null;
-                  _currentCompanyController.clear();
-                  _jobTitleController.clear();
-                }
-              });
-            },
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+            _AlumniToggle(
+              isAlumni: _isAlumni,
+              onChanged: (value) {
+                setState(() {
+                  _isAlumni = value;
+                  if (!value) {
+                    _graduationYear = null;
+                    _currentCompanyController.clear();
+                    _jobTitleController.clear();
+                  }
+                });
+              },
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
 
-          const SizedBox(height: 20),
-
-          if (_isAlumni) ...[
-            _ModernCard(
-              child: Column(
-                children: [
-                  _ModernDropdown<int>(
-                    value: _graduationYear,
-                    label: 'Graduation Year',
-                    icon: Iconsax.calendar,
-                    items: List.generate(20, (index) {
-                      final year = DateTime.now().year - index;
-                      return DropdownMenuItem(
-                        value: year,
-                        child: Text(year.toString()),
-                      );
-                    }),
-                    onChanged: (value) => setState(() => _graduationYear = value),
-                  ),
-                  const SizedBox(height: 20),
-                  _ModernTextField(
-                    controller: _jobTitleController,
-                    label: 'Job Title',
-                    icon: Iconsax.briefcase,
-                    hintText: 'Software Engineer',
-                  ),
-                  const SizedBox(height: 20),
-                  _ModernTextField(
-                    controller: _currentCompanyController,
-                    label: 'Current Company',
-                    icon: Iconsax.building,
-                    hintText: 'Company Name',
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
             const SizedBox(height: 20),
-          ],
 
-          _ModernCard(
-            child: Column(
-              children: [
-                _ModernTextField(
-                  controller: _batchController,
-                  label: 'Batch',
-                  icon: Iconsax.calendar_1,
-                  hintText: '2023-2027',
-                ),
-                if (!_isAlumni) ...[
-                  const SizedBox(height: 20),
-                  _ModernDropdown<int>(
-                    value: _semester,
-                    label: 'Semester',
-                    icon: Iconsax.book,
-                    items: List.generate(8, (index) {
-                      final sem = index + 1;
-                      return DropdownMenuItem(
-                        value: sem,
-                        child: Text('Semester $sem'),
-                      );
-                    }),
-                    onChanged: (value) => setState(() => _semester = value),
+            if (_isAlumni) ...[
+              _ModernCard(
+                    child: Column(
+                      children: [
+                        _ModernDropdown<int>(
+                          value: _graduationYear,
+                          label: 'Graduation Year',
+                          icon: Iconsax.calendar,
+                          items: List.generate(20, (index) {
+                            final year = DateTime.now().year - index;
+                            return DropdownMenuItem(
+                              value: year,
+                              child: Text(year.toString()),
+                            );
+                          }),
+                          onChanged: (value) =>
+                              setState(() => _graduationYear = value),
+                        ),
+                        const SizedBox(height: 20),
+                        _ModernTextField(
+                          controller: _jobTitleController,
+                          label: 'Job Title',
+                          icon: Iconsax.briefcase,
+                          hintText: 'Software Engineer',
+                        ),
+                        const SizedBox(height: 20),
+                        _ModernTextField(
+                          controller: _currentCompanyController,
+                          label: 'Current Company',
+                          icon: Iconsax.building,
+                          hintText: 'Company Name',
+                        ),
+                      ],
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 100.ms)
+                  .slideY(begin: 0.1),
+              const SizedBox(height: 20),
+            ],
+
+            _ModernCard(
+                  child: Column(
+                    children: [
+                      _ModernTextField(
+                        controller: _batchController,
+                        label: 'Batch',
+                        icon: Iconsax.calendar_1,
+                        hintText: '2023-2027',
+                      ),
+                      if (!_isAlumni) ...[
+                        const SizedBox(height: 20),
+                        _ModernDropdown<int>(
+                          value: _semester,
+                          label: 'Semester',
+                          icon: Iconsax.book,
+                          items: List.generate(8, (index) {
+                            final sem = index + 1;
+                            return DropdownMenuItem(
+                              value: sem,
+                              child: Text('Semester $sem'),
+                            );
+                          }),
+                          onChanged: (value) =>
+                              setState(() => _semester = value),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 200.ms)
+                .slideY(begin: 0.1),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _saving ? null : _saveAcademicProfile,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Center(
-                    child: _saving
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
-                              SizedBox(width: 12),
-                              Text(
-                                'Save Changes',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+            SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: ModernTheme.primaryOrange.withValues(
+                            alpha: 0.3,
                           ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _saving ? null : _saveAcademicProfile,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Center(
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Iconsax.tick_circle,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Save Changes',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideY(begin: 0.1),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 300.ms)
+                .slideY(begin: 0.1),
 
-          const SizedBox(height: 32),
-        ],
+            const SizedBox(height: 32),
+          ],
         ),
       ),
     );
@@ -854,9 +921,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.orange.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -887,10 +952,7 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
                       SizedBox(height: 4),
                       Text(
                         'Keep your account secure',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -902,87 +964,107 @@ class _EnhancedSettingsScreenState extends ConsumerState<EnhancedSettingsScreen>
           const SizedBox(height: 24),
 
           _ModernCard(
-            child: Column(
-              children: [
-                _ModernTextField(
-                  controller: _newPasswordController,
-                  label: 'New Password',
-                  icon: Iconsax.lock,
-                  obscureText: !_showNewPassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_showNewPassword ? Iconsax.eye_slash : Iconsax.eye),
-                    onPressed: () => setState(() => _showNewPassword = !_showNewPassword),
-                  ),
+                child: Column(
+                  children: [
+                    _ModernTextField(
+                      controller: _newPasswordController,
+                      label: 'New Password',
+                      icon: Iconsax.lock,
+                      obscureText: !_showNewPassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showNewPassword ? Iconsax.eye_slash : Iconsax.eye,
+                        ),
+                        onPressed: () => setState(
+                          () => _showNewPassword = !_showNewPassword,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _ModernTextField(
+                      controller: _confirmPasswordController,
+                      label: 'Confirm Password',
+                      icon: Iconsax.lock,
+                      obscureText: !_showConfirmPassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showConfirmPassword
+                              ? Iconsax.eye_slash
+                              : Iconsax.eye,
+                        ),
+                        onPressed: () => setState(
+                          () => _showConfirmPassword = !_showConfirmPassword,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                _ModernTextField(
-                  controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  icon: Iconsax.lock,
-                  obscureText: !_showConfirmPassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_showConfirmPassword ? Iconsax.eye_slash : Iconsax.eye),
-                    onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 100.ms)
+              .slideY(begin: 0.1),
 
           const SizedBox(height: 32),
 
           SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.red, Colors.orange],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                width: double.infinity,
+                height: 56,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.red, Colors.orange],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _changingPassword ? null : _changePassword,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Center(
-                    child: _changingPassword
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Iconsax.security_safe, color: Colors.white, size: 20),
-                              SizedBox(width: 12),
-                              Text(
-                                'Update Password',
-                                style: TextStyle(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _changingPassword ? null : _changePassword,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: _changingPassword
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
                                   color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  strokeWidth: 2.5,
                                 ),
+                              )
+                            : const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Iconsax.security_safe,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Update Password',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 200.ms)
+              .slideY(begin: 0.1),
 
           const SizedBox(height: 32),
         ],
@@ -1004,7 +1086,11 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: tabBar,
@@ -1109,18 +1195,16 @@ class _ModernTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: Colors.red,
-          ),
+          borderSide: const BorderSide(color: Colors.red),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: Colors.red,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
     );
   }
@@ -1167,7 +1251,10 @@ class _ModernDropdown<T> extends StatelessWidget {
             width: 2,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
       items: items,
       onChanged: onChanged,
@@ -1179,10 +1266,7 @@ class _AlumniToggle extends StatelessWidget {
   final bool isAlumni;
   final void Function(bool) onChanged;
 
-  const _AlumniToggle({
-    required this.isAlumni,
-    required this.onChanged,
-  });
+  const _AlumniToggle({required this.isAlumni, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -1224,15 +1308,15 @@ class _AlumniToggle extends StatelessWidget {
                 Text(
                   'I am an Alumni',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Mark if you have graduated',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

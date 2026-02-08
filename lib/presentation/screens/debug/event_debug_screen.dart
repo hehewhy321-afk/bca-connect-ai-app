@@ -31,9 +31,9 @@ class _EventDebugScreenState extends ConsumerState<EventDebugScreen> {
           .from('events')
           .select()
           .order('created_at', ascending: false);
-      
+
       _addOutput('✅ Found ${allEvents.length} total events');
-      
+
       if (allEvents.isNotEmpty) {
         _addOutput('\n📝 First event:');
         final first = allEvents[0];
@@ -52,7 +52,7 @@ class _EventDebugScreenState extends ConsumerState<EventDebugScreen> {
           .select()
           .gte('start_date', now)
           .order('start_date', ascending: true);
-      
+
       _addOutput('✅ Found ${upcomingEvents.length} upcoming events');
 
       // Test 4: Fetch past events
@@ -63,7 +63,7 @@ class _EventDebugScreenState extends ConsumerState<EventDebugScreen> {
           .lt('start_date', now)
           .order('start_date', ascending: false)
           .limit(5);
-      
+
       _addOutput('✅ Found ${pastEvents.length} past events');
 
       // Test 5: Check table structure
@@ -91,9 +91,7 @@ class _EventDebugScreenState extends ConsumerState<EventDebugScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Event Debug'),
-      ),
+      appBar: AppBar(title: const Text('Event Debug')),
       body: Column(
         children: [
           Padding(

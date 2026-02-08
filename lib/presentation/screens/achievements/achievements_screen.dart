@@ -54,12 +54,14 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
           .eq('user_id', user.id);
 
       if (mounted) {
-        final achievementsList = List<Map<String, dynamic>>.from(achievementsResponse);
+        final achievementsList = List<Map<String, dynamic>>.from(
+          achievementsResponse,
+        );
         final userAchievementsList = <String>[];
         for (var e in userAchievementsResponse as List) {
           userAchievementsList.add(e['achievement_id'] as String);
         }
-        
+
         setState(() {
           _level = profileResponse?['level'] ?? 1;
           _xpPoints = profileResponse?['xp_points'] ?? 0;
@@ -85,7 +87,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   Widget build(BuildContext context) {
     final currentXpProgress = _xpPoints % 100;
     final levelProgress = (currentXpProgress / 100) * 100;
-    final progressPercent = _totalCount > 0 ? (_earnedCount / _totalCount) * 100 : 0;
+    final progressPercent = _totalCount > 0
+        ? (_earnedCount / _totalCount) * 100
+        : 0;
 
     // Group achievements by category
     final categories = <String>{};
@@ -124,42 +128,55 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: _StatCard(
-                            icon: Iconsax.cup5,
-                            label: 'Level',
-                            value: _level.toString(),
-                            gradient: ModernTheme.orangeGradient,
-                            progress: levelProgress,
-                            subtitle: '$currentXpProgress/100 XP',
-                          ).animate().fadeIn(duration: 500.ms).slideX(begin: -0.2),
+                          child:
+                              _StatCard(
+                                    icon: Iconsax.cup5,
+                                    label: 'Level',
+                                    value: _level.toString(),
+                                    gradient: ModernTheme.orangeGradient,
+                                    progress: levelProgress,
+                                    subtitle: '$currentXpProgress/100 XP',
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 500.ms)
+                                  .slideX(begin: -0.2),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _StatCard(
-                            icon: Iconsax.chart5,
-                            label: 'Total XP',
-                            value: _xpPoints.toString(),
-                            color: ModernTheme.accentOrange,
-                          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideX(begin: -0.2),
+                          child:
+                              _StatCard(
+                                    icon: Iconsax.chart5,
+                                    label: 'Total XP',
+                                    value: _xpPoints.toString(),
+                                    color: ModernTheme.accentOrange,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 500.ms, delay: 100.ms)
+                                  .slideX(begin: -0.2),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     _StatCard(
-                      icon: Iconsax.award5,
-                      label: 'Achievements',
-                      value: '$_earnedCount/$_totalCount',
-                      color: ModernTheme.primaryOrange,
-                      progress: progressPercent.toDouble(),
-                      isWide: true,
-                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.2),
-                    
+                          icon: Iconsax.award5,
+                          label: 'Achievements',
+                          value: '$_earnedCount/$_totalCount',
+                          color: ModernTheme.primaryOrange,
+                          progress: progressPercent.toDouble(),
+                          isWide: true,
+                        )
+                        .animate()
+                        .fadeIn(duration: 500.ms, delay: 200.ms)
+                        .slideY(begin: 0.2),
+
                     const SizedBox(height: 32),
 
                     // Achievements by Category
                     ...categories.map((category) {
                       final categoryAchievements = _achievements
-                          .where((a) => (a['category'] ?? 'general') == category)
+                          .where(
+                            (a) => (a['category'] ?? 'general') == category,
+                          )
                           .toList();
 
                       return Column(
@@ -167,20 +184,20 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                         children: [
                           Text(
                             '${category[0].toUpperCase()}${category.substring(1)} Achievements',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
                           GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 0.85,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.85,
+                                ),
                             itemCount: categoryAchievements.length,
                             itemBuilder: (context, index) {
                               final achievement = categoryAchievements[index];
@@ -330,95 +347,98 @@ class _AchievementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: earned
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                  ModernTheme.accentOrange.withValues(alpha: 0.1),
-                ],
-              )
-            : null,
-        color: earned ? null : Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: earned
-              ? ModernTheme.primaryOrange.withValues(alpha: 0.3)
-              : Theme.of(context).dividerColor,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                achievement['icon'] ?? '🏆',
-                style: TextStyle(
-                  fontSize: 40,
-                  color: earned ? null : Colors.grey,
-                ),
-              ),
-              if (!earned)
-                Icon(
-                  Iconsax.lock,
-                  size: 16,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-            ],
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: earned
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                      ModernTheme.accentOrange.withValues(alpha: 0.1),
+                    ],
+                  )
+                : null,
+            color: earned ? null : Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: earned
+                  ? ModernTheme.primaryOrange.withValues(alpha: 0.3)
+                  : Theme.of(context).dividerColor,
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            achievement['name'] ?? '',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    achievement['icon'] ?? '🏆',
+                    style: TextStyle(
+                      fontSize: 40,
+                      color: earned ? null : Colors.grey,
+                    ),
+                  ),
+                  if (!earned)
+                    Icon(
+                      Iconsax.lock,
+                      size: 16,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                achievement['name'] ?? '',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: earned ? null : Colors.grey,
                 ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            achievement['description'] ?? '',
-            style: Theme.of(context).textTheme.bodySmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: earned
-                  ? ModernTheme.accentOrange.withValues(alpha: 0.2)
-                  : Theme.of(context).dividerColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Iconsax.star5,
-                  size: 12,
-                  color: earned ? ModernTheme.accentOrange : Colors.grey,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                achievement['description'] ?? '',
+                style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: earned
+                      ? ModernTheme.accentOrange.withValues(alpha: 0.2)
+                      : Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '+${achievement['xp_reward'] ?? 0} XP',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: earned ? ModernTheme.accentOrange : Colors.grey,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Iconsax.star5,
+                      size: 12,
+                      color: earned ? ModernTheme.accentOrange : Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '+${achievement['xp_reward'] ?? 0} XP',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: earned ? ModernTheme.accentOrange : Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).scale(begin: const Offset(0.9, 0.9));
+        )
+        .animate()
+        .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+        .scale(begin: const Offset(0.9, 0.9));
   }
 }

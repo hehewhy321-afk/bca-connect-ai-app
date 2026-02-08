@@ -10,7 +10,7 @@ class CertificateRepository {
   Future<List<Certificate>> getUserCertificates() async {
     final userId = _client.auth.currentUser?.id;
     debugPrint('🔐 Current user ID: $userId');
-    
+
     if (userId == null) {
       debugPrint('❌ No user logged in!');
       return [];
@@ -18,7 +18,7 @@ class CertificateRepository {
 
     try {
       debugPrint('📡 Fetching certificates for user: $userId');
-      
+
       final response = await _client
           .from('certificates')
           .select('''
@@ -31,12 +31,14 @@ class CertificateRepository {
       debugPrint('✅ Raw response: $response');
       debugPrint('📊 Response type: ${response.runtimeType}');
       debugPrint('📊 Response length: ${(response as List).length}');
-      
+
       final certificates = (response as List).map((e) {
-        debugPrint('   Certificate: ${e['title']} - Category: ${e['category']?['name']}');
+        debugPrint(
+          '   Certificate: ${e['title']} - Category: ${e['category']?['name']}',
+        );
         return Certificate.fromJson(e);
       }).toList();
-      
+
       debugPrint('✅ Parsed ${certificates.length} certificates');
       return certificates;
     } catch (e, stackTrace) {

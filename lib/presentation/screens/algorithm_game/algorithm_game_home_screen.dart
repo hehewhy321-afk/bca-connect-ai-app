@@ -10,7 +10,8 @@ class AlgorithmGameHomeScreen extends StatefulWidget {
   const AlgorithmGameHomeScreen({super.key});
 
   @override
-  State<AlgorithmGameHomeScreen> createState() => _AlgorithmGameHomeScreenState();
+  State<AlgorithmGameHomeScreen> createState() =>
+      _AlgorithmGameHomeScreenState();
 }
 
 class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
@@ -29,7 +30,7 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
     final stars = await _repository.getTotalStars();
     final completed = await _repository.getCompletedCount();
     final algorithms = await _repository.loadAlgorithms();
-    
+
     setState(() {
       _totalStars = stars;
       _completedCount = completed;
@@ -97,23 +98,31 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildStat('⭐', _totalStars.toString(), 'Stars'),
-                        _buildStat('✅', '$_completedCount/$_totalAlgorithms', 'Completed'),
-                        _buildStat('🎯', '${(_completedCount / (_totalAlgorithms > 0 ? _totalAlgorithms : 1) * 100).toInt()}%', 'Progress'),
+                        _buildStat(
+                          '✅',
+                          '$_completedCount/$_totalAlgorithms',
+                          'Completed',
+                        ),
+                        _buildStat(
+                          '🎯',
+                          '${(_completedCount / (_totalAlgorithms > 0 ? _totalAlgorithms : 1) * 100).toInt()}%',
+                          'Progress',
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Categories
               const Text(
                 'Choose Category',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              
+
               _buildCategoryCard(
                 context,
                 'Sorting',
@@ -122,9 +131,9 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
                 const Color(0xFF6366F1),
                 8,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               _buildCategoryCard(
                 context,
                 'Searching',
@@ -133,9 +142,9 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
                 const Color(0xFF8B5CF6),
                 2,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               _buildCategoryCard(
                 context,
                 'Data Structures',
@@ -144,9 +153,9 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
                 const Color(0xFFEC4899),
                 8,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               _buildCategoryCard(
                 context,
                 'Graph Algorithms',
@@ -209,10 +218,7 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-            width: 2,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
         ),
         child: Row(
           children: [
@@ -278,17 +284,26 @@ class _AlgorithmGameHomeScreenState extends State<AlgorithmGameHomeScreen> {
               SizedBox(height: 4),
               Text('Arrange shuffled algorithm steps in correct order'),
               SizedBox(height: 12),
-              Text('🎮 How to Play', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                '🎮 How to Play',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 4),
-              Text('• Drag steps from bottom to top slots\n• Or tap to place in order\n• Complete all steps correctly'),
+              Text(
+                '• Drag steps from bottom to top slots\n• Or tap to place in order\n• Complete all steps correctly',
+              ),
               SizedBox(height: 12),
               Text('⭐ Scoring', style: TextStyle(fontWeight: FontWeight.bold)),
               SizedBox(height: 4),
-              Text('• 3 stars: Perfect (< 30s, 0 mistakes)\n• 2 stars: Good (< 60s, < 3 mistakes)\n• 1 star: Completed'),
+              Text(
+                '• 3 stars: Perfect (< 30s, 0 mistakes)\n• 2 stars: Good (< 60s, < 3 mistakes)\n• 1 star: Completed',
+              ),
               SizedBox(height: 12),
               Text('💡 Tips', style: TextStyle(fontWeight: FontWeight.bold)),
               SizedBox(height: 4),
-              Text('• Read explanation after completing\n• Practice makes perfect\n• All progress saved locally'),
+              Text(
+                '• Read explanation after completing\n• Practice makes perfect\n• All progress saved locally',
+              ),
             ],
           ),
         ),

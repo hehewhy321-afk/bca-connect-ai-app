@@ -10,12 +10,7 @@ class ForumScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Forum'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
       body: Center(
         child: Column(
@@ -32,16 +27,13 @@ class ForumScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Forum',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Forum', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
               'Coming soon...',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

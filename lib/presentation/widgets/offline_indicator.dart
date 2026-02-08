@@ -13,17 +13,14 @@ class OfflineIndicator extends ConsumerWidget {
     return connectivityAsync.when(
       data: (isOnline) {
         if (isOnline) return const SizedBox.shrink();
-        
+
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.orange.shade100,
             border: Border(
-              bottom: BorderSide(
-                color: Colors.orange.shade300,
-                width: 1,
-              ),
+              bottom: BorderSide(color: Colors.orange.shade300, width: 1),
             ),
           ),
           child: Row(
@@ -44,11 +41,7 @@ class OfflineIndicator extends ConsumerWidget {
                   ),
                 ),
               ),
-              Icon(
-                Icons.cloud_off,
-                size: 18,
-                color: Colors.orange.shade700,
-              ),
+              Icon(Icons.cloud_off, size: 18, color: Colors.orange.shade700),
             ],
           ),
         );
@@ -75,19 +68,12 @@ class OfflineIndicatorCompact extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.orange.shade100,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.orange.shade300,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.orange.shade300, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.cloud_off,
-            size: 14,
-            color: Colors.orange.shade900,
-          ),
+          Icon(Icons.cloud_off, size: 14, color: Colors.orange.shade900),
           const SizedBox(width: 6),
           Text(
             'Offline',
@@ -110,7 +96,8 @@ class ConnectivitySnackbar extends ConsumerStatefulWidget {
   const ConnectivitySnackbar({super.key, required this.child});
 
   @override
-  ConsumerState<ConnectivitySnackbar> createState() => _ConnectivitySnackbarState();
+  ConsumerState<ConnectivitySnackbar> createState() =>
+      _ConnectivitySnackbarState();
 }
 
 class _ConnectivitySnackbarState extends ConsumerState<ConnectivitySnackbar> {
@@ -134,8 +121,8 @@ class _ConnectivitySnackbarState extends ConsumerState<ConnectivitySnackbar> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isOnline 
-                          ? 'Back online! All features available.' 
+                      isOnline
+                          ? 'Back online! All features available.'
                           : 'You are offline. Some features may be limited.',
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),

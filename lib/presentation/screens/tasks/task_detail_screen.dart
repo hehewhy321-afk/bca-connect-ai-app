@@ -32,10 +32,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          _buildTaskDetails(categoriesAsync),
-        ],
+        slivers: [_buildAppBar(), _buildTaskDetails(categoriesAsync)],
       ),
       bottomNavigationBar: _buildActionButtons(),
     );
@@ -97,11 +94,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _currentTask.priority.icon,
-            size: 16,
-            color: Colors.white,
-          ),
+          Icon(_currentTask.priority.icon, size: 16, color: Colors.white),
           const SizedBox(width: 6),
           Text(
             '${_currentTask.priority.displayName} Priority',
@@ -120,12 +113,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     return Text(
       _currentTask.title,
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            decoration: _currentTask.status == TaskStatus.completed
-                ? TextDecoration.lineThrough
-                : null,
-          ),
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        decoration: _currentTask.status == TaskStatus.completed
+            ? TextDecoration.lineThrough
+            : null,
+      ),
     );
   }
 
@@ -143,9 +136,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     : Iconsax.tick_circle,
               ),
               const SizedBox(width: 8),
-              Text(_currentTask.status == TaskStatus.completed
-                  ? 'Mark as Pending'
-                  : 'Mark as Completed'),
+              Text(
+                _currentTask.status == TaskStatus.completed
+                    ? 'Mark as Pending'
+                    : 'Mark as Completed',
+              ),
             ],
           ),
         ),
@@ -197,7 +192,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
   }
 
-  bool _hasDescription() => _currentTask.description != null && _currentTask.description!.isNotEmpty;
+  bool _hasDescription() =>
+      _currentTask.description != null && _currentTask.description!.isNotEmpty;
   bool _hasDueDate() => _currentTask.dueDate != null;
   bool _hasReminder() => _currentTask.reminderDate != null;
   bool _hasTags() => _currentTask.tags.isNotEmpty;
@@ -223,12 +219,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   Widget _buildCategoryWidget(List<TaskCategory> categories) {
     if (_currentTask.categoryId == null) return const SizedBox.shrink();
-    
+
     final category = categories.firstWhere(
       (c) => c.id == _currentTask.categoryId,
       orElse: () => categories.first,
     );
-    
+
     return Column(
       children: [
         _buildSectionCard(
@@ -241,9 +237,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               Text(
                 category.name,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: category.color,
-                    ),
+                  fontWeight: FontWeight.w600,
+                  color: category.color,
+                ),
               ),
             ],
           ),
@@ -262,15 +258,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         children: [
           Text(
             DateFormat('EEEE, MMMM d, y').format(_currentTask.dueDate!),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           Text(
             DateFormat('h:mm a').format(_currentTask.dueDate!),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 8),
           _buildDueDateBadge(),
@@ -322,15 +318,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         children: [
           Text(
             DateFormat('EEEE, MMMM d, y').format(_currentTask.reminderDate!),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           Text(
             DateFormat('h:mm a').format(_currentTask.reminderDate!),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -373,12 +369,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       Iconsax.info_circle,
       child: Column(
         children: [
-          _buildInfoRow('Created', DateFormat('MMM d, y • h:mm a').format(_currentTask.createdAt)),
+          _buildInfoRow(
+            'Created',
+            DateFormat('MMM d, y • h:mm a').format(_currentTask.createdAt),
+          ),
           const SizedBox(height: 8),
-          _buildInfoRow('Last Updated', DateFormat('MMM d, y • h:mm a').format(_currentTask.updatedAt)),
+          _buildInfoRow(
+            'Last Updated',
+            DateFormat('MMM d, y • h:mm a').format(_currentTask.updatedAt),
+          ),
           if (_currentTask.completedAt != null) ...[
             const SizedBox(height: 8),
-            _buildInfoRow('Completed', DateFormat('MMM d, y • h:mm a').format(_currentTask.completedAt!)),
+            _buildInfoRow(
+              'Completed',
+              DateFormat('MMM d, y • h:mm a').format(_currentTask.completedAt!),
+            ),
           ],
         ],
       ),
@@ -463,8 +468,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               _currentTask.status == TaskStatus.completed
                   ? Iconsax.tick_circle
                   : _currentTask.status == TaskStatus.inProgress
-                      ? Iconsax.clock
-                      : Iconsax.timer_1,
+                  ? Iconsax.clock
+                  : Iconsax.timer_1,
               color: Colors.white,
               size: 20,
             ),
@@ -477,15 +482,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 Text(
                   'Status',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 Text(
                   _currentTask.status.displayName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: _currentTask.status.color,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: _currentTask.status.color,
+                  ),
                 ),
               ],
             ),
@@ -495,7 +500,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
   }
 
-  Widget _buildSectionCard(String title, IconData icon, {required Widget child}) {
+  Widget _buildSectionCard(
+    String title,
+    IconData icon, {
+    required Widget child,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -519,9 +528,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -539,14 +548,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -566,7 +575,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Future<void> _toggleTaskStatus() async {
     try {
       await ref.read(taskProvider.notifier).toggleTaskStatus(_currentTask.id);
-      
+
       setState(() {
         _currentTask = _currentTask.copyWith(
           status: _currentTask.status == TaskStatus.completed
@@ -622,7 +631,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if (confirmed == true) {
       try {
         await ref.read(taskProvider.notifier).deleteTask(_currentTask.id);
-        
+
         if (mounted) {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -650,7 +659,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Task'),
-        content: Text('Are you sure you want to delete "${_currentTask.title}"?'),
+        content: Text(
+          'Are you sure you want to delete "${_currentTask.title}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

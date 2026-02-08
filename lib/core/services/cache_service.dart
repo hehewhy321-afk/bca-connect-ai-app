@@ -20,10 +20,17 @@ class CacheService {
   }
 
   // Save data to cache
-  static Future<void> set(String key, dynamic data, {Duration? duration}) async {
+  static Future<void> set(
+    String key,
+    dynamic data, {
+    Duration? duration,
+  }) async {
     try {
       await _cacheBox?.put(key, data);
-      await _cacheBox?.put('${key}_timestamp', DateTime.now().toIso8601String());
+      await _cacheBox?.put(
+        '${key}_timestamp',
+        DateTime.now().toIso8601String(),
+      );
     } catch (e) {
       debugPrint('Error saving cache: $e');
     }
@@ -40,7 +47,10 @@ class CacheService {
   }
 
   // Check if cache is valid (less than 24 hours old)
-  static bool isCacheValid(String key, {Duration maxAge = const Duration(hours: 24)}) {
+  static bool isCacheValid(
+    String key, {
+    Duration maxAge = const Duration(hours: 24),
+  }) {
     try {
       final timestampString = _cacheBox?.get('${key}_timestamp');
       if (timestampString != null) {
@@ -79,7 +89,7 @@ class CacheKeys {
   static const String forumPosts = 'forum_posts_cache';
   static const String profile = 'profile_cache';
   static const String courses = 'courses_cache';
-  
+
   // Cache durations
   static const Duration shortCache = Duration(minutes: 5);
   static const Duration mediumCache = Duration(hours: 1);

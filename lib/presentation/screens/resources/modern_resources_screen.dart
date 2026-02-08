@@ -41,11 +41,7 @@ class ModernResourcesScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Iconsax.folder_open,
-                    size: 100,
-                    color: Colors.grey[300],
-                  ),
+                  Icon(Iconsax.folder_open, size: 100, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Text(
                     'No Resources Available',
@@ -153,7 +149,10 @@ class ResourceCard extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: _getColorForType(context, resource.type).withValues(alpha: 0.1),
+                  color: _getColorForType(
+                    context,
+                    resource.type,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -181,10 +180,7 @@ class ResourceCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       resource.description ?? 'No description',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -192,9 +188,14 @@ class ResourceCard extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(50),
                           ),
                           child: Text(
@@ -202,12 +203,18 @@ class ResourceCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onSecondaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSecondaryContainer,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(Iconsax.arrow_down, size: 12, color: Colors.grey[600]),
+                        Icon(
+                          Iconsax.arrow_down,
+                          size: 12,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${resource.downloads}',

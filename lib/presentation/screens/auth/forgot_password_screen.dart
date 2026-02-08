@@ -10,7 +10,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -50,7 +51,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -70,7 +73,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             height: size.height - MediaQuery.of(context).padding.top,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _emailSent ? _buildSuccessView(isDark) : _buildFormView(isDark),
+              child: _emailSent
+                  ? _buildSuccessView(isDark)
+                  : _buildFormView(isDark),
             ),
           ),
         ),
@@ -93,7 +98,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: isDark 
+                  color: isDark
                       ? const Color(0xFF1A1A1A)
                       : const Color(0xFFFFF5F0),
                   borderRadius: BorderRadius.circular(32),
@@ -118,10 +123,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     color: ModernTheme.primaryOrange,
                   ),
                 ),
-              ).animate().scale(
-                duration: 800.ms,
-                curve: Curves.elasticOut,
-              ),
+              ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
 
               const SizedBox(height: 32),
 
@@ -168,7 +170,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
               filled: true,
-              fillColor: isDark 
+              fillColor: isDark
                   ? const Color(0xFF1A1A1A)
                   : const Color(0xFFF5F5F5),
               border: OutlineInputBorder(
@@ -178,9 +180,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: isDark
-                      ? const Color(0xFF2A2A2A)
-                      : Colors.grey[200]!,
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[200]!,
                   width: 1,
                 ),
               ),
@@ -193,10 +193,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Colors.red,
-                  width: 1,
-                ),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
@@ -218,45 +215,52 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
           // Reset Button
           SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _handleResetPassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ModernTheme.primaryOrange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-                shadowColor: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Iconsax.send_1, size: 20),
-                        SizedBox(width: 12),
-                        Text(
-                          'Send Reset Link',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _handleResetPassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ModernTheme.primaryOrange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-            ),
-          ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+                    elevation: 0,
+                    shadowColor: ModernTheme.primaryOrange.withValues(
+                      alpha: 0.3,
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Iconsax.send_1, size: 20),
+                            SizedBox(width: 12),
+                            Text(
+                              'Send Reset Link',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              )
+              .animate()
+              .fadeIn(delay: 500.ms)
+              .scale(begin: const Offset(0.95, 0.95)),
 
           const SizedBox(height: 24),
 
@@ -303,9 +307,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           width: 120,
           height: 120,
           decoration: BoxDecoration(
-            color: isDark 
-                ? const Color(0xFF1A1A1A)
-                : const Color(0xFFF0FDF4),
+            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0FDF4),
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: isDark
@@ -328,10 +330,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               color: Colors.green,
             ),
           ),
-        ).animate().scale(
-          duration: 800.ms,
-          curve: Curves.elasticOut,
-        ),
+        ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
 
         const SizedBox(height: 32),
 
@@ -352,14 +351,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDark 
-                ? const Color(0xFF1A1A1A)
-                : const Color(0xFFF5F5F5),
+            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF2A2A2A)
-                  : Colors.grey[200]!,
+              color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[200]!,
             ),
           ),
           child: Column(
@@ -403,28 +398,31 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
         // Back to Login Button
         SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: () => context.go('/auth/login'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ModernTheme.primaryOrange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () => context.go('/auth/login'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ModernTheme.primaryOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Back to Login',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Back to Login',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+            )
+            .animate()
+            .fadeIn(delay: 500.ms)
+            .scale(begin: const Offset(0.95, 0.95)),
 
         const SizedBox(height: 16),
 

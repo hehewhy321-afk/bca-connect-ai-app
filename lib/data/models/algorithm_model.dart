@@ -52,23 +52,14 @@ class AlgorithmStep {
   final int order;
   final String text;
 
-  AlgorithmStep({
-    required this.order,
-    required this.text,
-  });
+  AlgorithmStep({required this.order, required this.text});
 
   factory AlgorithmStep.fromJson(Map<String, dynamic> json) {
-    return AlgorithmStep(
-      order: json['order'],
-      text: json['text'],
-    );
+    return AlgorithmStep(order: json['order'], text: json['text']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'order': order,
-      'text': text,
-    };
+    return {'order': order, 'text': text};
   }
 }
 

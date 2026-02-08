@@ -2,19 +2,29 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/task.dart';
 import '../../data/services/task_storage_service.dart';
+import 'package:audioplayers/audioplayers.dart';
+import '../../core/services/notification_service.dart';
 
 // Task providers
-final taskProvider = StateNotifierProvider<TaskNotifier, AsyncValue<List<Task>>>((ref) {
-  return TaskNotifier();
-});
+final taskProvider =
+    StateNotifierProvider<TaskNotifier, AsyncValue<List<Task>>>((ref) {
+      return TaskNotifier();
+    });
 
-final taskCategoriesProvider = StateNotifierProvider<TaskCategoriesNotifier, AsyncValue<List<TaskCategory>>>((ref) {
-  return TaskCategoriesNotifier();
-});
+final taskCategoriesProvider =
+    StateNotifierProvider<
+      TaskCategoriesNotifier,
+      AsyncValue<List<TaskCategory>>
+    >((ref) {
+      return TaskCategoriesNotifier();
+    });
 
-final taskStatisticsProvider = StateNotifierProvider<TaskStatisticsNotifier, AsyncValue<Map<String, int>>>((ref) {
-  return TaskStatisticsNotifier();
-});
+final taskStatisticsProvider =
+    StateNotifierProvider<TaskStatisticsNotifier, AsyncValue<Map<String, int>>>(
+      (ref) {
+        return TaskStatisticsNotifier();
+      },
+    );
 
 // Filter providers
 final taskFilterProvider = StateProvider<TaskFilter>((ref) => TaskFilter());
@@ -22,7 +32,7 @@ final taskFilterProvider = StateProvider<TaskFilter>((ref) => TaskFilter());
 final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
   final tasks = ref.watch(taskProvider);
   final filter = ref.watch(taskFilterProvider);
-  
+
   return tasks.when(
     data: (taskList) {
       var filtered = taskList.where((task) {
@@ -30,17 +40,17 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
         if (filter.status != null && task.status != filter.status) {
           return false;
         }
-        
+
         // Category filter
         if (filter.categoryId != null && task.categoryId != filter.categoryId) {
           return false;
         }
-        
+
         // Priority filter
         if (filter.priority != null && task.priority != filter.priority) {
           return false;
         }
-        
+
         // Search query
         if (filter.searchQuery.isNotEmpty) {
           final query = filter.searchQuery.toLowerCase();
@@ -50,19 +60,19 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
             return false;
           }
         }
-        
+
         // Due date filter
         if (filter.showOverdueOnly && !task.isOverdue) {
           return false;
         }
-        
+
         if (filter.showDueTodayOnly && !task.isDueToday) {
           return false;
         }
-        
+
         return true;
       }).toList();
-      
+
       // Sort
       switch (filter.sortBy) {
         case TaskSortBy.dueDate:
@@ -83,7 +93,7 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
           filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           break;
       }
-      
+
       return AsyncValue.data(filtered);
     },
     loading: () => const AsyncValue.loading(),
@@ -93,6 +103,8 @@ final filteredTasksProvider = Provider<AsyncValue<List<Task>>>((ref) {
 
 // Task notifier
 class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   TaskNotifier() : super(const AsyncValue.loading()) {
     loadTasks();
   }
@@ -110,6 +122,7 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   Future<void> addTask(Task task) async {
     try {
       await TaskStorageService.saveTask(task);
+      await _syncTaskNotifications(task);
       await loadTasks(); // Refresh the list
     } catch (error) {
       debugPrint('Error adding task: $error');
@@ -120,6 +133,7 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   Future<void> updateTask(Task task) async {
     try {
       await TaskStorageService.updateTask(task);
+      await _syncTaskNotifications(task);
       await loadTasks(); // Refresh the list
     } catch (error) {
       debugPrint('Error updating task: $error');
@@ -129,6 +143,14 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 
   Future<void> deleteTask(String taskId) async {
     try {
+      final task = await TaskStorageService.getTask(taskId);
+      if (task != null) {
+        final baseId = (int.tryParse(task.id) ?? task.id.hashCode).abs();
+        final reminderId = (baseId % 100000000) * 2;
+        final deadlineId = reminderId + 1;
+        await NotificationService().cancelNotification(reminderId);
+        await NotificationService().cancelNotification(deadlineId);
+      }
       await TaskStorageService.deleteTask(taskId);
       await loadTasks(); // Refresh the list
     } catch (error) {
@@ -141,16 +163,25 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     try {
       final task = await TaskStorageService.getTask(taskId);
       if (task != null) {
-        final newStatus = task.status == TaskStatus.completed 
-            ? TaskStatus.pending 
-            : TaskStatus.completed;
-        
+        final isCompleting = task.status != TaskStatus.completed;
+        final newStatus = isCompleting
+            ? TaskStatus.completed
+            : TaskStatus.pending;
+
         final updatedTask = task.copyWith(
           status: newStatus,
-          completedAt: newStatus == TaskStatus.completed ? DateTime.now() : null,
+          completedAt: newStatus == TaskStatus.completed
+              ? DateTime.now()
+              : null,
         );
-        
+
         await TaskStorageService.updateTask(updatedTask);
+        await _syncTaskNotifications(updatedTask);
+
+        if (isCompleting) {
+          _playCompletionFeedback(task.title);
+        }
+
         await loadTasks(); // Refresh the list
       }
     } catch (error) {
@@ -161,17 +192,76 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 
   Future<void> markTaskCompleted(String taskId) async {
     try {
+      final task = await TaskStorageService.getTask(taskId);
       await TaskStorageService.markTaskCompleted(taskId);
+      if (task != null) {
+        final baseId = (int.tryParse(task.id) ?? task.id.hashCode).abs();
+        final reminderId = (baseId % 100000000) * 2;
+        final deadlineId = reminderId + 1;
+        await NotificationService().cancelNotification(reminderId);
+        await NotificationService().cancelNotification(deadlineId);
+        _playCompletionFeedback(task.title);
+      }
       await loadTasks(); // Refresh the list
     } catch (error) {
       debugPrint('Error marking task completed: $error');
       rethrow;
     }
   }
+
+  Future<void> _syncTaskNotifications(Task task) async {
+    final baseId = (int.tryParse(task.id) ?? task.id.hashCode).abs();
+    final reminderId = (baseId % 100000000) * 2;
+    final deadlineId = reminderId + 1;
+
+    // Always cancel existing first to avoid duplicates or orphaned reminders
+    await NotificationService().cancelNotification(reminderId);
+    await NotificationService().cancelNotification(deadlineId);
+
+    // Only schedule if not completed
+    if (task.status != TaskStatus.completed) {
+      final now = DateTime.now();
+
+      // 1. Schedule Reminder
+      if (task.reminderDate != null && task.reminderDate!.isAfter(now)) {
+        await NotificationService().scheduleNotification(
+          id: reminderId,
+          title: 'Task Reminder: ${task.title}',
+          body: task.description ?? 'Time to work on your task!',
+          scheduledDate: task.reminderDate!,
+          payload: 'task_${task.id}',
+        );
+      }
+
+      // 2. Schedule Deadline (Overdue)
+      if (task.dueDate != null && task.dueDate!.isAfter(now)) {
+        await NotificationService().scheduleNotification(
+          id: deadlineId,
+          title: 'Task Due Now: ${task.title}',
+          body: 'This task is due right now. Don\'t let it expire!',
+          scheduledDate: task.dueDate!,
+          payload: 'task_${task.id}',
+        );
+      }
+    }
+  }
+
+  void _playCompletionFeedback(String taskTitle) async {
+    try {
+      await _audioPlayer.play(AssetSource('sounds/for-study.mp3'));
+      await NotificationService().showNotification(
+        title: 'Task Completed!',
+        body: 'Great job completing: $taskTitle',
+      );
+    } catch (e) {
+      debugPrint('Error playing completion feedback: $e');
+    }
+  }
 }
 
 // Categories notifier
-class TaskCategoriesNotifier extends StateNotifier<AsyncValue<List<TaskCategory>>> {
+class TaskCategoriesNotifier
+    extends StateNotifier<AsyncValue<List<TaskCategory>>> {
   TaskCategoriesNotifier() : super(const AsyncValue.loading()) {
     loadCategories();
   }
@@ -208,7 +298,8 @@ class TaskCategoriesNotifier extends StateNotifier<AsyncValue<List<TaskCategory>
 }
 
 // Statistics notifier
-class TaskStatisticsNotifier extends StateNotifier<AsyncValue<Map<String, int>>> {
+class TaskStatisticsNotifier
+    extends StateNotifier<AsyncValue<Map<String, int>>> {
   TaskStatisticsNotifier() : super(const AsyncValue.loading()) {
     loadStatistics();
   }
@@ -270,17 +361,12 @@ class TaskFilter {
 
   bool get hasActiveFilters {
     return status != null ||
-           categoryId != null ||
-           priority != null ||
-           searchQuery.isNotEmpty ||
-           showOverdueOnly ||
-           showDueTodayOnly;
+        categoryId != null ||
+        priority != null ||
+        searchQuery.isNotEmpty ||
+        showOverdueOnly ||
+        showDueTodayOnly;
   }
 }
 
-enum TaskSortBy {
-  createdDate,
-  dueDate,
-  priority,
-  title,
-}
+enum TaskSortBy { createdDate, dueDate, priority, title }

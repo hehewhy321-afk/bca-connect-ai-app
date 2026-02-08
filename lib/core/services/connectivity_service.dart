@@ -7,19 +7,21 @@ class ConnectivityService {
 
   Future<bool> isOnline() async {
     final result = await _connectivity.checkConnectivity();
-    return result.any((r) => 
-      r == ConnectivityResult.mobile || 
-      r == ConnectivityResult.wifi ||
-      r == ConnectivityResult.ethernet
+    return result.any(
+      (r) =>
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.ethernet,
     );
   }
 
   Stream<bool> get onConnectivityChanged {
     return _connectivity.onConnectivityChanged.map((result) {
-      return result.any((r) => 
-        r == ConnectivityResult.mobile || 
-        r == ConnectivityResult.wifi ||
-        r == ConnectivityResult.ethernet
+      return result.any(
+        (r) =>
+            r == ConnectivityResult.mobile ||
+            r == ConnectivityResult.wifi ||
+            r == ConnectivityResult.ethernet,
       );
     });
   }

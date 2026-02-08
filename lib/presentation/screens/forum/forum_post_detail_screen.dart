@@ -7,18 +7,27 @@ import '../../../data/repositories/forum_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 
-final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, postId) async {
+final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((
+  ref,
+  postId,
+) async {
   final repo = ForumRepository();
   return await repo.getPostById(postId);
 });
 
-final forumRepliesProvider = FutureProvider.family<List<ForumComment>, String>((ref, postId) async {
+final forumRepliesProvider = FutureProvider.family<List<ForumComment>, String>((
+  ref,
+  postId,
+) async {
   final repo = ForumRepository();
   return await repo.getPostReplies(postId);
 });
 
 // Provider to track user's vote on a post
-final postVoteProvider = FutureProvider.family<int, String>((ref, postId) async {
+final postVoteProvider = FutureProvider.family<int, String>((
+  ref,
+  postId,
+) async {
   final user = SupabaseConfig.client.auth.currentUser;
   if (user == null) return 0;
 
@@ -38,7 +47,10 @@ final postVoteProvider = FutureProvider.family<int, String>((ref, postId) async 
 });
 
 // Provider to track user's vote on a reply
-final replyVoteProvider = FutureProvider.family<int, String>((ref, replyId) async {
+final replyVoteProvider = FutureProvider.family<int, String>((
+  ref,
+  replyId,
+) async {
   final user = SupabaseConfig.client.auth.currentUser;
   if (user == null) return 0;
 
@@ -63,7 +75,8 @@ class ForumPostDetailScreen extends ConsumerStatefulWidget {
   const ForumPostDetailScreen({super.key, required this.postId});
 
   @override
-  ConsumerState<ForumPostDetailScreen> createState() => _ForumPostDetailScreenState();
+  ConsumerState<ForumPostDetailScreen> createState() =>
+      _ForumPostDetailScreenState();
 }
 
 class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
@@ -80,9 +93,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   Future<void> _handleVote(String postId, int voteType) async {
     final user = SupabaseConfig.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to vote')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to vote')));
       return;
     }
 
@@ -97,14 +110,14 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
 
       if (existingVote != null) {
         final currentVote = existingVote['vote_type'] as int;
-        
+
         if (currentVote == voteType) {
           // Remove vote
           await SupabaseConfig.client
               .from('forum_votes')
               .delete()
               .eq('id', existingVote['id']);
-          
+
           // Update post count
           await SupabaseConfig.client.rpc(
             'update_post_votes',
@@ -116,7 +129,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               .from('forum_votes')
               .update({'vote_type': voteType})
               .eq('id', existingVote['id']);
-          
+
           // Update post count (remove old, add new)
           await SupabaseConfig.client.rpc(
             'update_post_votes',
@@ -130,7 +143,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           'user_id': user.id,
           'vote_type': voteType,
         });
-        
+
         // Update post count
         await SupabaseConfig.client.rpc(
           'update_post_votes',
@@ -143,9 +156,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       ref.invalidate(postVoteProvider(postId));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to vote: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to vote: $e')));
       }
     }
   }
@@ -153,9 +166,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   Future<void> _handleReplyVote(String replyId, int voteType) async {
     final user = SupabaseConfig.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to vote')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to vote')));
       return;
     }
 
@@ -169,13 +182,13 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
 
       if (existingVote != null) {
         final currentVote = existingVote['vote_type'] as int;
-        
+
         if (currentVote == voteType) {
           await SupabaseConfig.client
               .from('forum_votes')
               .delete()
               .eq('id', existingVote['id']);
-          
+
           await SupabaseConfig.client.rpc(
             'update_reply_votes',
             params: {'reply_id': replyId, 'vote_change': -voteType},
@@ -185,10 +198,13 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               .from('forum_votes')
               .update({'vote_type': voteType})
               .eq('id', existingVote['id']);
-          
+
           await SupabaseConfig.client.rpc(
             'update_reply_votes',
-            params: {'reply_id': replyId, 'vote_change': voteType - currentVote},
+            params: {
+              'reply_id': replyId,
+              'vote_change': voteType - currentVote,
+            },
           );
         }
       } else {
@@ -197,7 +213,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           'user_id': user.id,
           'vote_type': voteType,
         });
-        
+
         await SupabaseConfig.client.rpc(
           'update_reply_votes',
           params: {'reply_id': replyId, 'vote_change': voteType},
@@ -208,9 +224,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       ref.invalidate(replyVoteProvider(replyId));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to vote: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to vote: $e')));
       }
     }
   }
@@ -220,9 +236,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
 
     final user = SupabaseConfig.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to reply')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to reply')));
       return;
     }
 
@@ -250,9 +266,9 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post reply: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to post reply: $e')));
       }
     }
   }
@@ -301,7 +317,8 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 20,
-                                  backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                                  backgroundColor: ModernTheme.primaryOrange
+                                      .withValues(alpha: 0.2),
                                   child: Text(
                                     post.authorName[0].toUpperCase(),
                                     style: const TextStyle(
@@ -313,7 +330,8 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         post.authorName,
@@ -339,18 +357,17 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                             // Title
                             Text(
                               post.title,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 12),
 
                             // Content
                             Text(
                               post.content,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    height: 1.6,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.copyWith(height: 1.6),
                             ),
                             const SizedBox(height: 16),
 
@@ -374,10 +391,15 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                                     children: [
                                       IconButton(
                                         icon: Icon(
-                                          userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
-                                          color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                                          userVote == 1
+                                              ? Iconsax.arrow_up_15
+                                              : Iconsax.arrow_up,
+                                          color: userVote == 1
+                                              ? ModernTheme.primaryOrange
+                                              : null,
                                         ),
-                                        onPressed: () => _handleVote(post.id, 1),
+                                        onPressed: () =>
+                                            _handleVote(post.id, 1),
                                       ),
                                       Text(
                                         '${post.upvotes - post.downvotes}',
@@ -387,21 +409,32 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                                           color: userVote == 1
                                               ? ModernTheme.primaryOrange
                                               : userVote == -1
-                                                  ? Colors.red
-                                                  : null,
+                                              ? Colors.red
+                                              : null,
                                         ),
                                       ),
                                       IconButton(
                                         icon: Icon(
-                                          userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
-                                          color: userVote == -1 ? Colors.red : null,
+                                          userVote == -1
+                                              ? Iconsax.arrow_down_15
+                                              : Iconsax.arrow_down,
+                                          color: userVote == -1
+                                              ? Colors.red
+                                              : null,
                                         ),
-                                        onPressed: () => _handleVote(post.id, -1),
+                                        onPressed: () =>
+                                            _handleVote(post.id, -1),
                                       ),
                                     ],
                                   ),
-                                  loading: () => const SizedBox(width: 120, child: Center(child: CircularProgressIndicator())),
-                                  error: (error, stackTrace) => const SizedBox(width: 120),
+                                  loading: () => const SizedBox(
+                                    width: 120,
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  ),
+                                  error: (error, stackTrace) =>
+                                      const SizedBox(width: 120),
                                 ),
                                 const Spacer(),
                                 _StatItem(
@@ -427,8 +460,8 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                     Text(
                       'Replies (${post.replyCount})',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -462,11 +495,15 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                         }
 
                         // Build threaded replies
-                        final topLevelReplies = replies.where((r) => r.parentId == null).toList();
-                        
+                        final topLevelReplies = replies
+                            .where((r) => r.parentId == null)
+                            .toList();
+
                         return Column(
                           children: topLevelReplies.map((reply) {
-                            final childReplies = replies.where((r) => r.parentId == reply.id).toList();
+                            final childReplies = replies
+                                .where((r) => r.parentId == reply.id)
+                                .toList();
                             return _ThreadedReplyCard(
                               reply: reply,
                               childReplies: childReplies,
@@ -481,10 +518,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           }).toList(),
                         );
                       },
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(
-                        child: Text('Error loading replies: $error'),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) =>
+                          Center(child: Text('Error loading replies: $error')),
                     ),
                   ],
                 ),
@@ -510,12 +547,18 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                          color: ModernTheme.primaryOrange.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            Icon(Iconsax.arrow_right_3, size: 16, color: ModernTheme.primaryOrange),
+                            Icon(
+                              Iconsax.arrow_right_3,
+                              size: 16,
+                              color: ModernTheme.primaryOrange,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -549,7 +592,7 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                           child: TextField(
                             controller: _replyController,
                             decoration: InputDecoration(
-                              hintText: _replyingToName != null 
+                              hintText: _replyingToName != null
                                   ? 'Write a reply to $_replyingToName...'
                                   : 'Write a reply...',
                               border: OutlineInputBorder(
@@ -570,7 +613,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
-                            icon: const Icon(Iconsax.send_1, color: Colors.white),
+                            icon: const Icon(
+                              Iconsax.send_1,
+                              color: Colors.white,
+                            ),
                             onPressed: _submitReply,
                           ),
                         ),
@@ -628,7 +674,9 @@ class _ThreadedReplyCard extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: ModernTheme.accentOrange.withValues(alpha: 0.2),
+                      backgroundColor: ModernTheme.accentOrange.withValues(
+                        alpha: 0.2,
+                      ),
                       child: Text(
                         reply.authorName[0].toUpperCase(),
                         style: const TextStyle(
@@ -665,9 +713,9 @@ class _ThreadedReplyCard extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   reply.content,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.5,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.5),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -678,13 +726,20 @@ class _ThreadedReplyCard extends ConsumerWidget {
                         children: [
                           IconButton(
                             icon: Icon(
-                              userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
+                              userVote == 1
+                                  ? Iconsax.arrow_up_15
+                                  : Iconsax.arrow_up,
                               size: 16,
-                              color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                              color: userVote == 1
+                                  ? ModernTheme.primaryOrange
+                                  : null,
                             ),
                             onPressed: () => onVote(reply.id, 1),
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                           ),
                           Text(
                             '${reply.upvotes - reply.downvotes}',
@@ -694,32 +749,53 @@ class _ThreadedReplyCard extends ConsumerWidget {
                               color: userVote == 1
                                   ? ModernTheme.primaryOrange
                                   : userVote == -1
-                                      ? Colors.red
-                                      : null,
+                                  ? Colors.red
+                                  : null,
                             ),
                           ),
                           IconButton(
                             icon: Icon(
-                              userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
+                              userVote == -1
+                                  ? Iconsax.arrow_down_15
+                                  : Iconsax.arrow_down,
                               size: 16,
                               color: userVote == -1 ? Colors.red : null,
                             ),
                             onPressed: () => onVote(reply.id, -1),
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                           ),
                         ],
                       ),
-                      loading: () => const SizedBox(width: 80, height: 32, child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))),
+                      loading: () => const SizedBox(
+                        width: 80,
+                        height: 32,
+                        child: Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
                       error: (error, stackTrace) => const SizedBox(width: 80),
                     ),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () => onReply(reply.id, reply.authorName),
                       icon: const Icon(Iconsax.message, size: 14),
-                      label: const Text('Reply', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Reply',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -746,11 +822,16 @@ class _ThreadedReplyCard extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Iconsax.arrow_right_3, size: 12, color: ModernTheme.primaryOrange),
+                            Icon(
+                              Iconsax.arrow_right_3,
+                              size: 12,
+                              color: ModernTheme.primaryOrange,
+                            ),
                             const SizedBox(width: 8),
                             CircleAvatar(
                               radius: 12,
-                              backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                              backgroundColor: ModernTheme.primaryOrange
+                                  .withValues(alpha: 0.2),
                               child: Text(
                                 childReply.authorName[0].toUpperCase(),
                                 style: const TextStyle(
@@ -787,26 +868,35 @@ class _ThreadedReplyCard extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           childReply.content,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                height: 1.4,
-                              ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(height: 1.4),
                         ),
                         const SizedBox(height: 8),
                         Consumer(
                           builder: (context, ref, child) {
-                            final childVoteAsync = ref.watch(replyVoteProvider(childReply.id));
+                            final childVoteAsync = ref.watch(
+                              replyVoteProvider(childReply.id),
+                            );
                             return childVoteAsync.when(
                               data: (userVote) => Row(
                                 children: [
                                   IconButton(
                                     icon: Icon(
-                                      userVote == 1 ? Iconsax.arrow_up_15 : Iconsax.arrow_up,
+                                      userVote == 1
+                                          ? Iconsax.arrow_up_15
+                                          : Iconsax.arrow_up,
                                       size: 14,
-                                      color: userVote == 1 ? ModernTheme.primaryOrange : null,
+                                      color: userVote == 1
+                                          ? ModernTheme.primaryOrange
+                                          : null,
                                     ),
                                     onPressed: () => onVote(childReply.id, 1),
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 28,
+                                      minHeight: 28,
+                                    ),
                                   ),
                                   Text(
                                     '${childReply.upvotes - childReply.downvotes}',
@@ -816,24 +906,42 @@ class _ThreadedReplyCard extends ConsumerWidget {
                                       color: userVote == 1
                                           ? ModernTheme.primaryOrange
                                           : userVote == -1
-                                              ? Colors.red
-                                              : null,
+                                          ? Colors.red
+                                          : null,
                                     ),
                                   ),
                                   IconButton(
                                     icon: Icon(
-                                      userVote == -1 ? Iconsax.arrow_down_15 : Iconsax.arrow_down,
+                                      userVote == -1
+                                          ? Iconsax.arrow_down_15
+                                          : Iconsax.arrow_down,
                                       size: 14,
                                       color: userVote == -1 ? Colors.red : null,
                                     ),
                                     onPressed: () => onVote(childReply.id, -1),
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 28,
+                                      minHeight: 28,
+                                    ),
                                   ),
                                 ],
                               ),
-                              loading: () => const SizedBox(width: 70, height: 28, child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)))),
-                              error: (error, stackTrace) => const SizedBox(width: 70),
+                              loading: () => const SizedBox(
+                                width: 70,
+                                height: 28,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              error: (error, stackTrace) =>
+                                  const SizedBox(width: 70),
                             );
                           },
                         ),
@@ -890,10 +998,7 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         '#$label',
-        style: TextStyle(
-          color: Colors.grey[700],
-          fontSize: 11,
-        ),
+        style: TextStyle(color: Colors.grey[700], fontSize: 11),
       ),
     );
   }
@@ -918,19 +1023,10 @@ class _StatItem extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
       ],
     );
   }

@@ -18,10 +18,10 @@ class ForumRepository {
     bool forceRefresh = false,
   }) async {
     final cacheKey = '${CacheKeys.forumPosts}_${category ?? 'all'}_$offset';
-    
+
     // Check connectivity first
     final isOnline = await _connectivity.isOnline();
-    
+
     // If online, always fetch fresh data
     if (isOnline) {
       try {
@@ -36,29 +36,34 @@ class ForumRepository {
         }
 
         final response = await query;
-        
+
         // Fetch user names separately for each post
         final posts = <ForumPost>[];
         for (var postData in response as List) {
           final data = Map<String, dynamic>.from(postData);
-          
+
           // Debug: Print upvotes value
-          debugPrint('Post ${data['id']}: upvotes = ${data['upvotes']} (type: ${data['upvotes'].runtimeType})');
-          
+          debugPrint(
+            'Post ${data['id']}: upvotes = ${data['upvotes']} (type: ${data['upvotes'].runtimeType})',
+          );
+
           // Ensure upvotes is not null
           if (data['upvotes'] == null) {
             data['upvotes'] = 0;
             debugPrint('  -> Fixed null upvotes to 0');
           }
-          
+
           // Extract comment count from the nested response
-          if (data['comments_count'] != null && data['comments_count'] is List) {
+          if (data['comments_count'] != null &&
+              data['comments_count'] is List) {
             final countList = data['comments_count'] as List;
-            data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
+            data['comments_count'] = countList.isNotEmpty
+                ? countList[0]['count'] ?? 0
+                : 0;
           } else {
             data['comments_count'] = 0;
           }
-          
+
           // Try to fetch user profile
           try {
             final profile = await _client
@@ -66,48 +71,52 @@ class ForumRepository {
                 .select('full_name, avatar_url')
                 .eq('user_id', data['user_id'])
                 .maybeSingle();
-            
+
             if (profile != null) {
               data['user_name'] = profile['full_name'];
               data['user_avatar'] = profile['avatar_url'];
             }
-        } catch (e) {
-          // If profile fetch fails, continue without user data
-          debugPrint('Error fetching profile for post: $e');
+          } catch (e) {
+            // If profile fetch fails, continue without user data
+            debugPrint('Error fetching profile for post: $e');
+          }
+
+          posts.add(ForumPost.fromJson(data));
         }
-        
-        posts.add(ForumPost.fromJson(data));
-      }
-      
-      debugPrint('Fetched ${posts.length} forum posts from database (online)');
-      
-      // Cache the fresh results
-      final jsonList = posts.map((e) => e.toJson()).toList();
-      await CacheService.set(
-        cacheKey,
-        jsonEncode(jsonList),
-        duration: CacheKeys.mediumCache,
-      );
-      
-      return posts;
+
+        debugPrint(
+          'Fetched ${posts.length} forum posts from database (online)',
+        );
+
+        // Cache the fresh results
+        final jsonList = posts.map((e) => e.toJson()).toList();
+        await CacheService.set(
+          cacheKey,
+          jsonEncode(jsonList),
+          duration: CacheKeys.mediumCache,
+        );
+
+        return posts;
       } catch (e) {
         debugPrint('Error fetching forum posts: $e');
         // Fall through to cache on error
       }
     }
-    
+
     // If offline or error, use cache
     try {
       final cached = CacheService.get<String>(cacheKey);
       if (cached != null) {
         final List<dynamic> jsonList = jsonDecode(cached);
-        debugPrint('Loaded ${jsonList.length} forum posts from cache (offline or error)');
+        debugPrint(
+          'Loaded ${jsonList.length} forum posts from cache (offline or error)',
+        );
         return jsonList.map((e) => ForumPost.fromJson(e)).toList();
       }
     } catch (e) {
       debugPrint('Error loading forum posts from cache: $e');
     }
-    
+
     throw Exception('No internet connection and no cached data available');
   }
 
@@ -121,17 +130,19 @@ class ForumRepository {
           .maybeSingle();
 
       if (response == null) return null;
-      
+
       final data = Map<String, dynamic>.from(response);
-      
+
       // Extract comment count from the nested response
       if (data['comments_count'] != null && data['comments_count'] is List) {
         final countList = data['comments_count'] as List;
-        data['comments_count'] = countList.isNotEmpty ? countList[0]['count'] ?? 0 : 0;
+        data['comments_count'] = countList.isNotEmpty
+            ? countList[0]['count'] ?? 0
+            : 0;
       } else {
         data['comments_count'] = 0;
       }
-      
+
       // Fetch user profile separately
       try {
         final profile = await _client
@@ -139,7 +150,7 @@ class ForumRepository {
             .select('full_name, avatar_url')
             .eq('user_id', data['user_id'])
             .maybeSingle();
-        
+
         if (profile != null) {
           data['user_name'] = profile['full_name'];
           data['user_avatar'] = profile['avatar_url'];
@@ -147,7 +158,7 @@ class ForumRepository {
       } catch (e) {
         debugPrint('Error fetching profile for post: $e');
       }
-      
+
       // Increment view count
       try {
         await _client
@@ -157,7 +168,7 @@ class ForumRepository {
       } catch (e) {
         debugPrint('Error incrementing view count: $e');
       }
-      
+
       return ForumPost.fromJson(data);
     } catch (e) {
       debugPrint('Error fetching post: $e');
@@ -197,7 +208,7 @@ class ForumRepository {
       final comments = <ForumComment>[];
       for (var commentData in response as List) {
         final data = Map<String, dynamic>.from(commentData);
-        
+
         // Try to fetch user profile
         try {
           final profile = await _client
@@ -205,7 +216,7 @@ class ForumRepository {
               .select('full_name, avatar_url')
               .eq('user_id', data['user_id'])
               .maybeSingle();
-          
+
           if (profile != null) {
             data['user_name'] = profile['full_name'];
             data['user_avatar'] = profile['avatar_url'];
@@ -213,10 +224,10 @@ class ForumRepository {
         } catch (e) {
           debugPrint('Error fetching profile for comment: $e');
         }
-        
+
         comments.add(ForumComment.fromJson(data));
       }
-      
+
       return comments;
     } catch (e) {
       debugPrint('Error fetching comments: $e');
@@ -252,8 +263,10 @@ class ForumRepository {
     if (userId == null) throw Exception('User not authenticated');
 
     try {
-      debugPrint('Upvote: Checking existing vote for user $userId on post $postId');
-      
+      debugPrint(
+        'Upvote: Checking existing vote for user $userId on post $postId',
+      );
+
       // Check if user already voted
       final existingVote = await _client
           .from('forum_votes')
@@ -264,48 +277,68 @@ class ForumRepository {
 
       if (existingVote != null) {
         debugPrint('Upvote: Removing existing vote');
-        
+
         // Remove vote
         await _client
             .from('forum_votes')
             .delete()
             .eq('user_id', userId)
             .eq('post_id', postId);
-        
+
         // Decrement upvote count using secure RPC function
         try {
-          await _client.rpc('decrement_post_upvotes_secure', params: {'post_id_param': postId});
+          await _client.rpc(
+            'decrement_post_upvotes_secure',
+            params: {'post_id_param': postId},
+          );
           debugPrint('Upvote: Vote removed via RPC');
         } catch (e) {
           debugPrint('RPC failed, trying direct update: $e');
           // Fallback: try direct update (will work if RLS policy allows)
-          final post = await _client.from('forum_posts').select('upvotes').eq('id', postId).single();
+          final post = await _client
+              .from('forum_posts')
+              .select('upvotes')
+              .eq('id', postId)
+              .single();
           final currentUpvotes = post['upvotes'] as int? ?? 0;
-          await _client.from('forum_posts').update({'upvotes': (currentUpvotes - 1).clamp(0, 999999)}).eq('id', postId);
+          await _client
+              .from('forum_posts')
+              .update({'upvotes': (currentUpvotes - 1).clamp(0, 999999)})
+              .eq('id', postId);
         }
       } else {
         debugPrint('Upvote: Adding new vote');
-        
+
         // Add vote
         await _client.from('forum_votes').insert({
           'user_id': userId,
           'post_id': postId,
           'vote_type': 1,
         });
-        
+
         // Increment upvote count using secure RPC function
         try {
-          await _client.rpc('increment_post_upvotes_secure', params: {'post_id_param': postId});
+          await _client.rpc(
+            'increment_post_upvotes_secure',
+            params: {'post_id_param': postId},
+          );
           debugPrint('Upvote: Vote added via RPC');
         } catch (e) {
           debugPrint('RPC failed, trying direct update: $e');
           // Fallback: try direct update (will work if RLS policy allows)
-          final post = await _client.from('forum_posts').select('upvotes').eq('id', postId).single();
+          final post = await _client
+              .from('forum_posts')
+              .select('upvotes')
+              .eq('id', postId)
+              .single();
           final currentUpvotes = post['upvotes'] as int? ?? 0;
-          await _client.from('forum_posts').update({'upvotes': currentUpvotes + 1}).eq('id', postId);
+          await _client
+              .from('forum_posts')
+              .update({'upvotes': currentUpvotes + 1})
+              .eq('id', postId);
         }
       }
-      
+
       // Verify the upvote count after the operation
       final post = await _client
           .from('forum_posts')
@@ -313,7 +346,6 @@ class ForumRepository {
           .eq('id', postId)
           .single();
       debugPrint('Upvote: Post now has ${post['upvotes']} upvotes');
-      
     } catch (e) {
       debugPrint('Error toggling upvote: $e');
       rethrow;
@@ -332,7 +364,7 @@ class ForumRepository {
           .eq('user_id', userId)
           .eq('post_id', postId)
           .maybeSingle();
-      
+
       return vote != null;
     } catch (e) {
       debugPrint('Error checking upvote status: $e');

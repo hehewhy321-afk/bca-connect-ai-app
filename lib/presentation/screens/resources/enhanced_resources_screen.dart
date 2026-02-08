@@ -35,11 +35,16 @@ final filteredResourcesProvider = Provider<AsyncValue<List<Resource>>>((ref) {
 
   return resourcesAsync.whenData((resources) {
     return resources.where((resource) {
-      final matchesSearch = resource.title.toLowerCase().contains(searchQuery) ||
-          (resource.description?.toLowerCase().contains(searchQuery) ?? false) ||
+      final matchesSearch =
+          resource.title.toLowerCase().contains(searchQuery) ||
+          (resource.description?.toLowerCase().contains(searchQuery) ??
+              false) ||
           (resource.subject?.toLowerCase().contains(searchQuery) ?? false);
-      final matchesType = selectedType == 'all' || resource.type.toLowerCase() == selectedType.toLowerCase();
-      final matchesSemester = selectedSemester == 'all' ||
+      final matchesType =
+          selectedType == 'all' ||
+          resource.type.toLowerCase() == selectedType.toLowerCase();
+      final matchesSemester =
+          selectedSemester == 'all' ||
           (resource.semester?.toString() == selectedSemester);
       return matchesSearch && matchesType && matchesSemester;
     }).toList();
@@ -50,18 +55,23 @@ class EnhancedResourcesScreen extends ConsumerStatefulWidget {
   const EnhancedResourcesScreen({super.key});
 
   @override
-  ConsumerState<EnhancedResourcesScreen> createState() => _EnhancedResourcesScreenState();
+  ConsumerState<EnhancedResourcesScreen> createState() =>
+      _EnhancedResourcesScreenState();
 }
 
-class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScreen> {
+class _EnhancedResourcesScreenState
+    extends ConsumerState<EnhancedResourcesScreen> {
   final Map<String, double> _downloadProgress = {};
 
-  Future<void> _handleResourceView(BuildContext context, Resource resource) async {
+  Future<void> _handleResourceView(
+    BuildContext context,
+    Resource resource,
+  ) async {
     try {
       // Check connectivity first
       final connectivity = ConnectivityService();
       final isOnline = await connectivity.isOnline();
-      
+
       if (!isOnline) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +85,9 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
               ),
               backgroundColor: Colors.orange,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               action: SnackBarAction(
                 label: 'Retry',
                 textColor: Colors.white,
@@ -92,7 +104,8 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       // Increment view count
       await SupabaseConfig.client
           .from('resources')
-          .update({'views': resource.views + 1}).eq('id', resource.id);
+          .update({'views': resource.views + 1})
+          .eq('id', resource.id);
 
       // Track download if user is authenticated
       if (user != null) {
@@ -105,7 +118,8 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
           // Increment downloads count
           await SupabaseConfig.client
               .from('resources')
-              .update({'downloads': resource.downloads + 1}).eq('id', resource.id);
+              .update({'downloads': resource.downloads + 1})
+              .eq('id', resource.id);
         } catch (e) {
           if (!e.toString().contains('duplicate')) {
             debugPrint('Error tracking download: $e');
@@ -115,7 +129,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
       // Determine if it's a file or external link
       String? url = resource.externalUrl ?? resource.fileUrl;
-      
+
       if (url == null) {
         throw 'No URL available for this resource';
       }
@@ -137,9 +151,9 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
         String errorMessage;
         Color errorColor = Colors.red;
         IconData errorIcon = Iconsax.close_circle;
-        
+
         final errorString = e.toString();
-        if (errorString.contains('No internet connection') || 
+        if (errorString.contains('No internet connection') ||
             errorString.contains('SocketException') ||
             errorString.contains('Failed host lookup')) {
           errorMessage = 'No internet connection. Please check your network.';
@@ -160,7 +174,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
         } else {
           errorMessage = 'Unable to access this resource. Please try again.';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -172,8 +186,12 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
             ),
             backgroundColor: errorColor,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            action: errorString.contains('No internet connection') || errorString.contains('try again')
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            action:
+                errorString.contains('No internet connection') ||
+                    errorString.contains('try again')
                 ? SnackBarAction(
                     label: 'Retry',
                     textColor: Colors.white,
@@ -191,7 +209,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://$url';
     }
-    
+
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -200,12 +218,16 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
     }
   }
 
-  Future<void> _downloadFile(BuildContext context, Resource resource, String url) async {
+  Future<void> _downloadFile(
+    BuildContext context,
+    Resource resource,
+    String url,
+  ) async {
     try {
       // Check connectivity before starting download
       final connectivity = ConnectivityService();
       final isOnline = await connectivity.isOnline();
-      
+
       if (!isOnline) {
         throw 'No internet connection available for download';
       }
@@ -213,9 +235,9 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       // Request storage permission for Android
       if (Platform.isAndroid) {
         PermissionStatus status;
-        
+
         // For Android 13+ (API 33+), we need different permissions
-        if (await Permission.photos.isPermanentlyDenied || 
+        if (await Permission.photos.isPermanentlyDenied ||
             await Permission.videos.isPermanentlyDenied ||
             await Permission.audio.isPermanentlyDenied) {
           // Show dialog to open settings
@@ -239,22 +261,22 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 ],
               ),
             );
-            
+
             if (shouldOpenSettings == true) {
               await openAppSettings();
             }
           }
           return;
         }
-        
+
         // Try to request storage permission
         status = await Permission.storage.request();
-        
+
         // If denied, try manageExternalStorage for Android 11+
         if (!status.isGranted) {
           status = await Permission.manageExternalStorage.request();
         }
-        
+
         // If still denied, show dialog
         if (!status.isGranted) {
           if (context.mounted) {
@@ -277,7 +299,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 ],
               ),
             );
-            
+
             if (shouldRetry == true) {
               // Try again or open settings if permanently denied
               if (status.isPermanentlyDenied) {
@@ -304,12 +326,14 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
         if (url.contains('/storage/v1/object/public/')) {
           filePath = url.split('/storage/v1/object/public/').last;
         }
-        
+
         final parts = filePath.split('/');
         if (parts.length >= 2) {
           final bucket = parts[0];
           final path = parts.sublist(1).join('/');
-          downloadUrl = SupabaseConfig.client.storage.from(bucket).getPublicUrl(path);
+          downloadUrl = SupabaseConfig.client.storage
+              .from(bucket)
+              .getPublicUrl(path);
         }
       }
 
@@ -356,7 +380,10 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(child: Text('Downloading...')),
@@ -364,7 +391,9 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
             ),
             duration: const Duration(seconds: 30),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -373,7 +402,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       final dio = Dio();
       dio.options.connectTimeout = const Duration(seconds: 30);
       dio.options.receiveTimeout = const Duration(minutes: 5);
-      
+
       await dio.download(
         downloadUrl,
         filePath,
@@ -403,7 +432,10 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Download Complete!', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Download Complete!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Saved to: ${directory.path.contains('Download') ? 'Downloads' : 'App Storage'}',
@@ -416,7 +448,9 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             duration: const Duration(seconds: 5),
             action: SnackBarAction(
               label: 'Open',
@@ -439,21 +473,24 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       setState(() {
         _downloadProgress.remove(resource.id);
       });
-      
+
       // Handle specific download errors
       String errorMessage;
       if (e.toString().contains('No internet connection')) {
         errorMessage = 'No internet connection available for download';
-      } else if (e.toString().contains('DioException') || e.toString().contains('timeout')) {
-        errorMessage = 'Download failed due to network timeout. Please try again.';
+      } else if (e.toString().contains('DioException') ||
+          e.toString().contains('timeout')) {
+        errorMessage =
+            'Download failed due to network timeout. Please try again.';
       } else if (e.toString().contains('Storage permission')) {
         errorMessage = 'Storage permission required to download files';
       } else if (e.toString().contains('Could not access storage')) {
         errorMessage = 'Unable to access device storage for download';
       } else {
-        errorMessage = 'Download failed. Please check your connection and try again.';
+        errorMessage =
+            'Download failed. Please check your connection and try again.';
       }
-      
+
       throw errorMessage;
     }
   }
@@ -471,7 +508,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       'past_paper',
       'project',
       'interview_prep',
-      'article'
+      'article',
     ];
 
     final semesters = ['all', '1', '2', '3', '4', '5', '6', '7', '8'];
@@ -508,14 +545,23 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 children: [
                   Expanded(
                     child: TextField(
-                      onChanged: (value) => ref.read(resourceSearchQueryProvider.notifier).state = value,
+                      onChanged: (value) =>
+                          ref.read(resourceSearchQueryProvider.notifier).state =
+                              value,
                       decoration: InputDecoration(
                         hintText: 'Search resources...',
                         prefixIcon: const Icon(Iconsax.search_normal_1),
                         suffixIcon: searchQuery.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Iconsax.close_circle),
-                                onPressed: () => ref.read(resourceSearchQueryProvider.notifier).state = '',
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              resourceSearchQueryProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        '',
                               )
                             : null,
                         border: OutlineInputBorder(
@@ -523,8 +569,13 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -536,18 +587,28 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                         decoration: BoxDecoration(
                           gradient: selectedSemester != 'all'
                               ? const LinearGradient(
-                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                  colors: [
+                                    ModernTheme.primaryOrange,
+                                    Color(0xFFFF9A3C),
+                                  ],
                                 )
                               : null,
-                          color: selectedSemester != 'all' ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: selectedSemester != 'all'
+                              ? null
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Iconsax.calendar,
-                            color: selectedSemester != 'all' ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                            color: selectedSemester != 'all'
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
-                          onPressed: () => _showSemesterModal(context, ref, semesters),
+                          onPressed: () =>
+                              _showSemesterModal(context, ref, semesters),
                         ),
                       ),
                       if (selectedSemester != 'all')
@@ -584,13 +645,18 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                     label: Text(_formatType(type)),
                     selected: isSelected,
                     onSelected: (selected) {
-                      ref.read(resourceSelectedTypeProvider.notifier).state = type;
+                      ref.read(resourceSelectedTypeProvider.notifier).state =
+                          type;
                     },
                     backgroundColor: Theme.of(context).colorScheme.surface,
                     selectedColor: ModernTheme.primaryOrange,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
@@ -598,15 +664,22 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                       side: BorderSide(
                         color: isSelected
                             ? ModernTheme.primaryOrange
-                            : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                            : Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     side: BorderSide(
                       color: isSelected
                           ? ModernTheme.primaryOrange
-                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   );
                 },
               ),
@@ -626,20 +699,25 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                           Icon(
                             Iconsax.folder_open,
                             size: 80,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: 20),
                           Text(
                             'No resources found',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Try adjusting your filters',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -650,12 +728,15 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     itemCount: resources.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       return _ResourceCard(
                         resource: resources[index],
-                        onTap: () => _handleResourceView(context, resources[index]),
-                        downloadProgress: _downloadProgress[resources[index].id],
+                        onTap: () =>
+                            _handleResourceView(context, resources[index]),
+                        downloadProgress:
+                            _downloadProgress[resources[index].id],
                       );
                     },
                   );
@@ -663,12 +744,14 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                 loading: () => ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   itemCount: 6,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 16),
                   itemBuilder: (context, index) => const ResourceCardSkeleton(),
                 ),
                 error: (error, stack) {
                   // Check if it's a network error
-                  final isNetworkError = error.toString().contains('No internet connection') ||
+                  final isNetworkError =
+                      error.toString().contains('No internet connection') ||
                       error.toString().contains('SocketException') ||
                       error.toString().contains('Failed host lookup');
 
@@ -680,15 +763,17 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                           isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
                           size: 64,
                           color: isNetworkError
-                              ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                              ? Theme.of(context).colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.5)
                               : Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          isNetworkError ? 'No Internet Connection' : 'Error loading resources',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          isNetworkError
+                              ? 'No Internet Connection'
+                              : 'Error loading resources',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Padding(
@@ -697,8 +782,11 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                             isNetworkError
                                 ? 'Please check your internet connection and try again'
                                 : 'Something went wrong. Please try again',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -726,10 +814,17 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
 
   String _formatType(String type) {
     if (type == 'all') return 'All Types';
-    return type.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+    return type
+        .split('_')
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 
-  void _showSemesterModal(BuildContext context, WidgetRef ref, List<String> semesters) {
+  void _showSemesterModal(
+    BuildContext context,
+    WidgetRef ref,
+    List<String> semesters,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -737,7 +832,7 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
       builder: (context) {
         // Use local state variable
         String localSemester = ref.read(resourceSelectedSemesterProvider);
-        
+
         return StatefulBuilder(
           builder: (context, setState) {
             return Container(
@@ -762,18 +857,24 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                colors: [
+                                  ModernTheme.primaryOrange,
+                                  Color(0xFFFF9A3C),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Iconsax.calendar, color: Colors.white, size: 20),
+                            child: const Icon(
+                              Iconsax.calendar,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Text(
                             'Filter by Semester',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           IconButton(
@@ -795,30 +896,53 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                               setState(() {
                                 localSemester = semester;
                               });
-                              ref.read(resourceSelectedSemesterProvider.notifier).state = semester;
+                              ref
+                                      .read(
+                                        resourceSelectedSemesterProvider
+                                            .notifier,
+                                      )
+                                      .state =
+                                  semester;
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? const LinearGradient(
-                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                        colors: [
+                                          ModernTheme.primaryOrange,
+                                          Color(0xFFFF9A3C),
+                                        ],
                                       )
                                     : null,
-                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                color: isSelected
+                                    ? null
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(50),
                                 border: Border.all(
                                   color: isSelected
                                       ? Colors.transparent
-                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                      : Theme.of(context).colorScheme.outline
+                                            .withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Text(
-                                semester == 'all' ? 'All Semesters' : 'Sem $semester',
+                                semester == 'all'
+                                    ? 'All Semesters'
+                                    : 'Sem $semester',
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
                                   fontSize: 13,
                                 ),
                               ),
@@ -838,12 +962,20 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                                 setState(() {
                                   localSemester = 'all';
                                 });
-                                ref.read(resourceSelectedSemesterProvider.notifier).state = 'all';
+                                ref
+                                        .read(
+                                          resourceSelectedSemesterProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    'all';
                               },
                               icon: const Icon(Iconsax.refresh),
                               label: const Text('Clear Filter'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -855,7 +987,10 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                  colors: [
+                                    ModernTheme.primaryOrange,
+                                    Color(0xFFFF9A3C),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -865,11 +1000,18 @@ class _EnhancedResourcesScreenState extends ConsumerState<EnhancedResourcesScree
                                   onTap: () => Navigator.pop(context),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
                                     child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                        Icon(
+                                          Iconsax.tick_circle,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                         SizedBox(width: 8),
                                         Text(
                                           'Apply',
@@ -950,11 +1092,17 @@ class _ResourceCard extends StatelessWidget {
     switch (type.toLowerCase()) {
       case 'study_material':
         return const LinearGradient(
-          colors: [Color.fromARGB(255, 6, 53, 49), Color.fromARGB(255, 36, 34, 7)],
+          colors: [
+            Color.fromARGB(255, 6, 53, 49),
+            Color.fromARGB(255, 36, 34, 7),
+          ],
         );
       case 'past_paper':
         return const LinearGradient(
-          colors: [Color.fromARGB(255, 7, 54, 50), Color.fromARGB(255, 65, 79, 9)],
+          colors: [
+            Color.fromARGB(255, 7, 54, 50),
+            Color.fromARGB(255, 65, 79, 9),
+          ],
         );
       case 'project':
         return const LinearGradient(
@@ -969,14 +1117,15 @@ class _ResourceCard extends StatelessWidget {
           colors: [Color(0xFF10B981), Color(0xFF34D399)],
         );
       default:
-        return const LinearGradient(
-          colors: [Colors.grey, Color(0xFF9CA3AF)],
-        );
+        return const LinearGradient(colors: [Colors.grey, Color(0xFF9CA3AF)]);
     }
   }
 
   String _formatType(String type) {
-    return type.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+    return type
+        .split('_')
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 
   bool _isExternalLink() {
@@ -999,7 +1148,9 @@ class _ResourceCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.1),
             ),
             boxShadow: [
               BoxShadow(
@@ -1042,7 +1193,10 @@ class _ResourceCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(50),
@@ -1061,7 +1215,9 @@ class _ResourceCard extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                isExternal ? Iconsax.link : Iconsax.document_download,
+                                isExternal
+                                    ? Iconsax.link
+                                    : Iconsax.document_download,
                                 size: 14,
                                 color: Colors.white70,
                               ),
@@ -1092,9 +1248,9 @@ class _ResourceCard extends StatelessWidget {
                     Text(
                       resource.title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1105,9 +1261,9 @@ class _ResourceCard extends StatelessWidget {
                       Text(
                         resource.description!,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1120,11 +1276,16 @@ class _ResourceCard extends StatelessWidget {
                       children: [
                         if (resource.semester != null)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(50),
-                              border: Border.all(color: color.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                color: color.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -1144,22 +1305,35 @@ class _ResourceCard extends StatelessWidget {
                           ),
                         if (resource.subject != null)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(50),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Iconsax.book, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                Icon(
+                                  Iconsax.book,
+                                  size: 12,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   resource.subject!,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -1174,9 +1348,14 @@ class _ResourceCard extends StatelessWidget {
                       children: [
                         // Stats
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -1193,7 +1372,11 @@ class _ResourceCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Icon(Iconsax.document_download, size: 14, color: Colors.green),
+                              Icon(
+                                Iconsax.document_download,
+                                size: 14,
+                                color: Colors.green,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${resource.downloads}',
@@ -1211,7 +1394,10 @@ class _ResourceCard extends StatelessWidget {
                         // Action Button
                         if (downloadProgress != null)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               gradient: gradient,
                               borderRadius: BorderRadius.circular(12),
@@ -1242,7 +1428,10 @@ class _ResourceCard extends StatelessWidget {
                           )
                         else
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
@@ -1250,7 +1439,9 @@ class _ResourceCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFDA7809).withValues(alpha: 0.3),
+                                  color: const Color(
+                                    0xFFDA7809,
+                                  ).withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1260,7 +1451,9 @@ class _ResourceCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  isExternal ? Iconsax.export_1 : Iconsax.document_download,
+                                  isExternal
+                                      ? Iconsax.export_1
+                                      : Iconsax.document_download,
                                   size: 16,
                                   color: Colors.white,
                                 ),

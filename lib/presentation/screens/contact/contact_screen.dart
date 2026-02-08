@@ -31,7 +31,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   Future<void> _loadUserData() async {
     final user = SupabaseConfig.client.auth.currentUser;
     final profile = await ref.read(userProfileProvider.future);
-    
+
     setState(() {
       _nameController.text = profile?.fullName ?? '';
       _emailController.text = user?.email ?? '';
@@ -58,7 +58,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       await SupabaseConfig.client.from('contact_submissions').insert({
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
-        'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'phone': _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
         'subject': _subjectController.text.trim(),
         'message': _messageController.text.trim(),
       });
@@ -71,20 +73,24 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                 Icon(Iconsax.tick_circle, color: Colors.white),
                 SizedBox(width: 12),
                 Expanded(
-                  child: Text('Message sent successfully! We\'ll get back to you soon.'),
+                  child: Text(
+                    'Message sent successfully! We\'ll get back to you soon.',
+                  ),
                 ),
               ],
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
 
         // Clear form
         _subjectController.clear();
         _messageController.clear();
-        
+
         // Go back after a short delay
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) Navigator.pop(context);
@@ -103,7 +109,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -181,21 +189,29 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _ContactInfoCard(
-                    icon: Iconsax.call,
-                    title: 'Phone',
-                    info: '+977-9800923746',
-                    color: Colors.blue,
-                  ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideX(begin: -0.2),
+                  child:
+                      _ContactInfoCard(
+                            icon: Iconsax.call,
+                            title: 'Phone',
+                            info: '+977-9800923746',
+                            color: Colors.blue,
+                          )
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: 100.ms)
+                          .slideX(begin: -0.2),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _ContactInfoCard(
-                    icon: Iconsax.sms,
-                    title: 'Email',
-                    info: 'mmamcbca@gmail.com',
-                    color: Colors.green,
-                  ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideX(begin: 0.2),
+                  child:
+                      _ContactInfoCard(
+                            icon: Iconsax.sms,
+                            title: 'Email',
+                            info: 'mmamcbca@gmail.com',
+                            color: Colors.green,
+                          )
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: 200.ms)
+                          .slideX(begin: 0.2),
                 ),
               ],
             ),
@@ -211,15 +227,15 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                   Text(
                     'Send us a Message',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Fill out the form below and we\'ll respond as soon as possible.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -229,8 +245,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                     label: 'Your Name',
                     hint: 'Enter your full name',
                     icon: Iconsax.user,
-                    validator: (value) =>
-                        value?.trim().isEmpty ?? true ? 'Name is required' : null,
+                    validator: (value) => value?.trim().isEmpty ?? true
+                        ? 'Name is required'
+                        : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -242,8 +259,12 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                     icon: Iconsax.sms,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value?.trim().isEmpty ?? true) return 'Email is required';
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
+                      if (value?.trim().isEmpty ?? true) {
+                        return 'Email is required';
+                      }
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value!)) {
                         return 'Enter a valid email';
                       }
                       return null;
@@ -267,8 +288,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                     label: 'Subject',
                     hint: 'How can we help you?',
                     icon: Iconsax.document_text,
-                    validator: (value) =>
-                        value?.trim().isEmpty ?? true ? 'Subject is required' : null,
+                    validator: (value) => value?.trim().isEmpty ?? true
+                        ? 'Subject is required'
+                        : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -279,8 +301,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                     hint: 'Your message here...',
                     icon: Iconsax.message_text,
                     maxLines: 5,
-                    validator: (value) =>
-                        value?.trim().isEmpty ?? true ? 'Message is required' : null,
+                    validator: (value) => value?.trim().isEmpty ?? true
+                        ? 'Message is required'
+                        : null,
                   ),
                   const SizedBox(height: 24),
 
@@ -331,53 +354,61 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
             // Office Info
             Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Iconsax.building,
-                          color: ModernTheme.primaryOrange,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Office Information',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: ModernTheme.primaryOrange.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            child: const Icon(
+                              Iconsax.building,
+                              color: ModernTheme.primaryOrange,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Office Information',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _InfoRow(
+                        icon: Iconsax.location,
+                        text: 'MMAMC College, Biratnagar, Nepal',
+                      ),
+                      const SizedBox(height: 12),
+                      _InfoRow(
+                        icon: Iconsax.clock,
+                        text: 'Sunday - Friday: 10:00 AM - 5:00 PM',
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  _InfoRow(
-                    icon: Iconsax.location,
-                    text: 'MMAMC College, Biratnagar, Nepal',
-                  ),
-                  const SizedBox(height: 12),
-                  _InfoRow(
-                    icon: Iconsax.clock,
-                    text: 'Sunday - Friday: 10:00 AM - 5:00 PM',
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 600.ms, delay: 400.ms).slideY(begin: 0.2),
+                )
+                .animate()
+                .fadeIn(duration: 600.ms, delay: 400.ms)
+                .slideY(begin: 0.2),
           ],
         ),
       ),
@@ -424,16 +455,16 @@ class _ContactInfoCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             info,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -447,10 +478,7 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoRow({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -464,10 +492,7 @@ class _InfoRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );
@@ -496,16 +521,16 @@ class _ModernTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -517,7 +542,9 @@ class _ModernTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             filled: true,
             fillColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
@@ -528,14 +555,18 @@ class _ModernTextField extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),

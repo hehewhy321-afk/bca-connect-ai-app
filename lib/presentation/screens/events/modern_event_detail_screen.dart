@@ -8,7 +8,10 @@ import '../../../core/theme/modern_theme.dart';
 import '../../widgets/gradient_button.dart';
 import '../../widgets/cached_image.dart';
 
-final eventDetailProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
+final eventDetailProvider = FutureProvider.family<Event?, String>((
+  ref,
+  eventId,
+) async {
   final repo = EventRepository();
   return await repo.getEventById(eventId);
 });
@@ -98,9 +101,8 @@ class ModernEventDetailScreen extends ConsumerWidget {
                       // Title
                       Text(
                         event.title,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
 
@@ -127,7 +129,9 @@ class ModernEventDetailScreen extends ConsumerWidget {
                       _InfoRow(
                         icon: Iconsax.calendar,
                         title: 'Date',
-                        value: DateFormat('MMM dd, yyyy').format(event.startDate),
+                        value: DateFormat(
+                          'MMM dd, yyyy',
+                        ).format(event.startDate),
                       ),
                       const SizedBox(height: 12),
 
@@ -150,7 +154,8 @@ class ModernEventDetailScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
 
                       // Registration Fee
-                      if (event.registrationFee != null && event.registrationFee! > 0)
+                      if (event.registrationFee != null &&
+                          event.registrationFee! > 0)
                         _InfoRow(
                           icon: Iconsax.money,
                           title: 'Registration Fee',
@@ -162,15 +167,15 @@ class ModernEventDetailScreen extends ConsumerWidget {
                       Text(
                         'About Event',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         event.description ?? 'No description available',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              height: 1.6,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(height: 1.6),
                       ),
                       const SizedBox(height: 100),
                     ],
@@ -216,7 +221,9 @@ class ModernEventDetailScreen extends ConsumerWidget {
                   icon: Iconsax.tick_circle,
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Registration coming soon!')),
+                      const SnackBar(
+                        content: Text('Registration coming soon!'),
+                      ),
                     );
                   },
                 ),
@@ -311,16 +318,16 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),

@@ -18,7 +18,7 @@ import 'presentation/widgets/offline_indicator.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  
+
   // Show notification
   final notification = message.notification;
   if (notification != null) {
@@ -32,40 +32,42 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     // Load environment variables
     await dotenv.load(fileName: '.env');
-    
+
     // Initialize Hive for local storage
     await Hive.initFlutter();
-    
+
     // Initialize Cache Service
     await CacheService().initialize();
-    
+
     // Initialize Task Storage Service
     await TaskStorageService.initialize();
-    
+
     // Initialize Supabase
     await SupabaseConfig.initialize();
-    
+
     // Initialize Firebase for push notifications & analytics
     try {
       await Firebase.initializeApp();
-      
+
       // Initialize Firebase Analytics
       FirebaseAnalytics analytics = FirebaseAnalytics.instance;
       await analytics.setAnalyticsCollectionEnabled(true);
-      
+
       // Set background message handler
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      
-      // Initialize Notification Service
-      await NotificationService().initialize();
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
     } catch (e) {
-      // App will work without push notifications and analytics
+      debugPrint('Firebase initialization skipped/failed: $e');
     }
-    
+
+    // Initialize Notification Service (always initialize even if Firebase fails)
+    await NotificationService().initialize();
+
     runApp(const ProviderScope(child: MyApp()));
   } catch (e) {
     runApp(const ProviderScope(child: ErrorApp()));
@@ -79,7 +81,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
-    
+
     return ConnectivitySnackbar(
       child: MaterialApp.router(
         title: 'BCA MMAMC',

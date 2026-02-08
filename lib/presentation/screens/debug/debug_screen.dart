@@ -22,9 +22,10 @@ class _DebugScreenState extends ConsumerState<DebugScreen> {
     try {
       final client = SupabaseConfig.client;
       final user = client.auth.currentUser;
-      
+
       setState(() {
-        _result = '''
+        _result =
+            '''
 ✅ Supabase Connected!
 
 User: ${user?.email ?? 'Not logged in'}
@@ -48,13 +49,11 @@ User ID: ${user?.id ?? 'N/A'}
 
     try {
       final client = SupabaseConfig.client;
-      final response = await client
-          .from('events')
-          .select()
-          .limit(5);
+      final response = await client.from('events').select().limit(5);
 
       setState(() {
-        _result = '''
+        _result =
+            '''
 ✅ Events Fetched!
 
 Count: ${(response as List).length}
@@ -78,13 +77,11 @@ Data: ${response.toString()}
 
     try {
       final client = SupabaseConfig.client;
-      final response = await client
-          .from('forum_posts')
-          .select()
-          .limit(5);
+      final response = await client.from('forum_posts').select().limit(5);
 
       setState(() {
-        _result = '''
+        _result =
+            '''
 ✅ Forum Posts Fetched!
 
 Count: ${(response as List).length}
@@ -109,7 +106,7 @@ Data: ${response.toString()}
     try {
       final client = SupabaseConfig.client;
       final userId = client.auth.currentUser?.id;
-      
+
       if (userId == null) {
         setState(() {
           _result = '❌ Not logged in';
@@ -124,7 +121,8 @@ Data: ${response.toString()}
           .limit(5);
 
       setState(() {
-        _result = '''
+        _result =
+            '''
 ✅ Certificates Fetched!
 
 Count: ${(response as List).length}
@@ -148,13 +146,11 @@ Data: ${response.toString()}
 
     try {
       final client = SupabaseConfig.client;
-      final response = await client
-          .from('resources')
-          .select()
-          .limit(5);
+      final response = await client.from('resources').select().limit(5);
 
       setState(() {
-        _result = '''
+        _result =
+            '''
 ✅ Resources Fetched!
 
 Count: ${(response as List).length}
@@ -173,9 +169,7 @@ Data: ${response.toString()}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Debug Data Fetching'),
-      ),
+      appBar: AppBar(title: const Text('Debug Data Fetching')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -190,9 +184,7 @@ Data: ${response.toString()}
                 border: Border.all(color: Colors.grey[300]!),
               ),
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? const Center(child: CircularProgressIndicator())
                   : Text(
                       _result,
                       style: const TextStyle(

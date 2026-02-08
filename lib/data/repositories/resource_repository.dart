@@ -18,11 +18,12 @@ class ResourceRepository {
     int offset = 0,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = '${CacheKeys.resources}_${category ?? 'all'}_${type ?? 'all'}_$offset';
-    
+    final cacheKey =
+        '${CacheKeys.resources}_${category ?? 'all'}_${type ?? 'all'}_$offset';
+
     // Check connectivity first
     final isOnline = await _connectivity.isOnline();
-    
+
     // If online, always fetch fresh data
     if (isOnline) {
       try {
@@ -40,10 +41,14 @@ class ResourceRepository {
         }
 
         final response = await query;
-        final resources = (response as List).map((e) => Resource.fromJson(e)).toList();
-        
-        debugPrint('Fetched ${resources.length} resources from database (online)');
-        
+        final resources = (response as List)
+            .map((e) => Resource.fromJson(e))
+            .toList();
+
+        debugPrint(
+          'Fetched ${resources.length} resources from database (online)',
+        );
+
         // Cache the fresh results
         final jsonList = resources.map((e) => e.toJson()).toList();
         await CacheService.set(
@@ -51,26 +56,28 @@ class ResourceRepository {
           jsonEncode(jsonList),
           duration: CacheKeys.mediumCache,
         );
-        
+
         return resources;
       } catch (e) {
         debugPrint('Error fetching resources: $e');
         // Fall through to cache on error
       }
     }
-    
+
     // If offline or error, use cache
     try {
       final cached = CacheService.get<String>(cacheKey);
       if (cached != null) {
         final List<dynamic> jsonList = jsonDecode(cached);
-        debugPrint('Loaded ${jsonList.length} resources from cache (offline or error)');
+        debugPrint(
+          'Loaded ${jsonList.length} resources from cache (offline or error)',
+        );
         return jsonList.map((e) => Resource.fromJson(e)).toList();
       }
     } catch (e) {
       debugPrint('Error loading resources from cache: $e');
     }
-    
+
     throw Exception('No internet connection and no cached data available');
   }
 
@@ -93,7 +100,10 @@ class ResourceRepository {
   // Increment download count
   Future<void> incrementDownloads(String id) async {
     try {
-      await _client.rpc('increment_resource_downloads', params: {'resource_id_param': id});
+      await _client.rpc(
+        'increment_resource_downloads',
+        params: {'resource_id_param': id},
+      );
     } catch (e) {
       debugPrint('Error incrementing downloads: $e');
     }

@@ -43,15 +43,21 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
 
       // Try to load from cache first
       const cacheKey = 'founding_members';
-      if (CacheService.has(cacheKey) && CacheService.isCacheValid(cacheKey, maxAge: const Duration(hours: 24))) {
+      if (CacheService.has(cacheKey) &&
+          CacheService.isCacheValid(
+            cacheKey,
+            maxAge: const Duration(hours: 24),
+          )) {
         final cachedData = CacheService.get<String>(cacheKey);
         if (cachedData != null) {
           final data = jsonDecode(cachedData) as List;
           setState(() {
-            _members = data.map((json) => FoundingMember.fromJson(json)).toList();
+            _members = data
+                .map((json) => FoundingMember.fromJson(json))
+                .toList();
             _isLoading = false;
           });
-          
+
           // If online, refresh in background
           if (isOnline) {
             _fetchFreshData(cacheKey);
@@ -70,13 +76,17 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
       // User-friendly error messages
       String errorMessage;
       if (e.toString().contains('NO_INTERNET')) {
-        errorMessage = 'No internet connection. Please check your network and try again.';
-      } else if (e.toString().contains('relation') && e.toString().contains('does not exist')) {
-        errorMessage = 'Founding members feature is not yet configured in the database.';
+        errorMessage =
+            'No internet connection. Please check your network and try again.';
+      } else if (e.toString().contains('relation') &&
+          e.toString().contains('does not exist')) {
+        errorMessage =
+            'Founding members feature is not yet configured in the database.';
       } else {
-        errorMessage = 'Unable to load founding members. Please try again later.';
+        errorMessage =
+            'Unable to load founding members. Please try again later.';
       }
-      
+
       setState(() {
         _error = errorMessage;
         _isLoading = false;
@@ -229,8 +239,8 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                     Text(
                       'Loading founding members...',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -243,13 +253,19 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      _error!.contains('internet') ? Iconsax.wifi_square : Iconsax.warning_2,
+                      _error!.contains('internet')
+                          ? Iconsax.wifi_square
+                          : Iconsax.warning_2,
                       size: 64,
-                      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _error!.contains('internet') ? 'No Internet Connection' : 'Error Loading',
+                      _error!.contains('internet')
+                          ? 'No Internet Connection'
+                          : 'Error Loading',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
@@ -258,8 +274,8 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                       child: Text(
                         _error!,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -298,8 +314,8 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                     Text(
                       'No Members Found',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Padding(
@@ -307,8 +323,8 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                       child: Text(
                         'Founding members information will be available soon',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -326,19 +342,13 @@ class _FoundingMembersScreenState extends State<FoundingMembersScreen> {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final member = _members[index];
-                    return _MemberCard(
-                      member: member,
-                      index: index,
-                    ).animate().fadeIn(
-                          duration: 400.ms,
-                          delay: (index * 100).ms,
-                        ).scale(begin: const Offset(0.8, 0.8));
-                  },
-                  childCount: _members.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final member = _members[index];
+                  return _MemberCard(member: member, index: index)
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: (index * 100).ms)
+                      .scale(begin: const Offset(0.8, 0.8));
+                }, childCount: _members.length),
               ),
             ),
         ],
@@ -351,10 +361,7 @@ class _MemberCard extends StatelessWidget {
   final FoundingMember member;
   final int index;
 
-  const _MemberCard({
-    required this.member,
-    required this.index,
-  });
+  const _MemberCard({required this.member, required this.index});
 
   String _getInitials(String name) {
     final parts = name.split(' ').where((part) => part.isNotEmpty).toList();
@@ -432,9 +439,7 @@ class _MemberCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: gradient,
-                        ),
+                        gradient: LinearGradient(colors: gradient),
                       ),
                       child: member.avatarUrl != null
                           ? ClipOval(
@@ -564,7 +569,9 @@ class _MemberCard extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -627,7 +634,10 @@ class _MemberCard extends StatelessWidget {
 
                 // Role
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -647,7 +657,9 @@ class _MemberCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -711,7 +723,8 @@ class _MemberCard extends StatelessWidget {
                       if (member.twitterUrl != null) ...[
                         const SizedBox(width: 12),
                         _LargeSocialButton(
-                          icon: Icons.close, // Using close as placeholder for X/Twitter
+                          icon: Icons
+                              .close, // Using close as placeholder for X/Twitter
                           label: 'Twitter',
                           color: const Color(0xFF1DA1F2),
                           onTap: () => _launchUrl(member.twitterUrl!),
@@ -752,11 +765,7 @@ class _SocialButton extends StatelessWidget {
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: color,
-        ),
+        child: Icon(icon, size: 16, color: color),
       ),
     );
   }
@@ -794,11 +803,7 @@ class _ContactButton extends StatelessWidget {
                 color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: ModernTheme.primaryOrange,
-              ),
+              child: Icon(icon, size: 20, color: ModernTheme.primaryOrange),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -857,17 +862,11 @@ class _LargeSocialButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: color,
-            ),
+            Icon(icon, size: 24, color: color),
             const SizedBox(height: 4),
             Text(
               label,

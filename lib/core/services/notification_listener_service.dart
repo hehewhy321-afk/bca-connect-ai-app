@@ -4,7 +4,8 @@ import '../config/supabase_config.dart';
 import 'notification_service.dart';
 
 class NotificationListenerService {
-  static final NotificationListenerService _instance = NotificationListenerService._internal();
+  static final NotificationListenerService _instance =
+      NotificationListenerService._internal();
   factory NotificationListenerService() => _instance;
   NotificationListenerService._internal();
 
@@ -26,45 +27,52 @@ class NotificationListenerService {
     _subscription = SupabaseConfig.client
         .from('notifications')
         .stream(primaryKey: ['id'])
-        .listen((data) {
-          debugPrint('Notification stream update received: ${data.length} notifications');
-          
-          for (var notification in data) {
-            // Filter for current user
-            if (notification['user_id'] != user.id) continue;
-            
-            final id = notification['id'] as String;
-            final isRead = notification['is_read'] as bool? ?? false;
-            final createdAt = notification['created_at'] as String?;
-            
-            // Check if notification is new (created after we started listening)
-            bool isNew = false;
-            if (createdAt != null && _lastCheckTime != null) {
-              final notificationTime = DateTime.parse(createdAt);
-              isNew = notificationTime.isAfter(_lastCheckTime!);
+        .listen(
+          (data) {
+            debugPrint(
+              'Notification stream update received: ${data.length} notifications',
+            );
+
+            for (var notification in data) {
+              // Filter for current user
+              if (notification['user_id'] != user.id) continue;
+
+              final id = notification['id'] as String;
+              final isRead = notification['is_read'] as bool? ?? false;
+              final createdAt = notification['created_at'] as String?;
+
+              // Check if notification is new (created after we started listening)
+              bool isNew = false;
+              if (createdAt != null && _lastCheckTime != null) {
+                final notificationTime = DateTime.parse(createdAt);
+                isNew = notificationTime.isAfter(_lastCheckTime!);
+              }
+
+              debugPrint(
+                'Notification $id: isNew=$isNew, isRead=$isRead, processed=${_processedNotifications.contains(id)}',
+              );
+
+              // Show notification if it's new, unread, and not yet processed
+              if (!_processedNotifications.contains(id) && !isRead && isNew) {
+                debugPrint('Showing new notification: $id');
+                _processedNotifications.add(id);
+                _showLocalNotification(notification);
+              }
             }
-            
-            debugPrint('Notification $id: isNew=$isNew, isRead=$isRead, processed=${_processedNotifications.contains(id)}');
-            
-            // Show notification if it's new, unread, and not yet processed
-            if (!_processedNotifications.contains(id) && !isRead && isNew) {
-              debugPrint('Showing new notification: $id');
-              _processedNotifications.add(id);
-              _showLocalNotification(notification);
-            }
-          }
-        }, onError: (error) {
-          debugPrint('Notification stream error: $error');
-        });
+          },
+          onError: (error) {
+            debugPrint('Notification stream error: $error');
+          },
+        );
   }
 
   Future<void> _showLocalNotification(Map<String, dynamic> notification) async {
     final title = notification['title'] as String? ?? 'New Notification';
     final message = notification['message'] as String? ?? '';
     final type = notification['type'] as String? ?? 'info';
-    
+
     debugPrint('Triggering local notification: $title');
-    
+
     // Determine route based on type
     String? route;
     switch (type) {

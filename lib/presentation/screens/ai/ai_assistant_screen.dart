@@ -52,11 +52,15 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
 
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-            text: response.data['response'] ?? 'Sorry, I could not process your request.',
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
+          _messages.add(
+            ChatMessage(
+              text:
+                  response.data['response'] ??
+                  'Sorry, I could not process your request.',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
           _isLoading = false;
         });
         _scrollToBottom();
@@ -64,17 +68,20 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-            text: 'I apologize, but I\'m having trouble connecting right now. Here\'s what I can help you with:\n\n'
-                '• Information about BCA courses and curriculum\n'
-                '• Upcoming events and activities\n'
-                '• Study resources and materials\n'
-                '• Programming help and guidance\n'
-                '• Career advice for BCA students\n\n'
-                'Please try again or ask me anything!',
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
+          _messages.add(
+            ChatMessage(
+              text:
+                  'I apologize, but I\'m having trouble connecting right now. Here\'s what I can help you with:\n\n'
+                  '• Information about BCA courses and curriculum\n'
+                  '• Upcoming events and activities\n'
+                  '• Study resources and materials\n'
+                  '• Programming help and guidance\n'
+                  '• Career advice for BCA students\n\n'
+                  'Please try again or ask me anything!',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
           _isLoading = false;
         });
         _scrollToBottom();
@@ -102,7 +109,10 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Row(
             children: [
-              const Icon(Iconsax.message_programming, color: ModernTheme.primaryOrange),
+              const Icon(
+                Iconsax.message_programming,
+                color: ModernTheme.primaryOrange,
+              ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +120,10 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
                   const Text('AI Assistant', style: TextStyle(fontSize: 18)),
                   const Text(
                     'Powered by AI',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ],
               ),
@@ -155,9 +168,8 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
                         const SizedBox(height: 24),
                         Text(
                           'AI Study Assistant',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         Padding(
@@ -180,21 +192,24 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
                             _SuggestionChip(
                               label: 'Upcoming Events',
                               onTap: () {
-                                _messageController.text = 'What are the upcoming events?';
+                                _messageController.text =
+                                    'What are the upcoming events?';
                                 _sendMessage();
                               },
                             ),
                             _SuggestionChip(
                               label: 'Study Resources',
                               onTap: () {
-                                _messageController.text = 'Show me study resources';
+                                _messageController.text =
+                                    'Show me study resources';
                                 _sendMessage();
                               },
                             ),
                             _SuggestionChip(
                               label: 'Help with Code',
                               onTap: () {
-                                _messageController.text = 'I need help with coding';
+                                _messageController.text =
+                                    'I need help with coding';
                                 _sendMessage();
                               },
                             ),
@@ -289,8 +304,9 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment:
-            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
@@ -411,7 +427,8 @@ class _TypingDot extends StatefulWidget {
   State<_TypingDot> createState() => _TypingDotState();
 }
 
-class _TypingDotState extends State<_TypingDot> with SingleTickerProviderStateMixin {
+class _TypingDotState extends State<_TypingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -454,10 +471,7 @@ class _SuggestionChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _SuggestionChip({
-    required this.label,
-    required this.onTap,
-  });
+  const _SuggestionChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

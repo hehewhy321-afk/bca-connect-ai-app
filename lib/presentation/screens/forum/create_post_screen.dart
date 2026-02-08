@@ -13,7 +13,8 @@ class CreatePostScreen extends ConsumerStatefulWidget {
   ConsumerState<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with SingleTickerProviderStateMixin {
+class _CreatePostScreenState extends ConsumerState<CreatePostScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
@@ -76,9 +77,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
     'General': CategoryData(
       icon: Iconsax.message_text,
       color: Colors.grey,
-      gradient: const LinearGradient(
-        colors: [Colors.grey, Color(0xFF9CA3AF)],
-      ),
+      gradient: const LinearGradient(colors: [Colors.grey, Color(0xFF9CA3AF)]),
     ),
   };
 
@@ -137,7 +136,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         context.pop();
@@ -155,7 +156,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -188,7 +191,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
   @override
   Widget build(BuildContext context) {
     final categoryData = _categories[_selectedCategory]!;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
@@ -205,9 +208,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: categoryData.gradient,
-                ),
+                decoration: BoxDecoration(gradient: categoryData.gradient),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
@@ -270,10 +271,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -293,7 +298,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    SupabaseConfig.client.auth.currentUser?.email ?? 'User',
+                                    SupabaseConfig
+                                            .client
+                                            .auth
+                                            .currentUser
+                                            ?.email ??
+                                        'User',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -316,19 +326,26 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                       // Title Input
                       Text(
                         'Title',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _titleController,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'What\'s your post about?',
-                          prefixIcon: Icon(Iconsax.edit, color: categoryData.color),
+                          prefixIcon: Icon(
+                            Iconsax.edit,
+                            color: categoryData.color,
+                          ),
                           filled: true,
-                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -336,7 +353,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.1),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -368,17 +387,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                       // Content Input
                       Text(
                         'Content',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Supports Markdown formatting',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -386,9 +401,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                         style: const TextStyle(fontSize: 15, height: 1.6),
                         maxLines: 12,
                         decoration: InputDecoration(
-                          hintText: 'Write your post content here...\n\nYou can use:\n• **bold** for bold text\n• *italic* for italic\n• `code` for inline code\n• # Heading for headings',
+                          hintText:
+                              'Write your post content here...\n\nYou can use:\n• **bold** for bold text\n• *italic* for italic\n• `code` for inline code\n• # Heading for headings',
                           filled: true,
-                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -396,7 +414,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.1),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -428,9 +448,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                       // Category Selection
                       Text(
                         'Category',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -439,24 +458,36 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                         children: _categories.entries.map((entry) {
                           final isSelected = _selectedCategory == entry.key;
                           return GestureDetector(
-                            onTap: () => setState(() => _selectedCategory = entry.key),
+                            onTap: () =>
+                                setState(() => _selectedCategory = entry.key),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
-                                gradient: isSelected ? entry.value.gradient : null,
-                                color: isSelected ? null : entry.value.color.withValues(alpha: 0.1),
+                                gradient: isSelected
+                                    ? entry.value.gradient
+                                    : null,
+                                color: isSelected
+                                    ? null
+                                    : entry.value.color.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isSelected 
-                                      ? Colors.transparent 
-                                      : entry.value.color.withValues(alpha: 0.3),
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : entry.value.color.withValues(
+                                          alpha: 0.3,
+                                        ),
                                   width: 1.5,
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: entry.value.color.withValues(alpha: 0.3),
+                                          color: entry.value.color.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           blurRadius: 8,
                                           offset: const Offset(0, 4),
                                         ),
@@ -469,13 +500,17 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                                   Icon(
                                     entry.value.icon,
                                     size: 16,
-                                    color: isSelected ? Colors.white : entry.value.color,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : entry.value.color,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     entry.key,
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white : entry.value.color,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : entry.value.color,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
@@ -492,18 +527,22 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                       // Tags Input
                       Text(
                         'Tags (Optional)',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _tagsController,
                         decoration: InputDecoration(
                           hintText: 'java, programming, help',
-                          prefixIcon: Icon(Iconsax.tag, color: categoryData.color),
+                          prefixIcon: Icon(
+                            Iconsax.tag,
+                            color: categoryData.color,
+                          ),
                           filled: true,
-                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -511,7 +550,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.1),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -523,7 +564,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                           ),
                           contentPadding: const EdgeInsets.all(20),
                           helperText: 'Separate tags with commas',
-                          helperStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          helperStyle: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
                       ),
 
@@ -562,7 +606,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> with Single
                                   : const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Iconsax.send_1, color: Colors.white, size: 20),
+                                        Icon(
+                                          Iconsax.send_1,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                         SizedBox(width: 12),
                                         Text(
                                           'Publish Post',

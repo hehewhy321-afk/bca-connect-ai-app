@@ -10,25 +10,34 @@ import '../../widgets/easter_egg_widget.dart';
 // Providers
 final studyStorageProvider = Provider((ref) => StudyStorageService());
 
-final subjectsProvider = StateNotifierProvider<SubjectsNotifier, AsyncValue<List<Subject>>>((ref) {
-  return SubjectsNotifier(ref.read(studyStorageProvider));
-});
+final subjectsProvider =
+    StateNotifierProvider<SubjectsNotifier, AsyncValue<List<Subject>>>((ref) {
+      return SubjectsNotifier(ref.read(studyStorageProvider));
+    });
 
-final schedulesProvider = StateNotifierProvider<SchedulesNotifier, AsyncValue<List<ClassSchedule>>>((ref) {
-  return SchedulesNotifier(ref.read(studyStorageProvider));
-});
+final schedulesProvider =
+    StateNotifierProvider<SchedulesNotifier, AsyncValue<List<ClassSchedule>>>((
+      ref,
+    ) {
+      return SchedulesNotifier(ref.read(studyStorageProvider));
+    });
 
-final assignmentsProvider = StateNotifierProvider<AssignmentsNotifier, AsyncValue<List<Assignment>>>((ref) {
-  return AssignmentsNotifier(ref.read(studyStorageProvider));
-});
+final assignmentsProvider =
+    StateNotifierProvider<AssignmentsNotifier, AsyncValue<List<Assignment>>>((
+      ref,
+    ) {
+      return AssignmentsNotifier(ref.read(studyStorageProvider));
+    });
 
-final examsProvider = StateNotifierProvider<ExamsNotifier, AsyncValue<List<Exam>>>((ref) {
-  return ExamsNotifier(ref.read(studyStorageProvider));
-});
+final examsProvider =
+    StateNotifierProvider<ExamsNotifier, AsyncValue<List<Exam>>>((ref) {
+      return ExamsNotifier(ref.read(studyStorageProvider));
+    });
 
-final currentSemesterProvider = StateNotifierProvider<CurrentSemesterNotifier, int>((ref) {
-  return CurrentSemesterNotifier(ref.read(studyStorageProvider));
-});
+final currentSemesterProvider =
+    StateNotifierProvider<CurrentSemesterNotifier, int>((ref) {
+      return CurrentSemesterNotifier(ref.read(studyStorageProvider));
+    });
 
 // Notifiers
 class SubjectsNotifier extends StateNotifier<AsyncValue<List<Subject>>> {
@@ -57,7 +66,9 @@ class SubjectsNotifier extends StateNotifier<AsyncValue<List<Subject>>> {
 
   Future<void> updateSubject(Subject subject) async {
     final current = state.value ?? [];
-    final updated = current.map((s) => s.id == subject.id ? subject : s).toList();
+    final updated = current
+        .map((s) => s.id == subject.id ? subject : s)
+        .toList();
     await _storage.saveSubjects(updated);
     state = AsyncValue.data(updated);
   }
@@ -128,7 +139,9 @@ class AssignmentsNotifier extends StateNotifier<AsyncValue<List<Assignment>>> {
 
   Future<void> updateAssignment(Assignment assignment) async {
     final current = state.value ?? [];
-    final updated = current.map((a) => a.id == assignment.id ? assignment : a).toList();
+    final updated = current
+        .map((a) => a.id == assignment.id ? assignment : a)
+        .toList();
     await _storage.saveAssignments(updated);
     state = AsyncValue.data(updated);
   }
@@ -210,7 +223,8 @@ class StudyPlannerScreen extends ConsumerStatefulWidget {
   ConsumerState<StudyPlannerScreen> createState() => _StudyPlannerScreenState();
 }
 
-class _StudyPlannerScreenState extends ConsumerState<StudyPlannerScreen> with SingleTickerProviderStateMixin {
+class _StudyPlannerScreenState extends ConsumerState<StudyPlannerScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -342,9 +356,15 @@ class TimetableTab extends ConsumerWidget {
                 children: [
                   Icon(Iconsax.book_1, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
-                  Text('No subjects added', style: TextStyle(color: Colors.grey[600])),
+                  Text(
+                    'No subjects added',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Add subjects first to create timetable', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                  Text(
+                    'Add subjects first to create timetable',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () {
@@ -378,12 +398,20 @@ class TimetableTab extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final day = DayOfWeek.values[index];
                     final daySchedules = groupedSchedules[day] ?? [];
-                    daySchedules.sort((a, b) => a.startTime.hour * 60 + a.startTime.minute - (b.startTime.hour * 60 + b.startTime.minute));
+                    daySchedules.sort(
+                      (a, b) =>
+                          a.startTime.hour * 60 +
+                          a.startTime.minute -
+                          (b.startTime.hour * 60 + b.startTime.minute),
+                    );
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ExpansionTile(
-                        title: Text(day.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(
+                          day.displayName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         subtitle: Text('${daySchedules.length} classes'),
                         children: daySchedules.isEmpty
                             ? [
@@ -391,10 +419,18 @@ class TimetableTab extends ConsumerWidget {
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
                                     children: [
-                                      const Text('No classes', style: TextStyle(color: Colors.grey)),
+                                      const Text(
+                                        'No classes',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
                                       const SizedBox(height: 8),
                                       TextButton.icon(
-                                        onPressed: () => _showAddScheduleDialog(context, ref, subjects, day),
+                                        onPressed: () => _showAddScheduleDialog(
+                                          context,
+                                          ref,
+                                          subjects,
+                                          day,
+                                        ),
                                         icon: const Icon(Iconsax.add),
                                         label: const Text('Add Class'),
                                       ),
@@ -404,34 +440,55 @@ class TimetableTab extends ConsumerWidget {
                               ]
                             : [
                                 ...daySchedules.map((schedule) {
-                                  final subject = subjectMap[schedule.subjectId];
+                                  final subject =
+                                      subjectMap[schedule.subjectId];
                                   return ListTile(
                                     leading: Container(
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: subject?.color.withValues(alpha: 0.2),
+                                        color: subject?.color.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Center(
                                         child: Text(
-                                          subject?.code.substring(0, 2).toUpperCase() ?? '??',
-                                          style: TextStyle(color: subject?.color, fontWeight: FontWeight.bold),
+                                          subject?.code
+                                                  .substring(0, 2)
+                                                  .toUpperCase() ??
+                                              '??',
+                                          style: TextStyle(
+                                            color: subject?.color,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
                                     title: Text(subject?.name ?? 'Unknown'),
-                                    subtitle: Text('${schedule.startTime.format(context)} - ${schedule.endTime.format(context)} • ${schedule.room}'),
+                                    subtitle: Text(
+                                      '${schedule.startTime.format(context)} - ${schedule.endTime.format(context)} • ${schedule.room}',
+                                    ),
                                     trailing: IconButton(
-                                      icon: const Icon(Iconsax.trash, color: Colors.red),
-                                      onPressed: () => ref.read(schedulesProvider.notifier).deleteSchedule(schedule.id),
+                                      icon: const Icon(
+                                        Iconsax.trash,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () => ref
+                                          .read(schedulesProvider.notifier)
+                                          .deleteSchedule(schedule.id),
                                     ),
                                   );
                                 }),
                                 Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: TextButton.icon(
-                                    onPressed: () => _showAddScheduleDialog(context, ref, subjects, day),
+                                    onPressed: () => _showAddScheduleDialog(
+                                      context,
+                                      ref,
+                                      subjects,
+                                      day,
+                                    ),
                                     icon: const Icon(Iconsax.add),
                                     label: const Text('Add Class'),
                                   ),
@@ -445,7 +502,8 @@ class TimetableTab extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
-                  onPressed: () => _showAddScheduleDialog(context, ref, subjects, null),
+                  onPressed: () =>
+                      _showAddScheduleDialog(context, ref, subjects, null),
                   icon: const Icon(Iconsax.add),
                   label: const Text('Add Class Schedule'),
                   style: FilledButton.styleFrom(
@@ -465,7 +523,12 @@ class TimetableTab extends ConsumerWidget {
     );
   }
 
-  void _showAddScheduleDialog(BuildContext context, WidgetRef ref, List<Subject> subjects, DayOfWeek? preselectedDay) {
+  void _showAddScheduleDialog(
+    BuildContext context,
+    WidgetRef ref,
+    List<Subject> subjects,
+    DayOfWeek? preselectedDay,
+  ) {
     final roomController = TextEditingController();
     String? selectedSubjectId = subjects.first.id;
     DayOfWeek selectedDay = preselectedDay ?? DayOfWeek.monday;
@@ -484,15 +547,33 @@ class TimetableTab extends ConsumerWidget {
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: selectedSubjectId,
-                  decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder()),
-                  items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Subject',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: subjects
+                      .map(
+                        (s) =>
+                            DropdownMenuItem(value: s.id, child: Text(s.name)),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => selectedSubjectId = val),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<DayOfWeek>(
                   initialValue: selectedDay,
-                  decoration: const InputDecoration(labelText: 'Day', border: OutlineInputBorder()),
-                  items: DayOfWeek.values.map((day) => DropdownMenuItem(value: day, child: Text(day.displayName))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Day',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: DayOfWeek.values
+                      .map(
+                        (day) => DropdownMenuItem(
+                          value: day,
+                          child: Text(day.displayName),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => selectedDay = val!),
                 ),
                 const SizedBox(height: 12),
@@ -504,7 +585,10 @@ class TimetableTab extends ConsumerWidget {
                         subtitle: Text(startTime.format(context)),
                         trailing: const Icon(Iconsax.clock),
                         onTap: () async {
-                          final time = await showTimePicker(context: context, initialTime: startTime);
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: startTime,
+                          );
                           if (time != null) setState(() => startTime = time);
                         },
                       ),
@@ -515,7 +599,10 @@ class TimetableTab extends ConsumerWidget {
                         subtitle: Text(endTime.format(context)),
                         trailing: const Icon(Iconsax.clock),
                         onTap: () async {
-                          final time = await showTimePicker(context: context, initialTime: endTime);
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: endTime,
+                          );
                           if (time != null) setState(() => endTime = time);
                         },
                       ),
@@ -525,34 +612,49 @@ class TimetableTab extends ConsumerWidget {
                 const SizedBox(height: 12),
                 TextField(
                   controller: roomController,
-                  decoration: const InputDecoration(labelText: 'Room/Location', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Room/Location',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: classType,
-                  decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                  items: ['Lecture', 'Lab', 'Tutorial', 'Seminar'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Lecture', 'Lab', 'Tutorial', 'Seminar']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
                   onChanged: (val) => setState(() => classType = val!),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
-                if (selectedSubjectId == null || roomController.text.isEmpty) return;
-                
+                if (selectedSubjectId == null || roomController.text.isEmpty) {
+                  return;
+                }
+
                 // Validate time order
                 final startMinutes = startTime.hour * 60 + startTime.minute;
                 final endMinutes = endTime.hour * 60 + endTime.minute;
                 if (startMinutes >= endMinutes) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('End time must be after start time')),
+                    const SnackBar(
+                      content: Text('End time must be after start time'),
+                    ),
                   );
                   return;
                 }
-                
+
                 final schedule = ClassSchedule(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   subjectId: selectedSubjectId!,
@@ -587,7 +689,8 @@ class AssignmentsTab extends ConsumerWidget {
       data: (assignments) => subjectsAsync.when(
         data: (subjects) {
           final subjectMap = {for (var s in subjects) s.id: s};
-          final sortedAssignments = [...assignments]..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+          final sortedAssignments = [...assignments]
+            ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
           return Column(
             children: [
@@ -597,9 +700,16 @@ class AssignmentsTab extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Iconsax.task_square, size: 64, color: Colors.grey[400]),
+                            Icon(
+                              Iconsax.task_square,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 16),
-                            Text('No assignments', style: TextStyle(color: Colors.grey[600])),
+                            Text(
+                              'No assignments',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
                           ],
                         ),
                       )
@@ -609,7 +719,9 @@ class AssignmentsTab extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           final assignment = sortedAssignments[index];
                           final subject = subjectMap[assignment.subjectId];
-                          final daysLeft = assignment.dueDate.difference(DateTime.now()).inDays;
+                          final daysLeft = assignment.dueDate
+                              .difference(DateTime.now())
+                              .inDays;
                           final isOverdue = daysLeft < 0;
                           final isDueSoon = daysLeft >= 0 && daysLeft <= 3;
 
@@ -618,12 +730,16 @@ class AssignmentsTab extends ConsumerWidget {
                             child: ListTile(
                               leading: Checkbox(
                                 value: assignment.isCompleted,
-                                onChanged: (_) => ref.read(assignmentsProvider.notifier).toggleComplete(assignment.id),
+                                onChanged: (_) => ref
+                                    .read(assignmentsProvider.notifier)
+                                    .toggleComplete(assignment.id),
                               ),
                               title: Text(
                                 assignment.title,
                                 style: TextStyle(
-                                  decoration: assignment.isCompleted ? TextDecoration.lineThrough : null,
+                                  decoration: assignment.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -637,24 +753,40 @@ class AssignmentsTab extends ConsumerWidget {
                                       Icon(
                                         Iconsax.clock,
                                         size: 14,
-                                        color: isOverdue ? Colors.red : (isDueSoon ? Colors.orange : Colors.grey),
+                                        color: isOverdue
+                                            ? Colors.red
+                                            : (isDueSoon
+                                                  ? Colors.orange
+                                                  : Colors.grey),
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        DateFormat('MMM dd, yyyy').format(assignment.dueDate),
+                                        DateFormat(
+                                          'MMM dd, yyyy',
+                                        ).format(assignment.dueDate),
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: isOverdue ? Colors.red : (isDueSoon ? Colors.orange : Colors.grey),
+                                          color: isOverdue
+                                              ? Colors.red
+                                              : (isDueSoon
+                                                    ? Colors.orange
+                                                    : Colors.grey),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       if (!assignment.isCompleted)
                                         Text(
-                                          isOverdue ? 'Overdue' : (isDueSoon ? '$daysLeft days left' : ''),
+                                          isOverdue
+                                              ? 'Overdue'
+                                              : (isDueSoon
+                                                    ? '$daysLeft days left'
+                                                    : ''),
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: isOverdue ? Colors.red : Colors.orange,
+                                            color: isOverdue
+                                                ? Colors.red
+                                                : Colors.orange,
                                           ),
                                         ),
                                     ],
@@ -662,8 +794,13 @@ class AssignmentsTab extends ConsumerWidget {
                                 ],
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Iconsax.trash, color: Colors.red),
-                                onPressed: () => ref.read(assignmentsProvider.notifier).deleteAssignment(assignment.id),
+                                icon: const Icon(
+                                  Iconsax.trash,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => ref
+                                    .read(assignmentsProvider.notifier)
+                                    .deleteAssignment(assignment.id),
                               ),
                             ),
                           );
@@ -673,7 +810,8 @@ class AssignmentsTab extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
-                  onPressed: () => _showAddAssignmentDialog(context, ref, subjects),
+                  onPressed: () =>
+                      _showAddAssignmentDialog(context, ref, subjects),
                   icon: const Icon(Iconsax.add),
                   label: const Text('Add Assignment'),
                   style: FilledButton.styleFrom(
@@ -693,7 +831,11 @@ class AssignmentsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddAssignmentDialog(BuildContext context, WidgetRef ref, List<Subject> subjects) {
+  void _showAddAssignmentDialog(
+    BuildContext context,
+    WidgetRef ref,
+    List<Subject> subjects,
+  ) {
     if (subjects.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add subjects first')),
@@ -717,25 +859,41 @@ class AssignmentsTab extends ConsumerWidget {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descController,
-                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedSubjectId,
-                  decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder()),
-                  items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Subject',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: subjects
+                      .map(
+                        (s) =>
+                            DropdownMenuItem(value: s.id, child: Text(s.name)),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => selectedSubjectId = val),
                 ),
                 const SizedBox(height: 12),
                 ListTile(
                   title: const Text('Due Date'),
-                  subtitle: Text(DateFormat('MMM dd, yyyy').format(selectedDate)),
+                  subtitle: Text(
+                    DateFormat('MMM dd, yyyy').format(selectedDate),
+                  ),
                   trailing: const Icon(Iconsax.calendar),
                   onTap: () async {
                     final date = await showDatePicker(
@@ -751,10 +909,15 @@ class AssignmentsTab extends ConsumerWidget {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
-                if (titleController.text.isEmpty || selectedSubjectId == null) return;
+                if (titleController.text.isEmpty || selectedSubjectId == null) {
+                  return;
+                }
                 final assignment = Assignment(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   subjectId: selectedSubjectId!,
@@ -762,7 +925,9 @@ class AssignmentsTab extends ConsumerWidget {
                   description: descController.text,
                   dueDate: selectedDate,
                 );
-                ref.read(assignmentsProvider.notifier).addAssignment(assignment);
+                ref
+                    .read(assignmentsProvider.notifier)
+                    .addAssignment(assignment);
                 Navigator.pop(context);
               },
               child: const Text('Add'),
@@ -787,7 +952,8 @@ class ExamsTab extends ConsumerWidget {
       data: (exams) => subjectsAsync.when(
         data: (subjects) {
           final subjectMap = {for (var s in subjects) s.id: s};
-          final sortedExams = [...exams]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+          final sortedExams = [...exams]
+            ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
           return Column(
             children: [
@@ -797,9 +963,16 @@ class ExamsTab extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Iconsax.clipboard_text, size: 64, color: Colors.grey[400]),
+                            Icon(
+                              Iconsax.clipboard_text,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 16),
-                            Text('No exams scheduled', style: TextStyle(color: Colors.grey[600])),
+                            Text(
+                              'No exams scheduled',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
                           ],
                         ),
                       )
@@ -811,7 +984,9 @@ class ExamsTab extends ConsumerWidget {
                           final subject = subjectMap[exam.subjectId];
                           final now = DateTime.now();
                           final daysLeft = exam.dateTime.difference(now).inDays;
-                          final hoursLeft = exam.dateTime.difference(now).inHours;
+                          final hoursLeft = exam.dateTime
+                              .difference(now)
+                              .inHours;
                           final isPast = exam.dateTime.isBefore(now);
 
                           String countdown;
@@ -820,7 +995,9 @@ class ExamsTab extends ConsumerWidget {
                             countdown = 'Completed';
                             countdownColor = Colors.grey;
                           } else if (daysLeft == 0) {
-                            countdown = hoursLeft > 0 ? '$hoursLeft hours left' : 'Today';
+                            countdown = hoursLeft > 0
+                                ? '$hoursLeft hours left'
+                                : 'Today';
                             countdownColor = Colors.red;
                           } else if (daysLeft <= 7) {
                             countdown = '$daysLeft days left';
@@ -845,16 +1022,29 @@ class ExamsTab extends ConsumerWidget {
                                   children: [
                                     Text(
                                       DateFormat('MMM').format(exam.dateTime),
-                                      style: TextStyle(fontSize: 10, color: subject?.color, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: subject?.color,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     Text(
                                       DateFormat('dd').format(exam.dateTime),
-                                      style: TextStyle(fontSize: 18, color: subject?.color, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: subject?.color,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              title: Text(exam.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              title: Text(
+                                exam.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -862,35 +1052,68 @@ class ExamsTab extends ConsumerWidget {
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Icon(Iconsax.clock, size: 14, color: Colors.grey[600]),
+                                      Icon(
+                                        Iconsax.clock,
+                                        size: 14,
+                                        color: Colors.grey[600],
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        DateFormat('h:mm a').format(exam.dateTime),
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                        DateFormat(
+                                          'h:mm a',
+                                        ).format(exam.dateTime),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
-                                      Icon(Iconsax.location, size: 14, color: Colors.grey[600]),
+                                      Icon(
+                                        Iconsax.location,
+                                        size: 14,
+                                        color: Colors.grey[600],
+                                      ),
                                       const SizedBox(width: 4),
-                                      Text(exam.venue, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                      Text(
+                                        exam.venue,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: countdownColor.withValues(alpha: 0.1),
+                                      color: countdownColor.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(50),
                                     ),
                                     child: Text(
                                       countdown,
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: countdownColor),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: countdownColor,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Iconsax.trash, color: Colors.red),
-                                onPressed: () => ref.read(examsProvider.notifier).deleteExam(exam.id),
+                                icon: const Icon(
+                                  Iconsax.trash,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => ref
+                                    .read(examsProvider.notifier)
+                                    .deleteExam(exam.id),
                               ),
                             ),
                           );
@@ -920,7 +1143,11 @@ class ExamsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddExamDialog(BuildContext context, WidgetRef ref, List<Subject> subjects) {
+  void _showAddExamDialog(
+    BuildContext context,
+    WidgetRef ref,
+    List<Subject> subjects,
+  ) {
     if (subjects.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add subjects first')),
@@ -946,31 +1173,52 @@ class ExamsTab extends ConsumerWidget {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedSubjectId,
-                  decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder()),
-                  items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Subject',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: subjects
+                      .map(
+                        (s) =>
+                            DropdownMenuItem(value: s.id, child: Text(s.name)),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => selectedSubjectId = val),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: examType,
-                  decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                  items: ['Mid-term', 'Final', 'Quiz'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Mid-term', 'Final', 'Quiz']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
                   onChanged: (val) => setState(() => examType = val!),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: venueController,
-                  decoration: const InputDecoration(labelText: 'Venue', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Venue',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ListTile(
                   title: const Text('Date'),
-                  subtitle: Text(DateFormat('MMM dd, yyyy').format(selectedDate)),
+                  subtitle: Text(
+                    DateFormat('MMM dd, yyyy').format(selectedDate),
+                  ),
                   trailing: const Icon(Iconsax.calendar),
                   onTap: () async {
                     final date = await showDatePicker(
@@ -987,7 +1235,10 @@ class ExamsTab extends ConsumerWidget {
                   subtitle: Text(selectedTime.format(context)),
                   trailing: const Icon(Iconsax.clock),
                   onTap: () async {
-                    final time = await showTimePicker(context: context, initialTime: selectedTime);
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
                     if (time != null) setState(() => selectedTime = time);
                   },
                 ),
@@ -995,10 +1246,17 @@ class ExamsTab extends ConsumerWidget {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
-                if (titleController.text.isEmpty || selectedSubjectId == null || venueController.text.isEmpty) return;
+                if (titleController.text.isEmpty ||
+                    selectedSubjectId == null ||
+                    venueController.text.isEmpty) {
+                  return;
+                }
                 final examDateTime = DateTime(
                   selectedDate.year,
                   selectedDate.month,
@@ -1038,7 +1296,9 @@ class SubjectsTab extends ConsumerWidget {
 
     return subjectsAsync.when(
       data: (subjects) {
-        final semesterSubjects = subjects.where((s) => s.semester == currentSemester).toList();
+        final semesterSubjects = subjects
+            .where((s) => s.semester == currentSemester)
+            .toList();
 
         return Column(
           children: [
@@ -1047,7 +1307,10 @@ class SubjectsTab extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Text('Semester:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Semester:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: SingleChildScrollView(
@@ -1060,10 +1323,14 @@ class SubjectsTab extends ConsumerWidget {
                             child: ChoiceChip(
                               label: Text('Sem $sem'),
                               selected: currentSemester == sem,
-                              onSelected: (_) => ref.read(currentSemesterProvider.notifier).setSemester(sem),
+                              onSelected: (_) => ref
+                                  .read(currentSemesterProvider.notifier)
+                                  .setSemester(sem),
                               selectedColor: const Color(0xFFDA7809),
                               labelStyle: TextStyle(
-                                color: currentSemester == sem ? Colors.white : null,
+                                color: currentSemester == sem
+                                    ? Colors.white
+                                    : null,
                               ),
                             ),
                           );
@@ -1081,9 +1348,16 @@ class SubjectsTab extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Iconsax.book_1, size: 64, color: Colors.grey[400]),
+                          Icon(
+                            Iconsax.book_1,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 16),
-                          Text('No subjects for Semester $currentSemester', style: TextStyle(color: Colors.grey[600])),
+                          Text(
+                            'No subjects for Semester $currentSemester',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
                         ],
                       ),
                     )
@@ -1113,7 +1387,12 @@ class SubjectsTab extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            title: Text(subject.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(
+                              subject.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -1123,8 +1402,13 @@ class SubjectsTab extends ConsumerWidget {
                               ],
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Iconsax.trash, color: Colors.red),
-                              onPressed: () => ref.read(subjectsProvider.notifier).deleteSubject(subject.id),
+                              icon: const Icon(
+                                Iconsax.trash,
+                                color: Colors.red,
+                              ),
+                              onPressed: () => ref
+                                  .read(subjectsProvider.notifier)
+                                  .deleteSubject(subject.id),
                             ),
                           ),
                         );
@@ -1134,7 +1418,8 @@ class SubjectsTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: FilledButton.icon(
-                onPressed: () => _showAddSubjectDialog(context, ref, currentSemester),
+                onPressed: () =>
+                    _showAddSubjectDialog(context, ref, currentSemester),
                 icon: const Icon(Iconsax.add),
                 label: const Text('Add Subject'),
                 style: FilledButton.styleFrom(
@@ -1151,7 +1436,11 @@ class SubjectsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddSubjectDialog(BuildContext context, WidgetRef ref, int semester) {
+  void _showAddSubjectDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int semester,
+  ) {
     final nameController = TextEditingController();
     final codeController = TextEditingController();
     final teacherController = TextEditingController();
@@ -1180,27 +1469,49 @@ class SubjectsTab extends ConsumerWidget {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Subject Name', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Subject Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(labelText: 'Subject Code', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Subject Code',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: teacherController,
-                  decoration: const InputDecoration(labelText: 'Teacher Name', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Teacher Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
                   initialValue: credits,
-                  decoration: const InputDecoration(labelText: 'Credits', border: OutlineInputBorder()),
-                  items: [1, 2, 3, 4, 5, 6].map((c) => DropdownMenuItem(value: c, child: Text('$c Credits'))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Credits',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [1, 2, 3, 4, 5, 6]
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Text('$c Credits'),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => credits = val!),
                 ),
                 const SizedBox(height: 12),
-                const Text('Select Color:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Select Color:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -1214,7 +1525,9 @@ class SubjectsTab extends ConsumerWidget {
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: selectedColor == color ? Colors.black : Colors.transparent,
+                            color: selectedColor == color
+                                ? Colors.black
+                                : Colors.transparent,
                             width: 3,
                           ),
                         ),
@@ -1226,10 +1539,17 @@ class SubjectsTab extends ConsumerWidget {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
-                if (nameController.text.isEmpty || codeController.text.isEmpty || teacherController.text.isEmpty) return;
+                if (nameController.text.isEmpty ||
+                    codeController.text.isEmpty ||
+                    teacherController.text.isEmpty) {
+                  return;
+                }
                 final subject = Subject(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   name: nameController.text,

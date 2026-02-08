@@ -98,7 +98,10 @@ class TaskCategory {
     return TaskCategory(
       id: json['id'] as String,
       name: json['name'] as String,
-      icon: const IconData(0xe3a7, fontFamily: 'MaterialIcons'), // Default task icon
+      icon: const IconData(
+        0xe3a7,
+        fontFamily: 'MaterialIcons',
+      ), // Default task icon
       color: Color(json['color'] as int),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -113,11 +116,7 @@ class TaskCategory {
     };
   }
 
-  TaskCategory copyWith({
-    String? name,
-    IconData? icon,
-    Color? color,
-  }) {
+  TaskCategory copyWith({String? name, IconData? icon, Color? color}) {
     return TaskCategory(
       id: id,
       name: name ?? this.name,
@@ -171,12 +170,18 @@ class Task {
         orElse: () => TaskStatus.pending,
       ),
       categoryId: json['category_id'] as String?,
-      dueDate: json['due_date'] != null ? DateTime.parse(json['due_date'] as String) : null,
-      reminderDate: json['reminder_date'] != null ? DateTime.parse(json['reminder_date'] as String) : null,
+      dueDate: json['due_date'] != null
+          ? DateTime.parse(json['due_date'] as String)
+          : null,
+      reminderDate: json['reminder_date'] != null
+          ? DateTime.parse(json['reminder_date'] as String)
+          : null,
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at'] as String) : null,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
+          : null,
     );
   }
 
@@ -240,7 +245,9 @@ class Task {
     if (dueDate == null) return false;
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final due = dueDate!;
-    return tomorrow.year == due.year && tomorrow.month == due.month && tomorrow.day == due.day;
+    return tomorrow.year == due.year &&
+        tomorrow.month == due.month &&
+        tomorrow.day == due.day;
   }
 
   Duration? get timeUntilDue {

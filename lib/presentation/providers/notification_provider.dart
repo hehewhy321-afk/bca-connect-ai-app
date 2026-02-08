@@ -12,9 +12,9 @@ final unreadNotificationCountProvider = StreamProvider<int>((ref) {
       .from('notifications')
       .stream(primaryKey: ['id'])
       .map((data) {
-        final userNotifications = data.where((n) => 
-          n['user_id'] == user.id && n['is_read'] == false
-        ).toList();
+        final userNotifications = data
+            .where((n) => n['user_id'] == user.id && n['is_read'] == false)
+            .toList();
         return userNotifications.length;
       });
 });
@@ -30,7 +30,9 @@ final notificationsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
       .from('notifications')
       .stream(primaryKey: ['id'])
       .map((data) {
-        final userNotifications = data.where((n) => n['user_id'] == user.id).toList();
+        final userNotifications = data
+            .where((n) => n['user_id'] == user.id)
+            .toList();
         userNotifications.sort((a, b) {
           final aTime = DateTime.parse(a['created_at']);
           final bTime = DateTime.parse(b['created_at']);

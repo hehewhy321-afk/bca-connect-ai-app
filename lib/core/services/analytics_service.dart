@@ -7,7 +7,8 @@ class AnalyticsService {
   AnalyticsService._internal();
 
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  FirebaseAnalyticsObserver get observer => FirebaseAnalyticsObserver(analytics: _analytics);
+  FirebaseAnalyticsObserver get observer =>
+      FirebaseAnalyticsObserver(analytics: _analytics);
 
   // Log screen views
   Future<void> logScreenView(String screenName) async {
@@ -28,10 +29,7 @@ class AnalyticsService {
     Map<String, Object>? parameters,
   }) async {
     try {
-      await _analytics.logEvent(
-        name: name,
-        parameters: parameters,
-      );
+      await _analytics.logEvent(name: name, parameters: parameters);
       debugPrint('Analytics: Event logged - $name');
     } catch (e) {
       debugPrint('Analytics error: $e');
@@ -40,18 +38,12 @@ class AnalyticsService {
 
   // Log login
   Future<void> logLogin(String method) async {
-    await logEvent(
-      name: 'login',
-      parameters: {'method': method},
-    );
+    await logEvent(name: 'login', parameters: {'method': method});
   }
 
   // Log sign up
   Future<void> logSignUp(String method) async {
-    await logEvent(
-      name: 'sign_up',
-      parameters: {'method': method},
-    );
+    await logEvent(name: 'sign_up', parameters: {'method': method});
   }
 
   // Log feature usage
@@ -63,13 +55,13 @@ class AnalyticsService {
   }
 
   // Log AI chat
-  Future<void> logAIChat({required String mode, required String provider}) async {
+  Future<void> logAIChat({
+    required String mode,
+    required String provider,
+  }) async {
     await logEvent(
       name: 'ai_chat',
-      parameters: {
-        'mode': mode,
-        'provider': provider,
-      },
+      parameters: {'mode': mode, 'provider': provider},
     );
   }
 
@@ -77,21 +69,18 @@ class AnalyticsService {
   Future<void> logEventRegistration(String eventId, String eventName) async {
     await logEvent(
       name: 'event_registration',
-      parameters: {
-        'event_id': eventId,
-        'event_name': eventName,
-      },
+      parameters: {'event_id': eventId, 'event_name': eventName},
     );
   }
 
   // Log resource download
-  Future<void> logResourceDownload(String resourceId, String resourceName) async {
+  Future<void> logResourceDownload(
+    String resourceId,
+    String resourceName,
+  ) async {
     await logEvent(
       name: 'resource_download',
-      parameters: {
-        'resource_id': resourceId,
-        'resource_name': resourceName,
-      },
+      parameters: {'resource_id': resourceId, 'resource_name': resourceName},
     );
   }
 

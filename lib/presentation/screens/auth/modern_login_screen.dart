@@ -40,11 +40,11 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final rememberMe = prefs.getBool('remember_me') ?? false;
-    
+
     if (rememberMe) {
       final savedEmail = prefs.getString('saved_email') ?? '';
       final savedPassword = prefs.getString('saved_password') ?? '';
-      
+
       setState(() {
         _rememberMe = rememberMe;
         _emailController.text = savedEmail;
@@ -55,7 +55,7 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
 
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (_rememberMe) {
       await prefs.setBool('remember_me', true);
       await prefs.setString('saved_email', _emailController.text.trim());
@@ -74,33 +74,40 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.signIn(_emailController.text.trim(), _passwordController.text);
-      
+      await authRepo.signIn(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
       // Save credentials if remember me is checked
       await _saveCredentials();
-      
+
       if (mounted) {
         context.go('/home');
       }
     } catch (e) {
       if (mounted) {
         String errorMessage = 'Invalid email or password';
-        
+
         final errorString = e.toString().toLowerCase();
-        if (errorString.contains('network') || errorString.contains('connection')) {
+        if (errorString.contains('network') ||
+            errorString.contains('connection')) {
           errorMessage = 'Network error. Please check your connection';
         } else if (errorString.contains('email')) {
           errorMessage = 'Invalid email format';
-        } else if (errorString.contains('banned') || errorString.contains('suspended')) {
+        } else if (errorString.contains('banned') ||
+            errorString.contains('suspended')) {
           errorMessage = 'Your account has been suspended';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -116,7 +123,7 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
       body: SafeArea(
@@ -130,7 +137,7 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                 child: Column(
                   children: [
                     const Spacer(flex: 2),
-                    
+
                     // Logo Section
                     Column(
                       children: [
@@ -139,19 +146,23 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: isDark 
+                            color: isDark
                                 ? const Color(0xFF1A1A1A)
                                 : const Color(0xFFFFF5F0),
                             borderRadius: BorderRadius.circular(32),
                             border: Border.all(
                               color: isDark
                                   ? const Color(0xFF2A2A2A)
-                                  : ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                  : ModernTheme.primaryOrange.withValues(
+                                      alpha: 0.1,
+                                    ),
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                color: ModernTheme.primaryOrange.withValues(
+                                  alpha: 0.1,
+                                ),
                                 blurRadius: 30,
                                 offset: const Offset(0, 10),
                               ),
@@ -166,154 +177,182 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                           duration: 800.ms,
                           curve: Curves.elasticOut,
                         ),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Title
                         Text(
-                          'Welcome Back',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                            letterSpacing: -0.5,
-                          ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.3, end: 0),
-                        
+                              'Welcome Back',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1A1A1A),
+                                letterSpacing: -0.5,
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(delay: 200.ms)
+                            .slideY(begin: -0.3, end: 0),
+
                         const SizedBox(height: 8),
-                        
+
                         Text(
                           'Sign in to access your account',
                           style: TextStyle(
                             fontSize: 15,
-                            color: isDark 
-                                ? Colors.grey[400]
-                                : Colors.grey[600],
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
                             fontWeight: FontWeight.w400,
                           ),
                         ).animate().fadeIn(delay: 300.ms),
                       ],
                     ),
-                    
+
                     const Spacer(flex: 2),
-                    
+
                     // Form Fields
                     Column(
                       children: [
                         // Email Field
                         Container(
-                          decoration: BoxDecoration(
-                            color: isDark 
-                                ? const Color(0xFF1A1A1A)
-                                : const Color(0xFFF8F9FA),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF2A2A2A)
-                                  : Colors.grey[200]!,
-                            ),
-                          ),
-                          child: TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Email address',
-                              hintStyle: TextStyle(
-                                color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                fontWeight: FontWeight.w400,
-                              ),
-                              prefixIcon: Icon(
-                                Iconsax.sms,
-                                color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                size: 20,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 18,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                        ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // Password Field
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isDark 
-                                ? const Color(0xFF1A1A1A)
-                                : const Color(0xFFF8F9FA),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF2A2A2A)
-                                  : Colors.grey[200]!,
-                            ),
-                          ),
-                          child: TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Password',
-                              hintStyle: TextStyle(
-                                color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                fontWeight: FontWeight.w400,
-                              ),
-                              prefixIcon: Icon(
-                                Iconsax.lock,
-                                color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                size: 20,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword ? Iconsax.eye_slash : Iconsax.eye,
-                                  color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                  size: 20,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF1A1A1A)
+                                    : const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF2A2A2A)
+                                      : Colors.grey[200]!,
                                 ),
-                                onPressed: () {
-                                  setState(() => _obscurePassword = !_obscurePassword);
+                              ),
+                              child: TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1A1A1A),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Email address',
+                                  hintStyle: TextStyle(
+                                    color: isDark
+                                        ? Colors.grey[600]
+                                        : Colors.grey[400],
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Iconsax.sms,
+                                    color: isDark
+                                        ? Colors.grey[600]
+                                        : Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 18,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  if (!value.contains('@')) {
+                                    return 'Please enter a valid email';
+                                  }
+                                  return null;
                                 },
                               ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 18,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                        ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.2, end: 0),
-                        
+                            )
+                            .animate()
+                            .fadeIn(delay: 400.ms)
+                            .slideX(begin: -0.2, end: 0),
+
                         const SizedBox(height: 16),
-                        
+
+                        // Password Field
+                        Container(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF1A1A1A)
+                                    : const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF2A2A2A)
+                                      : Colors.grey[200]!,
+                                ),
+                              ),
+                              child: TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1A1A1A),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Password',
+                                  hintStyle: TextStyle(
+                                    color: isDark
+                                        ? Colors.grey[600]
+                                        : Colors.grey[400],
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Iconsax.lock,
+                                    color: isDark
+                                        ? Colors.grey[600]
+                                        : Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Iconsax.eye_slash
+                                          : Iconsax.eye,
+                                      color: isDark
+                                          ? Colors.grey[600]
+                                          : Colors.grey[400],
+                                      size: 20,
+                                    ),
+                                    onPressed: () {
+                                      setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      );
+                                    },
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 18,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Password must be at least 6 characters';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(delay: 500.ms)
+                            .slideX(begin: -0.2, end: 0),
+
+                        const SizedBox(height: 16),
+
                         // Remember Me Checkbox
                         Row(
                           children: [
@@ -323,10 +362,11 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                                 value: _rememberMe,
                                 onChanged: (value) async {
                                   setState(() => _rememberMe = value ?? false);
-                                  
+
                                   // If unchecked, immediately clear saved credentials
                                   if (!_rememberMe) {
-                                    final prefs = await SharedPreferences.getInstance();
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
                                     await prefs.remove('remember_me');
                                     await prefs.remove('saved_email');
                                     await prefs.remove('saved_password');
@@ -345,16 +385,22 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                                 'Remember me',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
                             // Forgot Password
                             TextButton(
-                              onPressed: () => context.push('/auth/forgot-password'),
+                              onPressed: () =>
+                                  context.push('/auth/forgot-password'),
                               style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                               ),
                               child: Text(
                                 'Forgot password?',
@@ -367,68 +413,74 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                             ),
                           ],
                         ).animate().fadeIn(delay: 550.ms),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Sign In Button
                         Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: ModernTheme.orangeGradient,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                              width: double.infinity,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                gradient: ModernTheme.orangeGradient,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: ModernTheme.primaryOrange.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _isLoading ? null : _handleLogin,
-                              borderRadius: BorderRadius.circular(16),
-                              child: Center(
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'Sign In',
-                                            style: TextStyle(
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _isLoading ? null : _handleLogin,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Center(
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
                                               color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.5,
+                                              strokeWidth: 2.5,
                                             ),
+                                          )
+                                        : Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                'Sign In',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Icon(
+                                                Iconsax.arrow_right_3,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 8),
-                                          const Icon(
-                                            Iconsax.arrow_right_3,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ],
-                                      ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ).animate().fadeIn(delay: 700.ms).scale(begin: const Offset(0.95, 0.95)),
-                        
+                            )
+                            .animate()
+                            .fadeIn(delay: 700.ms)
+                            .scale(begin: const Offset(0.95, 0.95)),
+
                         const SizedBox(height: 24),
-                        
+
                         // Info Note
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -449,7 +501,9 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: isDark
-                                      ? const Color(0xFF0EA5E9).withValues(alpha: 0.1)
+                                      ? const Color(
+                                          0xFF0EA5E9,
+                                        ).withValues(alpha: 0.1)
                                       : const Color(0xFFE0F2FE),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -480,7 +534,7 @@ class _ModernLoginScreenState extends ConsumerState<ModernLoginScreen> {
                         ).animate().fadeIn(delay: 800.ms),
                       ],
                     ),
-                    
+
                     const Spacer(flex: 3),
                   ],
                 ),

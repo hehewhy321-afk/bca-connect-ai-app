@@ -47,37 +47,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
       final isSplashRoute = state.matchedLocation == '/';
       final isOnboardingRoute = state.matchedLocation == '/onboarding';
-      
+
       // Allow splash and onboarding routes to handle their own navigation
       if (isSplashRoute || isOnboardingRoute) {
         return null;
       }
-      
+
       // If not authenticated and not on auth route, redirect to login
       if (!isAuthenticated && !isAuthRoute) {
         return '/auth/login';
       }
-      
+
       // If authenticated and on auth route, redirect to home
       if (isAuthenticated && isAuthRoute) {
         return '/home';
       }
-      
+
       return null;
     },
     routes: [
       // Splash Screen
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+
       // Onboarding
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
-      
+
       // Auth Routes
       GoRoute(
         path: '/auth/login',
@@ -91,13 +88,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
-      
+
       // Main App Routes
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
-      ),
-      
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+
       // Events
       GoRoute(
         path: '/events',
@@ -110,13 +104,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return EnhancedEventDetailScreen(eventId: id);
         },
       ),
-      
+
       // My Events
       GoRoute(
         path: '/my-events',
         builder: (context, state) => const MyEventsScreen(),
       ),
-      
+
       // Forum
       GoRoute(
         path: '/forum',
@@ -133,13 +127,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return EnhancedForumPostDetailScreen(postId: id);
         },
       ),
-      
+
       // Certificates
       GoRoute(
         path: '/certificates',
         builder: (context, state) => const CertificatesScreen(),
       ),
-      
+
       // Resources
       GoRoute(
         path: '/resources',
@@ -152,97 +146,97 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return ResourceDetailScreen(resourceId: id);
         },
       ),
-      
+
       // Profile
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
       ),
-      
+
       // AI Assistant
       GoRoute(
         path: '/ai-assistant',
         builder: (context, state) => const ImprovedAIAssistantScreen(),
       ),
-      
+
       // Achievements
       GoRoute(
         path: '/achievements',
         builder: (context, state) => const AchievementsScreen(),
       ),
-      
+
       // Community
       GoRoute(
         path: '/community',
         builder: (context, state) => const CommunityScreen(),
       ),
-      
+
       // Alumni
       GoRoute(
         path: '/alumni',
         builder: (context, state) => const AlumniScreen(),
       ),
-      
+
       // Settings
       GoRoute(
         path: '/settings',
         builder: (context, state) => const EnhancedSettingsScreen(),
       ),
-      
+
       // Notices
       GoRoute(
         path: '/notices',
         builder: (context, state) => const EnhancedNoticesScreen(),
       ),
-      
+
       // Notification Settings
       GoRoute(
         path: '/notification-settings',
         builder: (context, state) => const NotificationSettingsScreen(),
       ),
-      
+
       // Notifications
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
-      
+
       // Nepali Calendar
       GoRoute(
         path: '/calendar',
         builder: (context, state) => const NepaliCalendarScreen(),
       ),
-      
+
       // Pomodoro Timer
       GoRoute(
         path: '/pomodoro',
         builder: (context, state) => const PomodoroScreen(),
       ),
-      
+
       // Finance Tracker
       GoRoute(
         path: '/finance',
         builder: (context, state) => const FinanceTrackerScreen(),
       ),
-      
+
       // Study Planner
       GoRoute(
         path: '/study',
         builder: (context, state) => const StudyPlannerScreen(),
       ),
-      
+
       // Algorithm Game
       GoRoute(
         path: '/algorithm-game',
         builder: (context, state) => const AlgorithmGameHomeScreen(),
       ),
-      
+
       // Fun Zone
       GoRoute(
         path: '/fun-zone',
         builder: (context, state) => const FunZoneHomeScreen(),
       ),
-      
+
       // Courses
       GoRoute(
         path: '/courses',
@@ -262,13 +256,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return LearningPlayerScreen(courseId: id);
         },
       ),
-      
+
       // Task Manager
       GoRoute(
         path: '/tasks',
         builder: (context, state) => const TaskManagerScreen(),
       ),
-      
+
       // Debug
       GoRoute(
         path: '/debug/events',

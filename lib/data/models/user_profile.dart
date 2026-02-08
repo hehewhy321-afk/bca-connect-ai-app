@@ -68,16 +68,24 @@ class UserProfile {
       graduationYear: json['graduation_year'] as int?,
       currentCompany: json['current_company'] as String?,
       jobTitle: json['job_title'] as String?,
-      skills: (json['skills'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      skills:
+          (json['skills'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       linkedinUrl: json['linkedin_url'] as String?,
       githubUrl: json['github_url'] as String?,
       xpPoints: json['xp_points'] as int? ?? 0,
       level: json['level'] as int? ?? 1,
       isBanned: json['is_banned'] as bool? ?? false,
-      banExpiresAt: json['ban_expires_at'] != null ? DateTime.parse(json['ban_expires_at'] as String) : null,
+      banExpiresAt: json['ban_expires_at'] != null
+          ? DateTime.parse(json['ban_expires_at'] as String)
+          : null,
       banReason: json['ban_reason'] as String?,
-      notificationPreferences: json['notification_preferences'] as Map<String, dynamic>? ?? {},
-      pushNotificationsEnabled: json['push_notifications_enabled'] as bool? ?? false,
+      notificationPreferences:
+          json['notification_preferences'] as Map<String, dynamic>? ?? {},
+      pushNotificationsEnabled:
+          json['push_notifications_enabled'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

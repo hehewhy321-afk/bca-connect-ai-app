@@ -16,11 +16,55 @@ import '../../widgets/easter_egg_widget.dart';
 // Providers
 final financeStorageProvider = Provider((ref) => FinanceStorageService());
 
-final transactionsProvider = StateNotifierProvider<TransactionsNotifier, AsyncValue<List<FinanceTransaction>>>((ref) {
-  return TransactionsNotifier(ref.read(financeStorageProvider));
-});
+final transactionsProvider =
+    StateNotifierProvider<
+      TransactionsNotifier,
+      AsyncValue<List<FinanceTransaction>>
+    >((ref) {
+      return TransactionsNotifier(ref.read(financeStorageProvider));
+    });
 
-class TransactionsNotifier extends StateNotifier<AsyncValue<List<FinanceTransaction>>> {
+final categoriesProvider =
+    StateNotifierProvider<
+      CategoriesNotifier,
+      AsyncValue<List<FinanceCategory>>
+    >((ref) => CategoriesNotifier(ref.read(financeStorageProvider)));
+
+class CategoriesNotifier
+    extends StateNotifier<AsyncValue<List<FinanceCategory>>> {
+  final FinanceStorageService _storage;
+
+  CategoriesNotifier(this._storage) : super(const AsyncValue.loading()) {
+    loadCategories();
+  }
+
+  Future<void> loadCategories() async {
+    state = const AsyncValue.loading();
+    try {
+      final categories = await _storage.loadCategories();
+      state = AsyncValue.data(categories);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> addCategory(FinanceCategory category) async {
+    final current = state.value ?? [];
+    final updated = [...current, category];
+    await _storage.saveCategories(updated);
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> deleteCategory(String id) async {
+    final current = state.value ?? [];
+    final updated = current.where((c) => c.id != id).toList();
+    await _storage.saveCategories(updated);
+    state = AsyncValue.data(updated);
+  }
+}
+
+class TransactionsNotifier
+    extends StateNotifier<AsyncValue<List<FinanceTransaction>>> {
   final FinanceStorageService _storage;
 
   TransactionsNotifier(this._storage) : super(const AsyncValue.loading()) {
@@ -71,7 +115,12 @@ class TransactionsNotifier extends StateNotifier<AsyncValue<List<FinanceTransact
 }
 
 final selectedMonthProvider = StateProvider<DateTime>((ref) => DateTime.now());
-final selectedFilterProvider = StateProvider<String>((ref) => 'all'); // all, income, expense
+final selectedFilterProvider = StateProvider<String>(
+  (ref) => 'all',
+); // all, income, expense
+
+final searchQueryProvider = StateProvider<String>((ref) => '');
+final isSearchExpandedProvider = StateProvider<bool>((ref) => false);
 
 class FinanceTrackerScreen extends ConsumerWidget {
   const FinanceTrackerScreen({super.key});
@@ -82,15 +131,41 @@ class FinanceTrackerScreen extends ConsumerWidget {
     final selectedMonth = ref.watch(selectedMonthProvider);
     final selectedFilter = ref.watch(selectedFilterProvider);
 
+    final isSearchExpanded = ref.watch(isSearchExpandedProvider);
+    final searchQuery = ref.watch(searchQueryProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: EasterEggWidget(
-          soundFile: EasterEggs.finance.soundFile,
-          emoji: EasterEggs.finance.emoji,
-          message: EasterEggs.finance.message,
-          child: const Text('Finance Tracker'),
-        ),
+        title: isSearchExpanded
+            ? TextField(
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Search transactions...',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  ref.read(searchQueryProvider.notifier).state = value;
+                },
+              )
+            : EasterEggWidget(
+                soundFile: EasterEggs.finance.soundFile,
+                emoji: EasterEggs.finance.emoji,
+                message: EasterEggs.finance.message,
+                child: const Text('Finance Tracker'),
+              ),
         actions: [
+          IconButton(
+            icon: Icon(isSearchExpanded ? Icons.close : Iconsax.search_normal),
+            onPressed: () {
+              ref.read(isSearchExpandedProvider.notifier).state =
+                  !isSearchExpanded;
+              if (isSearchExpanded) {
+                ref.read(searchQueryProvider.notifier).state = '';
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Iconsax.setting_2),
             onPressed: () => _showOptionsMenu(context, ref),
@@ -102,14 +177,24 @@ class FinanceTrackerScreen extends ConsumerWidget {
           // Filter by month
           final monthTransactions = transactions.where((t) {
             return t.date.year == selectedMonth.year &&
-                   t.date.month == selectedMonth.month;
+                t.date.month == selectedMonth.month;
           }).toList();
 
-          // Apply filter
-          final filteredTransactions = selectedFilter == 'all'
+          // Apply filters
+          var filteredTransactions = selectedFilter == 'all'
               ? monthTransactions
-              : monthTransactions.where((t) => 
-                  t.type.name == selectedFilter).toList();
+              : monthTransactions
+                    .where((t) => t.type.name == selectedFilter)
+                    .toList();
+
+          // Apply search
+          if (searchQuery.isNotEmpty) {
+            filteredTransactions = filteredTransactions.where((t) {
+              final searchLower = searchQuery.toLowerCase();
+              return t.description.toLowerCase().contains(searchLower) ||
+                  t.category.name.toLowerCase().contains(searchLower);
+            }).toList();
+          }
 
           // Calculate totals
           final income = monthTransactions
@@ -163,17 +248,21 @@ class FinanceTrackerScreen extends ConsumerWidget {
                 else
                   _TransactionsList(
                     transactions: filteredTransactions,
-                    onEdit: (transaction) => _showAddEditDialog(context, ref, transaction: transaction),
-                    onDelete: (id) => ref.read(transactionsProvider.notifier).deleteTransaction(id),
+                    onEdit: (transaction) => _showAddEditDialog(
+                      context,
+                      ref,
+                      transaction: transaction,
+                    ),
+                    onDelete: (id) => ref
+                        .read(transactionsProvider.notifier)
+                        .deleteTransaction(id),
                   ),
               ],
             ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error: $error'),
-        ),
+        error: (error, stack) => Center(child: Text('Error: $error')),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEditDialog(context, ref),
@@ -192,6 +281,14 @@ class FinanceTrackerScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Iconsax.category),
+              title: const Text('Manage Categories'),
+              onTap: () {
+                Navigator.pop(context);
+                _showManageCategoriesDialog(context, ref);
+              },
+            ),
+            ListTile(
               leading: const Icon(Iconsax.export_1),
               title: const Text('Export Data'),
               onTap: () async {
@@ -209,7 +306,10 @@ class FinanceTrackerScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Iconsax.trash, color: Colors.red),
-              title: const Text('Clear All Data', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Clear All Data',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () async {
                 Navigator.pop(context);
                 await _clearAllData(context, ref);
@@ -257,10 +357,19 @@ class FinanceTrackerScreen extends ConsumerWidget {
                 ),
               ),
               child: ListTile(
-                leading: const Icon(Iconsax.save_2, color: ModernTheme.primaryOrange, size: 28),
-                title: const Text('Save to Device', style: TextStyle(fontWeight: FontWeight.bold)),
+                leading: const Icon(
+                  Iconsax.save_2,
+                  color: ModernTheme.primaryOrange,
+                  size: 28,
+                ),
+                title: const Text(
+                  'Save to Device',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: const Text('Save in Downloads folder'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 onTap: () => Navigator.pop(context, 'save'),
               ),
             ),
@@ -280,10 +389,19 @@ class FinanceTrackerScreen extends ConsumerWidget {
                 ),
               ),
               child: ListTile(
-                leading: const Icon(Iconsax.share, color: Colors.blue, size: 28),
-                title: const Text('Share', style: TextStyle(fontWeight: FontWeight.bold)),
+                leading: const Icon(
+                  Iconsax.share,
+                  color: Colors.blue,
+                  size: 28,
+                ),
+                title: const Text(
+                  'Share',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: const Text('Share via other apps'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 onTap: () => Navigator.pop(context, 'share'),
               ),
             ),
@@ -301,9 +419,12 @@ class FinanceTrackerScreen extends ConsumerWidget {
     if (action == null) return;
 
     try {
-      final jsonData = await ref.read(transactionsProvider.notifier).exportData();
-      final fileName = 'finance-export-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.json';
-      
+      final jsonData = await ref
+          .read(transactionsProvider.notifier)
+          .exportData();
+      final fileName =
+          'finance-export-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.json';
+
       if (action == 'save') {
         // Save to Downloads folder
         final directory = Directory('/storage/emulated/0/Download');
@@ -312,15 +433,12 @@ class FinanceTrackerScreen extends ConsumerWidget {
           final appDir = await getApplicationDocumentsDirectory();
           final file = File('${appDir.path}/$fileName');
           await file.writeAsString(jsonData);
-          
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Saved to: ${file.path}'),
-                action: SnackBarAction(
-                  label: 'OK',
-                  onPressed: () {},
-                ),
+                action: SnackBarAction(label: 'OK', onPressed: () {}),
                 duration: const Duration(seconds: 5),
               ),
             );
@@ -328,7 +446,7 @@ class FinanceTrackerScreen extends ConsumerWidget {
         } else {
           final file = File('${directory.path}/$fileName');
           await file.writeAsString(jsonData);
-          
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -348,13 +466,12 @@ class FinanceTrackerScreen extends ConsumerWidget {
         final directory = await getApplicationDocumentsDirectory();
         final file = File('${directory.path}/$fileName');
         await file.writeAsString(jsonData);
-        
+
         if (context.mounted) {
           // ignore: deprecated_member_use
-          await Share.shareXFiles(
-            [XFile(file.path)],
-            subject: 'Finance Tracker Export',
-          );
+          await Share.shareXFiles([
+            XFile(file.path),
+          ], subject: 'Finance Tracker Export');
         }
       }
     } catch (e) {
@@ -379,7 +496,9 @@ class FinanceTrackerScreen extends ConsumerWidget {
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
         final jsonString = await file.readAsString();
-        final success = await ref.read(transactionsProvider.notifier).importData(jsonString);
+        final success = await ref
+            .read(transactionsProvider.notifier)
+            .importData(jsonString);
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -392,9 +511,9 @@ class FinanceTrackerScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
       }
     }
   }
@@ -404,7 +523,9 @@ class FinanceTrackerScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Clear All Data?'),
-        content: const Text('This will delete all transactions. This action cannot be undone.'),
+        content: const Text(
+          'This will delete all transactions. This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -422,32 +543,57 @@ class FinanceTrackerScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(transactionsProvider.notifier).clearAll();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('All data cleared')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('All data cleared')));
       }
     }
   }
 
-  void _showAddEditDialog(BuildContext context, WidgetRef ref, {FinanceTransaction? transaction}) {
+  void _showAddEditDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    FinanceTransaction? transaction,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddEditTransactionSheet(
         transaction: transaction,
+        categories:
+            ref.read(categoriesProvider).value ??
+            FinanceCategory.defaultCategories,
         onSave: (newTransaction) async {
           if (transaction == null) {
-            await ref.read(transactionsProvider.notifier).addTransaction(newTransaction);
+            await ref
+                .read(transactionsProvider.notifier)
+                .addTransaction(newTransaction);
           } else {
-            await ref.read(transactionsProvider.notifier).updateTransaction(newTransaction);
+            await ref
+                .read(transactionsProvider.notifier)
+                .updateTransaction(newTransaction);
           }
         },
       ),
     );
   }
-}
 
+  void _showManageCategoriesDialog(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ManageCategoriesSheet(
+        categories: ref.watch(categoriesProvider).value ?? [],
+        onAdd: (category) =>
+            ref.read(categoriesProvider.notifier).addCategory(category),
+        onDelete: (id) =>
+            ref.read(categoriesProvider.notifier).deleteCategory(id),
+      ),
+    );
+  }
+}
 
 // Month Selector Widget
 class _MonthSelector extends StatelessWidget {
@@ -476,20 +622,26 @@ class _MonthSelector extends StatelessWidget {
           IconButton(
             icon: const Icon(Iconsax.arrow_left_2),
             onPressed: () {
-              final newMonth = DateTime(selectedMonth.year, selectedMonth.month - 1);
+              final newMonth = DateTime(
+                selectedMonth.year,
+                selectedMonth.month - 1,
+              );
               onMonthChanged(newMonth);
             },
           ),
           Text(
             DateFormat('MMMM yyyy').format(selectedMonth),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           IconButton(
             icon: const Icon(Iconsax.arrow_right_3),
             onPressed: () {
-              final newMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
+              final newMonth = DateTime(
+                selectedMonth.year,
+                selectedMonth.month + 1,
+              );
               onMonthChanged(newMonth);
             },
           ),
@@ -529,9 +681,9 @@ class _SummaryCards extends StatelessWidget {
             children: [
               Text(
                 'Total Balance',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
               ),
               const SizedBox(height: 8),
               Text(
@@ -592,9 +744,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,21 +791,21 @@ class _ChartsSectionState extends State<_ChartsSection> {
   @override
   Widget build(BuildContext context) {
     // Calculate category totals for expenses
-    final Map<TransactionCategory, double> expenseTotals = {};
-    final Map<TransactionCategory, double> incomeTotals = {};
-    
+    final Map<FinanceCategory, double> expenseTotals = {};
+    final Map<FinanceCategory, double> incomeTotals = {};
+
     for (var transaction in widget.transactions) {
       if (transaction.type == TransactionType.expense) {
-        expenseTotals[transaction.category] = 
+        expenseTotals[transaction.category] =
             (expenseTotals[transaction.category] ?? 0) + transaction.amount;
       } else {
-        incomeTotals[transaction.category] = 
+        incomeTotals[transaction.category] =
             (incomeTotals[transaction.category] ?? 0) + transaction.amount;
       }
     }
 
     final categoryTotals = _showExpense ? expenseTotals : incomeTotals;
-    
+
     if (categoryTotals.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -676,9 +826,9 @@ class _ChartsSectionState extends State<_ChartsSection> {
             children: [
               Text(
                 'Category Breakdown',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               // Toggle Buttons
               Container(
@@ -715,7 +865,7 @@ class _ChartsSectionState extends State<_ChartsSection> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Pie Chart
           SizedBox(
             height: 200,
@@ -742,7 +892,7 @@ class _ChartsSectionState extends State<_ChartsSection> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Legend
           Wrap(
             spacing: 12,
@@ -761,7 +911,7 @@ class _ChartsSectionState extends State<_ChartsSection> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    entry.key.displayName,
+                    entry.key.name,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -795,7 +945,9 @@ class _ToggleButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected
+              ? color.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -870,16 +1022,22 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? ModernTheme.primaryOrange : Theme.of(context).colorScheme.surface,
+          color: isSelected
+              ? ModernTheme.primaryOrange
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
-            color: isSelected ? ModernTheme.primaryOrange : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+            color: isSelected
+                ? ModernTheme.primaryOrange
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
           ),
@@ -900,14 +1058,16 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Iconsax.empty_wallet,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'No transactions yet',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -952,7 +1112,7 @@ class _TransactionsList extends StatelessWidget {
       children: sortedKeys.map((dateKey) {
         final dayTransactions = groupedTransactions[dateKey]!;
         final date = DateTime.parse(dateKey);
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -966,11 +1126,13 @@ class _TransactionsList extends StatelessWidget {
                 ),
               ),
             ),
-            ...dayTransactions.map((transaction) => _TransactionCard(
-              transaction: transaction,
-              onEdit: () => onEdit(transaction),
-              onDelete: () => onDelete(transaction.id),
-            )),
+            ...dayTransactions.map(
+              (transaction) => _TransactionCard(
+                transaction: transaction,
+                onEdit: () => onEdit(transaction),
+                onDelete: () => onDelete(transaction.id),
+              ),
+            ),
             const SizedBox(height: 8),
           ],
         );
@@ -993,7 +1155,7 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -1022,7 +1184,7 @@ class _TransactionCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          transaction.category.displayName,
+          transaction.category.name,
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1078,26 +1240,28 @@ class _TransactionCard extends StatelessWidget {
   }
 }
 
-
 // Add/Edit Transaction Sheet
 class _AddEditTransactionSheet extends StatefulWidget {
   final FinanceTransaction? transaction;
+  final List<FinanceCategory> categories;
   final Function(FinanceTransaction) onSave;
 
   const _AddEditTransactionSheet({
     this.transaction,
+    required this.categories,
     required this.onSave,
   });
 
   @override
-  State<_AddEditTransactionSheet> createState() => _AddEditTransactionSheetState();
+  State<_AddEditTransactionSheet> createState() =>
+      _AddEditTransactionSheetState();
 }
 
 class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
   late TransactionType _selectedType;
-  late TransactionCategory _selectedCategory;
+  late FinanceCategory _selectedCategory;
   late DateTime _selectedDate;
 
   @override
@@ -1110,7 +1274,10 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
       text: widget.transaction?.description ?? '',
     );
     _selectedType = widget.transaction?.type ?? TransactionType.expense;
-    _selectedCategory = widget.transaction?.category ?? TransactionCategory.food;
+    _selectedType = widget.transaction?.type ?? TransactionType.expense;
+    _selectedCategory =
+        widget.transaction?.category ??
+        widget.categories.firstWhere((c) => c.type == _selectedType);
     _selectedDate = widget.transaction?.date ?? DateTime.now();
   }
 
@@ -1123,7 +1290,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = TransactionCategoryExtension.getByType(_selectedType);
+    final categories = widget.categories
+        .where((c) => c.type == _selectedType)
+        .toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -1149,7 +1318,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.transaction == null ? 'Add Transaction' : 'Edit Transaction',
+                      widget.transaction == null
+                          ? 'Add Transaction'
+                          : 'Edit Transaction',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -1174,7 +1345,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                         onTap: () {
                           setState(() {
                             _selectedType = TransactionType.income;
-                            _selectedCategory = TransactionCategory.salary;
+                            _selectedCategory = widget.categories.firstWhere(
+                              (c) => c.type == TransactionType.income,
+                            );
                           });
                         },
                       ),
@@ -1189,7 +1362,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                         onTap: () {
                           setState(() {
                             _selectedType = TransactionType.expense;
-                            _selectedCategory = TransactionCategory.food;
+                            _selectedCategory = widget.categories.firstWhere(
+                              (c) => c.type == TransactionType.expense,
+                            );
                           });
                         },
                       ),
@@ -1227,9 +1402,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                 // Category Selector
                 Text(
                   'Category',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -1244,11 +1419,16 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? category.color.withValues(alpha: 0.2)
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
@@ -1263,15 +1443,21 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                             Icon(
                               category.icon,
                               size: 18,
-                              color: isSelected ? category.color : Theme.of(context).colorScheme.onSurface,
+                              color: isSelected
+                                  ? category.color
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              category.displayName,
+                              category.name,
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? category.color : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? category.color
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -1320,7 +1506,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
                       ),
                     ),
                     child: Text(
-                      widget.transaction == null ? 'Add Transaction' : 'Update Transaction',
+                      widget.transaction == null
+                          ? 'Add Transaction'
+                          : 'Update Transaction',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1355,7 +1543,9 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
     }
 
     final transaction = FinanceTransaction(
-      id: widget.transaction?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          widget.transaction?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       amount: amount,
       type: _selectedType,
       category: _selectedCategory,
@@ -1366,6 +1556,154 @@ class _AddEditTransactionSheetState extends State<_AddEditTransactionSheet> {
 
     widget.onSave(transaction);
     Navigator.pop(context);
+  }
+}
+
+class _ManageCategoriesSheet extends StatelessWidget {
+  final List<FinanceCategory> categories;
+  final Function(FinanceCategory) onAdd;
+  final Function(String) onDelete;
+
+  const _ManageCategoriesSheet({
+    required this.categories,
+    required this.onAdd,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final incomeCategories = categories
+        .where((c) => c.type == TransactionType.income)
+        .toList();
+    final expenseCategories = categories
+        .where((c) => c.type == TransactionType.expense)
+        .toList();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Manage Categories',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: DefaultTabController(
+              length: 2,
+              child: Column(
+                children: [
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Expense'),
+                      Tab(text: 'Income'),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _CategoryList(
+                          categories: expenseCategories,
+                          onDelete: onDelete,
+                        ),
+                        _CategoryList(
+                          categories: incomeCategories,
+                          onDelete: onDelete,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _showAddCategoryDialog(context),
+                icon: const Icon(Iconsax.add),
+                label: const Text('Create New Category'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: ModernTheme.primaryOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => _AddCategoryDialog(onAdd: onAdd),
+    );
+  }
+}
+
+class _CategoryList extends StatelessWidget {
+  final List<FinanceCategory> categories;
+  final Function(String) onDelete;
+
+  const _CategoryList({required this.categories, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedCategories = [...categories]
+      ..sort((a, b) {
+        if (a.isDefault && !b.isDefault) return 1;
+        if (!a.isDefault && b.isDefault) return -1;
+        return 0;
+      });
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedCategories.length,
+      itemBuilder: (context, index) {
+        final cat = sortedCategories[index];
+
+        return ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: cat.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(cat.icon, color: cat.color),
+          ),
+          title: Text(cat.name),
+          subtitle: Text(cat.isDefault ? 'Default' : 'Custom'),
+          trailing: cat.isDefault
+              ? null
+              : IconButton(
+                  icon: const Icon(Iconsax.trash, size: 18, color: Colors.red),
+                  onPressed: () => onDelete(cat.id),
+                ),
+        );
+      },
+    );
   }
 }
 
@@ -1391,7 +1729,9 @@ class _TypeButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -1403,19 +1743,241 @@ class _TypeButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
+              color: isSelected
+                  ? color
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
+                color: isSelected
+                    ? color
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AddCategoryDialog extends StatefulWidget {
+  final Function(FinanceCategory) onAdd;
+
+  const _AddCategoryDialog({required this.onAdd});
+
+  @override
+  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+}
+
+class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+  final _nameController = TextEditingController();
+  TransactionType _type = TransactionType.expense;
+  int _selectedIconCode = Icons.category.codePoint;
+  Color _selectedColor = ModernTheme.primaryOrange;
+
+  final List<IconData> _availableIcons = [
+    Icons.account_balance,
+    Icons.savings,
+    Icons.credit_card,
+    Icons.payments,
+    Icons.wallet,
+    Icons.shopping_cart,
+    Icons.fastfood,
+    Icons.local_cafe,
+    Icons.restaurant,
+    Icons.directions_car,
+    Icons.directions_bus,
+    Icons.flight,
+    Icons.local_hotel,
+    Icons.local_hospital,
+    Icons.vaccines,
+    Icons.school,
+    Icons.book,
+    Icons.movie,
+    Icons.sports_esports,
+    Icons.fitness_center,
+    Icons.home,
+    Icons.electrical_services,
+    Icons.water_drop,
+    Icons.phone_android,
+    Icons.wifi,
+    Icons.card_giftcard,
+    Icons.celebration,
+    Icons.pets,
+    Icons.local_florist,
+    Icons.build,
+  ];
+
+  final List<Color> _availableColors = [
+    ModernTheme.primaryOrange,
+    Colors.blue,
+    Colors.green,
+    Colors.red,
+    Colors.purple,
+    Colors.pink,
+    Colors.teal,
+    Colors.indigo,
+    Colors.amber,
+    Colors.brown,
+    Colors.grey,
+    Colors.cyan,
+    Colors.deepOrange,
+    Colors.deepPurple,
+    Colors.lightGreen,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Category'),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Category Name',
+                  hintText: 'e.g. Subscriptions',
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _TypeButton(
+                      label: 'Expense',
+                      icon: Iconsax.minus_cirlce,
+                      color: Colors.red,
+                      isSelected: _type == TransactionType.expense,
+                      onTap: () =>
+                          setState(() => _type = TransactionType.expense),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _TypeButton(
+                      label: 'Income',
+                      icon: Iconsax.add_circle,
+                      color: Colors.green,
+                      isSelected: _type == TransactionType.income,
+                      onTap: () =>
+                          setState(() => _type = TransactionType.income),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Icon',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 150,
+                width: double.maxFinite,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  itemCount: _availableIcons.length,
+                  itemBuilder: (context, index) {
+                    final icon = _availableIcons[index];
+                    final isSelected = _selectedIconCode == icon.codePoint;
+                    return InkWell(
+                      onTap: () =>
+                          setState(() => _selectedIconCode = icon.codePoint),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? _selectedColor.withValues(alpha: 0.2)
+                              : null,
+                          border: isSelected
+                              ? Border.all(color: _selectedColor, width: 2)
+                              : null,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: isSelected ? _selectedColor : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Color',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 50,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _availableColors.length,
+                  itemBuilder: (context, index) {
+                    final color = _availableColors[index];
+                    final isSelected = _selectedColor == color;
+                    return InkWell(
+                      onTap: () => setState(() => _selectedColor = color),
+                      child: Container(
+                        width: 40,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(color: Colors.black, width: 2)
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_nameController.text.trim().isEmpty) return;
+            final category = FinanceCategory(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              name: _nameController.text.trim(),
+              iconCodePoint: _selectedIconCode,
+              colorValue: _selectedColor.toARGB32(),
+              type: _type,
+              isDefault: false,
+            );
+            widget.onAdd(category);
+            Navigator.pop(context);
+          },
+          child: const Text('Create'),
+        ),
+      ],
     );
   }
 }

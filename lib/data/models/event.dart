@@ -52,10 +52,16 @@ class Event {
       description: json['description'] as String?,
       category: json['category'] as String,
       startDate: DateTime.parse(json['start_date'] as String),
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'] as String)
+          : null,
       location: json['location'] as String?,
       imageUrl: json['image_url'] as String?,
-      galleryImages: (json['gallery_images'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      galleryImages:
+          (json['gallery_images'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       maxAttendees: json['max_attendees'] as int?,
       registrationFee: (json['registration_fee'] as num?)?.toDouble(),
       teamType: json['team_type'] as String? ?? 'solo',

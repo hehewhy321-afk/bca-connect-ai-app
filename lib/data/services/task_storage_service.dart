@@ -6,7 +6,7 @@ import '../models/task.dart';
 class TaskStorageService {
   static const String _tasksBoxName = 'tasks';
   static const String _categoriesBoxName = 'task_categories';
-  
+
   static Box<String>? _tasksBox;
   static Box<String>? _categoriesBox;
 
@@ -14,12 +14,12 @@ class TaskStorageService {
     try {
       _tasksBox = await Hive.openBox<String>(_tasksBoxName);
       _categoriesBox = await Hive.openBox<String>(_categoriesBoxName);
-      
+
       // Initialize default categories if none exist
       if (_categoriesBox!.isEmpty) {
         await _initializeDefaultCategories();
       }
-      
+
       debugPrint('TaskStorageService initialized successfully');
     } catch (e) {
       debugPrint('Error initializing TaskStorageService: $e');
@@ -72,7 +72,7 @@ class TaskStorageService {
           debugPrint('Error parsing task: $e');
         }
       }
-      
+
       // Sort by created date (newest first)
       tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return tasks;
@@ -105,7 +105,11 @@ class TaskStorageService {
   static Future<List<Task>> getTasksDueToday() async {
     try {
       final allTasks = await getAllTasks();
-      return allTasks.where((task) => task.isDueToday && task.status != TaskStatus.completed).toList();
+      return allTasks
+          .where(
+            (task) => task.isDueToday && task.status != TaskStatus.completed,
+          )
+          .toList();
     } catch (e) {
       debugPrint('Error getting tasks due today: $e');
       return [];
@@ -187,7 +191,7 @@ class TaskStorageService {
           debugPrint('Error parsing category: $e');
         }
       }
-      
+
       // Sort by name
       categories.sort((a, b) => a.name.compareTo(b.name));
       return categories;
@@ -211,14 +215,20 @@ class TaskStorageService {
   static Future<Map<String, int>> getTaskStatistics() async {
     try {
       final allTasks = await getAllTasks();
-      
+
       return {
         'total': allTasks.length,
         'pending': allTasks.where((t) => t.status == TaskStatus.pending).length,
-        'inProgress': allTasks.where((t) => t.status == TaskStatus.inProgress).length,
-        'completed': allTasks.where((t) => t.status == TaskStatus.completed).length,
+        'inProgress': allTasks
+            .where((t) => t.status == TaskStatus.inProgress)
+            .length,
+        'completed': allTasks
+            .where((t) => t.status == TaskStatus.completed)
+            .length,
         'overdue': allTasks.where((t) => t.isOverdue).length,
-        'dueToday': allTasks.where((t) => t.isDueToday && t.status != TaskStatus.completed).length,
+        'dueToday': allTasks
+            .where((t) => t.isDueToday && t.status != TaskStatus.completed)
+            .length,
       };
     } catch (e) {
       debugPrint('Error getting task statistics: $e');
@@ -238,11 +248,12 @@ class TaskStorageService {
     try {
       final allTasks = await getAllTasks();
       final lowercaseQuery = query.toLowerCase();
-      
+
       return allTasks.where((task) {
         return task.title.toLowerCase().contains(lowercaseQuery) ||
-               (task.description?.toLowerCase().contains(lowercaseQuery) ?? false) ||
-               task.tags.any((tag) => tag.toLowerCase().contains(lowercaseQuery));
+            (task.description?.toLowerCase().contains(lowercaseQuery) ??
+                false) ||
+            task.tags.any((tag) => tag.toLowerCase().contains(lowercaseQuery));
       }).toList();
     } catch (e) {
       debugPrint('Error searching tasks: $e');
@@ -255,7 +266,7 @@ class TaskStorageService {
     try {
       final tasks = await getAllTasks();
       final categories = await getAllCategories();
-      
+
       return {
         'tasks': tasks.map((t) => t.toJson()).toList(),
         'categories': categories.map((c) => c.toJson()).toList(),
@@ -273,7 +284,7 @@ class TaskStorageService {
       // Clear existing data
       await _tasksBox!.clear();
       await _categoriesBox!.clear();
-      
+
       // Import categories
       if (data['categories'] != null) {
         for (final categoryData in data['categories']) {
@@ -281,7 +292,7 @@ class TaskStorageService {
           await saveCategory(category);
         }
       }
-      
+
       // Import tasks
       if (data['tasks'] != null) {
         for (final taskData in data['tasks']) {
@@ -289,7 +300,7 @@ class TaskStorageService {
           await saveTask(task);
         }
       }
-      
+
       debugPrint('Data imported successfully');
     } catch (e) {
       debugPrint('Error importing data: $e');

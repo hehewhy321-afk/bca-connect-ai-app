@@ -2,7 +2,8 @@ class Resource {
   final String id;
   final String title;
   final String? description;
-  final String type; // study_material, past_paper, project, interview_prep, article
+  final String
+  type; // study_material, past_paper, project, interview_prep, article
   final String? category;
   final String? subject;
   final int? semester;

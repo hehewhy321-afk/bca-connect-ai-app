@@ -12,9 +12,7 @@ class EventDetailScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: const Text('Event Details'),
       ),
-      body: Center(
-        child: Text('Event ID: $eventId'),
-      ),
+      body: Center(child: Text('Event ID: $eventId')),
     );
   }
 }

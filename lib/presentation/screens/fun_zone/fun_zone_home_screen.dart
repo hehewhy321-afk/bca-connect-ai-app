@@ -24,7 +24,8 @@ class FunZoneHomeScreen extends StatefulWidget {
   State<FunZoneHomeScreen> createState() => _FunZoneHomeScreenState();
 }
 
-class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProviderStateMixin {
+class _FunZoneHomeScreenState extends State<FunZoneHomeScreen>
+    with TickerProviderStateMixin {
   final _repository = GameRepository();
   Map<String, GameStats> _stats = {};
   bool _isLoading = true;
@@ -37,7 +38,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
 
   Future<void> _loadStats() async {
     setState(() => _isLoading = true);
-    
+
     final colorMatchStats = await _repository.getStats('color_match');
     final swipeManiaStats = await _repository.getStats('swipe_mania');
     final tapMasterStats = await _repository.getStats('tap_master');
@@ -48,7 +49,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
     final game2048Stats = await _repository.getStats('game_2048');
     final brickBreakerStats = await _repository.getStats('brick_breaker');
     final spinMatchStats = await _repository.getStats('spin_match');
-    
+
     setState(() {
       _stats = {
         'color_match': colorMatchStats,
@@ -68,9 +69,15 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final totalGamesPlayed = _stats.values.fold(0, (sum, stat) => sum + stat.timesPlayed);
-    final totalHighScore = _stats.values.fold(0, (sum, stat) => sum + stat.highScore);
-    
+    final totalGamesPlayed = _stats.values.fold(
+      0,
+      (sum, stat) => sum + stat.timesPlayed,
+    );
+    final totalHighScore = _stats.values.fold(
+      0,
+      (sum, stat) => sum + stat.highScore,
+    );
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
@@ -100,34 +107,58 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                     Positioned(
                       top: -50,
                       right: -50,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ).animate(onPlay: (controller) => controller.repeat())
-                          .scale(duration: 3.seconds, begin: const Offset(1, 1), end: const Offset(1.2, 1.2))
-                          .then()
-                          .scale(duration: 3.seconds, begin: const Offset(1.2, 1.2), end: const Offset(1, 1)),
+                      child:
+                          Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                ),
+                              )
+                              .animate(
+                                onPlay: (controller) => controller.repeat(),
+                              )
+                              .scale(
+                                duration: 3.seconds,
+                                begin: const Offset(1, 1),
+                                end: const Offset(1.2, 1.2),
+                              )
+                              .then()
+                              .scale(
+                                duration: 3.seconds,
+                                begin: const Offset(1.2, 1.2),
+                                end: const Offset(1, 1),
+                              ),
                     ),
                     Positioned(
                       bottom: -30,
                       left: -30,
-                      child: Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ).animate(onPlay: (controller) => controller.repeat())
-                          .scale(duration: 2.5.seconds, begin: const Offset(1, 1), end: const Offset(1.3, 1.3))
-                          .then()
-                          .scale(duration: 2.5.seconds, begin: const Offset(1.3, 1.3), end: const Offset(1, 1)),
+                      child:
+                          Container(
+                                width: 150,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                ),
+                              )
+                              .animate(
+                                onPlay: (controller) => controller.repeat(),
+                              )
+                              .scale(
+                                duration: 2.5.seconds,
+                                begin: const Offset(1, 1),
+                                end: const Offset(1.3, 1.3),
+                              )
+                              .then()
+                              .scale(
+                                duration: 2.5.seconds,
+                                begin: const Offset(1.3, 1.3),
+                                end: const Offset(1, 1),
+                              ),
                     ),
-                    
+
                     // Content
                     SafeArea(
                       child: Center(
@@ -140,36 +171,53 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                               soundFile: EasterEggs.funZone.soundFile,
                               emoji: EasterEggs.funZone.emoji,
                               message: EasterEggs.funZone.message,
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: const Text(
-                                  '🎮',
-                                  style: TextStyle(fontSize: 60),
-                                ),
-                              ).animate(onPlay: (controller) => controller.repeat())
-                                  .shimmer(duration: 2.seconds, color: Colors.white.withValues(alpha: 0.3))
-                                  .then(delay: 1.seconds),
+                              child:
+                                  Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              blurRadius: 20,
+                                              offset: const Offset(0, 10),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Text(
+                                          '🎮',
+                                          style: TextStyle(fontSize: 60),
+                                        ),
+                                      )
+                                      .animate(
+                                        onPlay: (controller) =>
+                                            controller.repeat(),
+                                      )
+                                      .shimmer(
+                                        duration: 2.seconds,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      )
+                                      .then(delay: 1.seconds),
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              'Take a break & play amazing games!',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ).animate().fadeIn(duration: 600.ms, delay: 200.ms).slideY(begin: 0.3),
+                                  'Take a break & play amazing games!',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 600.ms, delay: 200.ms)
+                                .slideY(begin: 0.3),
                           ],
                         ),
                       ),
@@ -179,7 +227,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
               ),
             ),
           ),
-          
+
           // Stats Cards
           SliverToBoxAdapter(
             child: Padding(
@@ -196,27 +244,35 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard(
-                      icon: Iconsax.cup,
-                      value: totalHighScore.toString(),
-                      label: 'Total Score',
-                      color: ModernTheme.primaryOrange,
-                    ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.2),
+                    child:
+                        _buildStatCard(
+                              icon: Iconsax.cup,
+                              value: totalHighScore.toString(),
+                              label: 'Total Score',
+                              color: ModernTheme.primaryOrange,
+                            )
+                            .animate()
+                            .fadeIn(duration: 400.ms, delay: 100.ms)
+                            .slideX(begin: -0.2),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard(
-                      icon: Iconsax.star5,
-                      value: '10',
-                      label: 'Games',
-                      color: const Color(0xFFEC4899),
-                    ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.2),
+                    child:
+                        _buildStatCard(
+                              icon: Iconsax.star5,
+                              value: '10',
+                              label: 'Games',
+                              color: const Color(0xFFEC4899),
+                            )
+                            .animate()
+                            .fadeIn(duration: 400.ms, delay: 200.ms)
+                            .slideX(begin: -0.2),
                   ),
                 ],
               ),
             ),
           ),
-          
+
           // Games Grid
           if (_isLoading)
             SliverPadding(
@@ -229,13 +285,17 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                   mainAxisSpacing: 12,
                 ),
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ).animate(onPlay: (controller) => controller.repeat())
-                      .shimmer(duration: 1.5.seconds),
+                  (context, index) =>
+                      Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          )
+                          .animate(onPlay: (controller) => controller.repeat())
+                          .shimmer(duration: 1.5.seconds),
                   childCount: 6,
                 ),
               ),
@@ -259,7 +319,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFFEC4899), Color(0xFFF59E0B)],
                     ),
                     stats: _stats['color_match'],
-                    onTap: () => _navigateToGame(context, const ColorMatchGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const ColorMatchGameScreen()),
                     index: 0,
                   ),
                   _buildModernGameCard(
@@ -270,7 +331,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
                     ),
                     stats: _stats['swipe_mania'],
-                    onTap: () => _navigateToGame(context, const SwipeManiaGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const SwipeManiaGameScreen()),
                     index: 1,
                   ),
                   _buildModernGameCard(
@@ -281,7 +343,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
                     ),
                     stats: _stats['tap_master'],
-                    onTap: () => _navigateToGame(context, const TapMasterGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const TapMasterGameScreen()),
                     index: 2,
                   ),
                   _buildModernGameCard(
@@ -292,7 +355,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
                     ),
                     stats: _stats['flappy_code'],
-                    onTap: () => _navigateToGame(context, const FlappyCodeGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const FlappyCodeGameScreen()),
                     index: 3,
                   ),
                   _buildModernGameCard(
@@ -303,7 +367,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                     ),
                     stats: _stats['memory_match'],
-                    onTap: () => _navigateToGame(context, const MemoryMatchGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const MemoryMatchGameScreen()),
                     index: 4,
                   ),
                   _buildModernGameCard(
@@ -314,7 +379,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
                     ),
                     stats: _stats['number_rush'],
-                    onTap: () => _navigateToGame(context, const NumberRushGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const NumberRushGameScreen()),
                     index: 5,
                   ),
                   _buildModernGameCard(
@@ -325,7 +391,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
                     ),
                     stats: _stats['snake_game'],
-                    onTap: () => _navigateToGame(context, const SnakeGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const SnakeGameScreen()),
                     index: 6,
                   ),
                   _buildModernGameCard(
@@ -336,7 +403,8 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFFFAD961), Color(0xFFF76B1C)],
                     ),
                     stats: _stats['game_2048'],
-                    onTap: () => _navigateToGame(context, const Game2048Screen()),
+                    onTap: () =>
+                        _navigateToGame(context, const Game2048Screen()),
                     index: 7,
                   ),
                   _buildModernGameCard(
@@ -347,7 +415,10 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFF1A2980), Color(0xFF26D0CE)],
                     ),
                     stats: _stats['brick_breaker'],
-                    onTap: () => _navigateToGame(context, const BrickBreakerGameScreen()),
+                    onTap: () => _navigateToGame(
+                      context,
+                      const BrickBreakerGameScreen(),
+                    ),
                     index: 8,
                   ),
                   _buildModernGameCard(
@@ -358,17 +429,16 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
                       colors: [Color(0xFFDA22FF), Color(0xFF9733EE)],
                     ),
                     stats: _stats['spin_match'],
-                    onTap: () => _navigateToGame(context, const SpinMatchGameScreen()),
+                    onTap: () =>
+                        _navigateToGame(context, const SpinMatchGameScreen()),
                     index: 9,
                   ),
                 ]),
               ),
             ),
-          
+
           // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 32),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
     );
@@ -386,16 +456,10 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         children: [
@@ -405,11 +469,7 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
               color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: color,
-            ),
+            child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(height: 8),
           Text(
@@ -448,119 +508,123 @@ class _FunZoneHomeScreenState extends State<FunZoneHomeScreen> with TickerProvid
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: gradient.colors.first.withValues(alpha: 0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Background emoji
-            Positioned(
-              right: -15,
-              bottom: -15,
-              child: Text(
-                emoji,
-                style: TextStyle(
-                  fontSize: 80,
-                  color: Colors.white.withValues(alpha: 0.15),
-                ),
-              ),
-            ),
-            
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Emoji and play count
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 36),
-                      ),
-                      if ((stats?.timesPlayed ?? 0) > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${stats!.timesPlayed}x',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Title
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+      child:
+          Container(
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.colors.first.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // High score
-                  if ((stats?.highScore ?? 0) > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // Background emoji
+                    Positioned(
+                      right: -15,
+                      bottom: -15,
+                      child: Text(
+                        emoji,
+                        style: TextStyle(
+                          fontSize: 80,
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    ),
+
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            '🏆',
-                            style: TextStyle(fontSize: 12),
+                          // Emoji and play count
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(emoji, style: const TextStyle(fontSize: 36)),
+                              if ((stats?.timesPlayed ?? 0) > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${stats!.timesPlayed}x',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
+
+                          const Spacer(),
+
+                          // Title
                           Text(
-                            '${stats!.highScore}',
+                            title,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              height: 1.2,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
+
+                          const SizedBox(height: 8),
+
+                          // High score
+                          if ((stats?.highScore ?? 0) > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    '🏆',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${stats!.highScore}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ).animate().fadeIn(
-        duration: 400.ms,
-        delay: (index * 50).ms,
-      ).scale(begin: const Offset(0.8, 0.8)),
+                  ],
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: (index * 50).ms)
+              .scale(begin: const Offset(0.8, 0.8)),
     );
   }
 

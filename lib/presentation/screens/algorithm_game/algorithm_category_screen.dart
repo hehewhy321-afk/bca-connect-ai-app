@@ -11,7 +11,8 @@ class AlgorithmCategoryScreen extends StatefulWidget {
   const AlgorithmCategoryScreen({super.key, required this.category});
 
   @override
-  State<AlgorithmCategoryScreen> createState() => _AlgorithmCategoryScreenState();
+  State<AlgorithmCategoryScreen> createState() =>
+      _AlgorithmCategoryScreenState();
 }
 
 class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
@@ -28,14 +29,16 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
 
   Future<void> _loadAlgorithms() async {
     setState(() => _isLoading = true);
-    
-    final algorithms = await _repository.getAlgorithmsByCategory(widget.category);
+
+    final algorithms = await _repository.getAlgorithmsByCategory(
+      widget.category,
+    );
     final progressMap = <String, GameProgress?>{};
-    
+
     for (final algo in algorithms) {
       progressMap[algo.id] = await _repository.getProgress(algo.id);
     }
-    
+
     setState(() {
       _algorithms = algorithms;
       _progressMap = progressMap;
@@ -74,9 +77,7 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category),
-      ),
+      appBar: AppBar(title: Text(widget.category)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -91,10 +92,10 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
                       child: _buildHeader(),
                     );
                   }
-                  
+
                   final algo = _algorithms[index - 1];
                   final progress = _progressMap[algo.id];
-                  
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _buildAlgorithmCard(algo, progress),
@@ -106,17 +107,19 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
   }
 
   Widget _buildHeader() {
-    final completed = _progressMap.values.where((p) => p?.completed == true).length;
-    final totalStars = _progressMap.values.fold(0, (sum, p) => sum + (p?.stars ?? 0));
-    
+    final completed = _progressMap.values
+        .where((p) => p?.completed == true)
+        .length;
+    final totalStars = _progressMap.values.fold(
+      0,
+      (sum, p) => sum + (p?.stars ?? 0),
+    );
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _getDifficultyColor('easy'),
-            _getDifficultyColor('medium'),
-          ],
+          colors: [_getDifficultyColor('easy'), _getDifficultyColor('medium')],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -172,7 +175,7 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
     final difficultyColor = _getDifficultyColor(algo.difficulty);
     final isCompleted = progress?.completed ?? false;
     final stars = progress?.stars ?? 0;
-    
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -226,7 +229,10 @@ class _AlgorithmCategoryScreenState extends State<AlgorithmCategoryScreen> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: difficultyColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),

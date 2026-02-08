@@ -12,7 +12,9 @@ final certificateRepositoryProvider = Provider<CertificateRepository>((ref) {
 // User Certificates Provider with Mock Data Fallback
 final userCertificatesProvider = FutureProvider<List<Certificate>>((ref) async {
   try {
-    final certificates = await ref.watch(certificateRepositoryProvider).getUserCertificates();
+    final certificates = await ref
+        .watch(certificateRepositoryProvider)
+        .getUserCertificates();
     // If no certificates from backend, use mock data
     if (certificates.isEmpty) {
       return MockData.getMockCertificates();
@@ -26,12 +28,16 @@ final userCertificatesProvider = FutureProvider<List<Certificate>>((ref) async {
 });
 
 // Certificate Detail Provider
-final certificateDetailProvider = FutureProvider.family<Certificate?, String>((ref, id) async {
+final certificateDetailProvider = FutureProvider.family<Certificate?, String>((
+  ref,
+  id,
+) async {
   try {
-    return await ref.watch(certificateRepositoryProvider).getCertificateById(id);
+    return await ref
+        .watch(certificateRepositoryProvider)
+        .getCertificateById(id);
   } catch (e) {
     debugPrint('Error loading certificate detail: $e');
     return null;
   }
 });
-

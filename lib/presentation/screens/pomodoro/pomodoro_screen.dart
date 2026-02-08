@@ -4,6 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:audioplayers/audioplayers.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
 
@@ -21,7 +23,7 @@ class PomodoroSettings {
   final int sessionsUntilLongBreak;
   final bool soundEnabled;
   final bool vibrationEnabled;
-  
+
   const PomodoroSettings({
     this.workDuration = 25,
     this.shortBreakDuration = 5,
@@ -30,7 +32,7 @@ class PomodoroSettings {
     this.soundEnabled = true,
     this.vibrationEnabled = true,
   });
-  
+
   PomodoroSettings copyWith({
     int? workDuration,
     int? shortBreakDuration,
@@ -43,22 +45,39 @@ class PomodoroSettings {
       workDuration: workDuration ?? this.workDuration,
       shortBreakDuration: shortBreakDuration ?? this.shortBreakDuration,
       longBreakDuration: longBreakDuration ?? this.longBreakDuration,
-      sessionsUntilLongBreak: sessionsUntilLongBreak ?? this.sessionsUntilLongBreak,
+      sessionsUntilLongBreak:
+          sessionsUntilLongBreak ?? this.sessionsUntilLongBreak,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
     );
   }
-  
+
   static PomodoroSettings fromPreset(PomodoroPreset preset) {
     switch (preset) {
       case PomodoroPreset.standard:
-        return const PomodoroSettings(workDuration: 25, shortBreakDuration: 5, longBreakDuration: 15);
+        return const PomodoroSettings(
+          workDuration: 25,
+          shortBreakDuration: 5,
+          longBreakDuration: 15,
+        );
       case PomodoroPreset.deepWork:
-        return const PomodoroSettings(workDuration: 50, shortBreakDuration: 10, longBreakDuration: 30);
+        return const PomodoroSettings(
+          workDuration: 50,
+          shortBreakDuration: 10,
+          longBreakDuration: 30,
+        );
       case PomodoroPreset.study:
-        return const PomodoroSettings(workDuration: 30, shortBreakDuration: 5, longBreakDuration: 20);
+        return const PomodoroSettings(
+          workDuration: 30,
+          shortBreakDuration: 5,
+          longBreakDuration: 20,
+        );
       case PomodoroPreset.quickTask:
-        return const PomodoroSettings(workDuration: 15, shortBreakDuration: 3, longBreakDuration: 10);
+        return const PomodoroSettings(
+          workDuration: 15,
+          shortBreakDuration: 3,
+          longBreakDuration: 10,
+        );
     }
   }
 }
@@ -71,7 +90,7 @@ class PomodoroSession {
   final int completedSessions;
   final bool isRunning;
   final int totalFocusMinutesToday;
-  
+
   const PomodoroSession({
     required this.state,
     required this.remainingSeconds,
@@ -80,15 +99,15 @@ class PomodoroSession {
     required this.isRunning,
     this.totalFocusMinutesToday = 0,
   });
-  
+
   double get progress => 1 - (remainingSeconds / totalSeconds);
-  
+
   String get timeDisplay {
     final minutes = remainingSeconds ~/ 60;
     final seconds = remainingSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
-  
+
   PomodoroSession copyWith({
     PomodoroState? state,
     int? remainingSeconds,
@@ -103,30 +122,38 @@ class PomodoroSession {
       totalSeconds: totalSeconds ?? this.totalSeconds,
       completedSessions: completedSessions ?? this.completedSessions,
       isRunning: isRunning ?? this.isRunning,
-      totalFocusMinutesToday: totalFocusMinutesToday ?? this.totalFocusMinutesToday,
+      totalFocusMinutesToday:
+          totalFocusMinutesToday ?? this.totalFocusMinutesToday,
     );
   }
 }
 
 // Providers
-final pomodoroSettingsProvider = StateProvider<PomodoroSettings>((ref) => const PomodoroSettings());
+final pomodoroSettingsProvider = StateProvider<PomodoroSettings>(
+  (ref) => const PomodoroSettings(),
+);
 
-final pomodoroSessionProvider = StateNotifierProvider<PomodoroSessionNotifier, PomodoroSession>((ref) {
-  return PomodoroSessionNotifier(ref);
-});
+final pomodoroSessionProvider =
+    StateNotifierProvider<PomodoroSessionNotifier, PomodoroSession>((ref) {
+      return PomodoroSessionNotifier(ref);
+    });
 
 class PomodoroSessionNotifier extends StateNotifier<PomodoroSession> {
   final Ref ref;
   Timer? _timer;
-  
-  PomodoroSessionNotifier(this.ref) : super(const PomodoroSession(
-    state: PomodoroState.idle,
-    remainingSeconds: 25 * 60,
-    totalSeconds: 25 * 60,
-    completedSessions: 0,
-    isRunning: false,
-  ));
-  
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  PomodoroSessionNotifier(this.ref)
+    : super(
+        const PomodoroSession(
+          state: PomodoroState.idle,
+          remainingSeconds: 25 * 60,
+          totalSeconds: 25 * 60,
+          completedSessions: 0,
+          isRunning: false,
+        ),
+      );
+
   void startWork() {
     final settings = ref.read(pomodoroSettingsProvider);
     state = state.copyWith(
@@ -137,15 +164,18 @@ class PomodoroSessionNotifier extends StateNotifier<PomodoroSession> {
     );
     _startTimer();
   }
-  
+
   void startBreak() {
     final settings = ref.read(pomodoroSettingsProvider);
-    final isLongBreak = (state.completedSessions + 1) % settings.sessionsUntilLongBreak == 0;
-    final duration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
-    
+    final isLongBreak =
+        (state.completedSessions + 1) % settings.sessionsUntilLongBreak == 0;
+    final duration = isLongBreak
+        ? settings.longBreakDuration
+        : settings.shortBreakDuration;
+
     // Add completed work duration to total focus time
     final focusMinutes = settings.workDuration;
-    
+
     state = state.copyWith(
       state: isLongBreak ? PomodoroState.longBreak : PomodoroState.shortBreak,
       remainingSeconds: duration * 60,
@@ -157,23 +187,22 @@ class PomodoroSessionNotifier extends StateNotifier<PomodoroSession> {
     _startTimer();
     _playCompletionSound();
   }
-  
+
   void pause() {
     _timer?.cancel();
-    state = state.copyWith(
-      state: PomodoroState.paused,
-      isRunning: false,
-    );
+    state = state.copyWith(state: PomodoroState.paused, isRunning: false);
   }
-  
+
   void resume() {
     state = state.copyWith(
-      state: state.state == PomodoroState.paused ? PomodoroState.working : state.state,
+      state: state.state == PomodoroState.paused
+          ? PomodoroState.working
+          : state.state,
       isRunning: true,
     );
     _startTimer();
   }
-  
+
   void reset() {
     _timer?.cancel();
     final settings = ref.read(pomodoroSettingsProvider);
@@ -184,45 +213,58 @@ class PomodoroSessionNotifier extends StateNotifier<PomodoroSession> {
       isRunning: false,
     );
   }
-  
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.remainingSeconds > 0) {
-        state = state.copyWith(
-          remainingSeconds: state.remainingSeconds - 1,
-        );
+        state = state.copyWith(remainingSeconds: state.remainingSeconds - 1);
       } else {
         timer.cancel();
         _onTimerComplete();
       }
     });
   }
-  
-  void _onTimerComplete() {
+
+  void _onTimerComplete() async {
     final settings = ref.read(pomodoroSettingsProvider);
-    
+
     if (settings.vibrationEnabled) {
       HapticFeedback.heavyImpact();
     }
-    
+
+    // Show notification
+    final String title = state.state == PomodoroState.working
+        ? 'Work Session Completed!'
+        : 'Break Finished!';
+    final String body = state.state == PomodoroState.working
+        ? 'Time for a well-deserved break.'
+        : 'Ready to focus again?';
+
+    await NotificationService().showNotification(title: title, body: body);
+
     if (state.state == PomodoroState.working) {
       // Work session completed, start break
       startBreak();
     } else {
       // Break completed, reset to idle
+      _playCompletionSound();
       reset();
     }
   }
-  
-  void _playCompletionSound() {
+
+  void _playCompletionSound() async {
     final settings = ref.read(pomodoroSettingsProvider);
     if (settings.soundEnabled) {
-      // Play system sound
-      SystemSound.play(SystemSoundType.alert);
+      try {
+        await _audioPlayer.play(AssetSource('sounds/for-study.mp3'));
+      } catch (e) {
+        debugPrint('Error playing sound: $e');
+        SystemSound.play(SystemSoundType.alert);
+      }
     }
   }
-  
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -237,14 +279,14 @@ class PomodoroScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(pomodoroSessionProvider);
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // Orange Gradient Header with Settings
           _buildGradientHeader(context, ref),
-          
+
           // Main Content
           Expanded(
             child: SingleChildScrollView(
@@ -254,25 +296,25 @@ class PomodoroScreen extends ConsumerWidget {
                   // Quick Presets (if idle)
                   if (session.state == PomodoroState.idle)
                     _buildQuickPresets(context, ref),
-                  
+
                   if (session.state == PomodoroState.idle)
                     const SizedBox(height: 24),
-                  
+
                   // Timer Circle
                   _buildTimerCircle(context, session, ref),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Control Buttons
                   _buildControlButtons(context, session, ref),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Stats Cards
                   _buildStatsCards(context, session),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // AI Insights
                   _buildAIInsights(context, session),
                 ],
@@ -331,10 +373,7 @@ class PomodoroScreen extends ConsumerWidget {
                     SizedBox(height: 4),
                     Text(
                       'Focus & productivity tracker',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -354,7 +393,7 @@ class PomodoroScreen extends ConsumerWidget {
 
   Widget _buildQuickPresets(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -436,10 +475,11 @@ class PomodoroScreen extends ConsumerWidget {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return InkWell(
       onTap: () {
-        ref.read(pomodoroSettingsProvider.notifier).state = PomodoroSettings.fromPreset(preset);
+        ref.read(pomodoroSettingsProvider.notifier).state =
+            PomodoroSettings.fromPreset(preset);
         ref.read(pomodoroSessionProvider.notifier).reset();
       },
       borderRadius: BorderRadius.circular(12),
@@ -485,9 +525,13 @@ class PomodoroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimerCircle(BuildContext context, PomodoroSession session, WidgetRef ref) {
+  Widget _buildTimerCircle(
+    BuildContext context,
+    PomodoroSession session,
+    WidgetRef ref,
+  ) {
     final color = _getStateColor(session.state);
-    
+
     return Container(
       width: 280,
       height: 280,
@@ -496,15 +540,9 @@ class PomodoroScreen extends ConsumerWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.2),
-            color.withValues(alpha: 0.05),
-          ],
+          colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.05)],
         ),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 2,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -520,7 +558,7 @@ class PomodoroScreen extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           // Time Display
           EasterEggWidget(
             soundFile: EasterEggs.pomodoro.soundFile,
@@ -543,7 +581,9 @@ class PomodoroScreen extends ConsumerWidget {
                   _getStateLabel(session.state),
                   style: TextStyle(
                     fontSize: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -555,9 +595,13 @@ class PomodoroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildControlButtons(BuildContext context, PomodoroSession session, WidgetRef ref) {
+  Widget _buildControlButtons(
+    BuildContext context,
+    PomodoroSession session,
+    WidgetRef ref,
+  ) {
     final theme = Theme.of(context);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -573,13 +617,14 @@ class PomodoroScreen extends ConsumerWidget {
               ),
             ),
             child: IconButton(
-              onPressed: () => ref.read(pomodoroSessionProvider.notifier).reset(),
+              onPressed: () =>
+                  ref.read(pomodoroSessionProvider.notifier).reset(),
               icon: Icon(Iconsax.refresh, color: theme.colorScheme.onSurface),
               iconSize: 24,
               padding: const EdgeInsets.all(16),
             ),
           ),
-        
+
         // Play/Pause Button
         Container(
           decoration: BoxDecoration(
@@ -616,7 +661,7 @@ class PomodoroScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
           ),
         ),
-        
+
         // Skip Button
         if (session.state != PomodoroState.idle)
           Container(
@@ -681,14 +726,15 @@ class PomodoroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, {
+  Widget _buildStatCard(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -732,17 +778,14 @@ class PomodoroScreen extends ConsumerWidget {
 
   Widget _buildAIInsights(BuildContext context, PomodoroSession session) {
     final insights = _getAIInsights(session);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFDA7809),
-            Color(0xFFFF9500),
-          ],
+          colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
         ),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -775,34 +818,36 @@ class PomodoroScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...insights.map((insight) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    insight,
-                    style: const TextStyle(
+          ...insights.map(
+            (insight) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
                       color: Colors.white,
-                      fontSize: 14,
-                      height: 1.5,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      insight,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -874,12 +919,14 @@ class PomodoroScreen extends ConsumerWidget {
       builder: (context) => Consumer(
         builder: (context, ref, child) {
           final settings = ref.watch(pomodoroSettingsProvider);
-          
+
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
             ),
             child: Column(
               children: [
@@ -889,11 +936,13 @@ class PomodoroScreen extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                
+
                 // Header
                 Padding(
                   padding: const EdgeInsets.all(20),
@@ -921,15 +970,18 @@ class PomodoroScreen extends ConsumerWidget {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: Icon(Iconsax.close_circle, color: Theme.of(context).colorScheme.onSurface),
+                        icon: Icon(
+                          Iconsax.close_circle,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
                 ),
-                
+
                 const Divider(height: 1),
-                
+
                 // Settings Content
                 Expanded(
                   child: SingleChildScrollView(
@@ -947,14 +999,14 @@ class PomodoroScreen extends ConsumerWidget {
                           divisions: 11,
                           unit: 'min',
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(workDuration: value.toInt());
+                            ref.read(pomodoroSettingsProvider.notifier).state =
+                                settings.copyWith(workDuration: value.toInt());
                             ref.read(pomodoroSessionProvider.notifier).reset();
                           },
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         _buildSettingSlider(
                           context,
                           ref,
@@ -965,13 +1017,16 @@ class PomodoroScreen extends ConsumerWidget {
                           divisions: 12,
                           unit: 'min',
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(shortBreakDuration: value.toInt());
+                            ref
+                                .read(pomodoroSettingsProvider.notifier)
+                                .state = settings.copyWith(
+                              shortBreakDuration: value.toInt(),
+                            );
                           },
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         _buildSettingSlider(
                           context,
                           ref,
@@ -982,13 +1037,16 @@ class PomodoroScreen extends ConsumerWidget {
                           divisions: 7,
                           unit: 'min',
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(longBreakDuration: value.toInt());
+                            ref
+                                .read(pomodoroSettingsProvider.notifier)
+                                .state = settings.copyWith(
+                              longBreakDuration: value.toInt(),
+                            );
                           },
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         _buildSettingSlider(
                           context,
                           ref,
@@ -999,13 +1057,16 @@ class PomodoroScreen extends ConsumerWidget {
                           divisions: 6,
                           unit: 'sessions',
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(sessionsUntilLongBreak: value.toInt());
+                            ref
+                                .read(pomodoroSettingsProvider.notifier)
+                                .state = settings.copyWith(
+                              sessionsUntilLongBreak: value.toInt(),
+                            );
                           },
                         ),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Toggle Settings
                         _buildSettingToggle(
                           context,
@@ -1014,13 +1075,13 @@ class PomodoroScreen extends ConsumerWidget {
                           subtitle: 'Play sound when timer completes',
                           value: settings.soundEnabled,
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(soundEnabled: value);
+                            ref.read(pomodoroSettingsProvider.notifier).state =
+                                settings.copyWith(soundEnabled: value);
                           },
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         _buildSettingToggle(
                           context,
                           ref,
@@ -1028,8 +1089,8 @@ class PomodoroScreen extends ConsumerWidget {
                           subtitle: 'Vibrate when timer completes',
                           value: settings.vibrationEnabled,
                           onChanged: (value) {
-                            ref.read(pomodoroSettingsProvider.notifier).state = 
-                              settings.copyWith(vibrationEnabled: value);
+                            ref.read(pomodoroSettingsProvider.notifier).state =
+                                settings.copyWith(vibrationEnabled: value);
                           },
                         ),
                       ],
@@ -1090,7 +1151,9 @@ class PomodoroScreen extends ConsumerWidget {
         SliderTheme(
           data: SliderThemeData(
             activeTrackColor: const Color(0xFFDA7809),
-            inactiveTrackColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+            inactiveTrackColor: Theme.of(
+              context,
+            ).colorScheme.outline.withValues(alpha: 0.3),
             thumbColor: const Color(0xFFDA7809),
             overlayColor: const Color(0xFFDA7809).withValues(alpha: 0.2),
             trackHeight: 4,
@@ -1116,7 +1179,7 @@ class PomodoroScreen extends ConsumerWidget {
     required ValueChanged<bool> onChanged,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1163,23 +1226,23 @@ class PomodoroScreen extends ConsumerWidget {
 class ProgressRingPainter extends CustomPainter {
   final double progress;
   final Color color;
-  
+
   ProgressRingPainter({required this.progress, required this.color});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    
+
     // Background ring
     final bgPaint = Paint()
       ..color = color.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawCircle(center, radius, bgPaint);
-    
+
     // Progress ring
     final progressPaint = Paint()
       ..shader = LinearGradient(
@@ -1188,7 +1251,7 @@ class ProgressRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
@@ -1197,7 +1260,7 @@ class ProgressRingPainter extends CustomPainter {
       progressPaint,
     );
   }
-  
+
   @override
   bool shouldRepaint(ProgressRingPainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.color != color;

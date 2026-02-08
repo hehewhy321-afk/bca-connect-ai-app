@@ -27,18 +27,23 @@ final filteredNoticesProvider = Provider<AsyncValue<List<Announcement>>>((ref) {
 
   return noticesAsync.whenData((notices) {
     return notices.where((notice) {
-      final matchesSearch = notice.title.toLowerCase().contains(searchQuery) ||
+      final matchesSearch =
+          notice.title.toLowerCase().contains(searchQuery) ||
           notice.content.toLowerCase().contains(searchQuery);
-      
-      final matchesType = selectedType == 'all' || 
+
+      final matchesType =
+          selectedType == 'all' ||
           notice.type.toLowerCase() == selectedType.toLowerCase();
-      
-      final isExpired = notice.expiresAt != null && notice.expiresAt!.isBefore(DateTime.now());
-      final matchesStatus = selectedStatus == 'all' ||
+
+      final isExpired =
+          notice.expiresAt != null &&
+          notice.expiresAt!.isBefore(DateTime.now());
+      final matchesStatus =
+          selectedStatus == 'all' ||
           (selectedStatus == 'active' && !isExpired) ||
           (selectedStatus == 'expired' && isExpired) ||
           (selectedStatus == 'pinned' && notice.isActive);
-      
+
       return matchesSearch && matchesType && matchesStatus;
     }).toList();
   });
@@ -105,14 +110,17 @@ class EnhancedNoticesScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
-              onChanged: (value) => ref.read(noticeSearchQueryProvider.notifier).state = value,
+              onChanged: (value) =>
+                  ref.read(noticeSearchQueryProvider.notifier).state = value,
               decoration: InputDecoration(
                 hintText: 'Search notices...',
                 prefixIcon: const Icon(Iconsax.search_normal_1),
                 suffixIcon: searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Iconsax.close_circle),
-                        onPressed: () => ref.read(noticeSearchQueryProvider.notifier).state = '',
+                        onPressed: () =>
+                            ref.read(noticeSearchQueryProvider.notifier).state =
+                                '',
                       )
                     : null,
                 border: OutlineInputBorder(
@@ -120,8 +128,13 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
@@ -146,8 +159,12 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   selectedColor: _getPriorityColor(type),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
@@ -155,15 +172,22 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                     side: BorderSide(
                       color: isSelected
                           ? _getPriorityColor(type)
-                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? _getPriorityColor(type)
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 );
               },
             ),
@@ -186,13 +210,18 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                   label: Text(_formatStatus(status)),
                   selected: isSelected,
                   onSelected: (selected) {
-                    ref.read(noticeSelectedStatusProvider.notifier).state = status;
+                    ref.read(noticeSelectedStatusProvider.notifier).state =
+                        status;
                   },
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   selectedColor: const Color(0xFF8B5CF6),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
@@ -200,15 +229,22 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                     side: BorderSide(
                       color: isSelected
                           ? const Color(0xFF8B5CF6)
-                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? const Color(0xFF8B5CF6)
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 );
               },
             ),
@@ -228,22 +264,28 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                         Icon(
                           Iconsax.document_text,
                           size: 64,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          searchQuery.isNotEmpty ? 'No notices found' : 'No notices available',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          searchQuery.isNotEmpty
+                              ? 'No notices found'
+                              : 'No notices available',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           searchQuery.isNotEmpty
                               ? 'Try adjusting your filters'
                               : 'There are no notices at this time',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -253,7 +295,9 @@ class EnhancedNoticesScreen extends ConsumerWidget {
 
                 // Separate pinned and regular notices
                 final pinnedNotices = notices.where((n) => n.isActive).toList();
-                final regularNotices = notices.where((n) => !n.isActive).toList();
+                final regularNotices = notices
+                    .where((n) => !n.isActive)
+                    .toList();
 
                 return RefreshIndicator(
                   onRefresh: () async => ref.invalidate(allNoticesProvider),
@@ -264,19 +308,27 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                       if (pinnedNotices.isNotEmpty) ...[
                         Row(
                           children: [
-                            Icon(Iconsax.bookmark5, size: 20, color: ModernTheme.primaryOrange),
+                            Icon(
+                              Iconsax.bookmark5,
+                              size: 20,
+                              color: ModernTheme.primaryOrange,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Pinned Notices',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                                color: ModernTheme.primaryOrange.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -309,19 +361,27 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                       if (regularNotices.isNotEmpty) ...[
                         Row(
                           children: [
-                            Icon(Iconsax.document_text5, size: 20, color: Theme.of(context).colorScheme.primary),
+                            Icon(
+                              Iconsax.document_text5,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'All Notices',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -329,7 +389,9 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -360,7 +422,9 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                     height: 150,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Center(child: CircularProgressIndicator()),
@@ -369,7 +433,8 @@ class EnhancedNoticesScreen extends ConsumerWidget {
               ),
               error: (error, stack) {
                 // Check if it's a network error
-                final isNetworkError = error.toString().contains('No internet connection') ||
+                final isNetworkError =
+                    error.toString().contains('No internet connection') ||
                     error.toString().contains('SocketException') ||
                     error.toString().contains('Failed host lookup');
 
@@ -381,15 +446,17 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                         isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
                         size: 64,
                         color: isNetworkError
-                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.5)
                             : Theme.of(context).colorScheme.error,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isNetworkError ? 'No Internet Connection' : 'Error loading notices',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        isNetworkError
+                            ? 'No Internet Connection'
+                            : 'Error loading notices',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Padding(
@@ -398,8 +465,11 @@ class EnhancedNoticesScreen extends ConsumerWidget {
                           isNetworkError
                               ? 'Please check your internet connection and try again'
                               : 'Something went wrong. Please try again',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           textAlign: TextAlign.center,
                         ),
@@ -454,7 +524,8 @@ class _NoticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = getPriorityColor(notice.type);
     final icon = getPriorityIcon(notice.type);
-    final isExpired = notice.expiresAt != null && notice.expiresAt!.isBefore(DateTime.now());
+    final isExpired =
+        notice.expiresAt != null && notice.expiresAt!.isBefore(DateTime.now());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -511,7 +582,10 @@ class _NoticeCard extends StatelessWidget {
                           children: [
                             if (isPinned)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: ModernTheme.orangeGradient,
                                   borderRadius: BorderRadius.circular(6),
@@ -519,7 +593,11 @@ class _NoticeCard extends StatelessWidget {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Iconsax.bookmark5, size: 12, color: Colors.white),
+                                    Icon(
+                                      Iconsax.bookmark5,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       'Pinned',
@@ -534,7 +612,10 @@ class _NoticeCard extends StatelessWidget {
                               ),
                             if (notice.type.toLowerCase() != 'info')
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(6),
@@ -550,7 +631,10 @@ class _NoticeCard extends StatelessWidget {
                               ),
                             if (isExpired)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(6),
@@ -570,9 +654,8 @@ class _NoticeCard extends StatelessWidget {
                         // Title
                         Text(
                           notice.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -616,8 +699,8 @@ class _NoticeCard extends StatelessWidget {
                     Text(
                       'Expires: ${DateFormat('MMM dd').format(notice.expiresAt!)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isExpired ? Colors.red : Colors.orange,
-                          ),
+                        color: isExpired ? Colors.red : Colors.orange,
+                      ),
                     ),
                   ],
                 ],

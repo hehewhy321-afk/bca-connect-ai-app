@@ -42,15 +42,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         // Show simple, user-friendly error message
         String errorMessage = 'Invalid email or password';
-        
+
         // Check for specific error types
         final errorString = e.toString().toLowerCase();
-        if (errorString.contains('network') || errorString.contains('connection')) {
+        if (errorString.contains('network') ||
+            errorString.contains('connection')) {
           errorMessage = 'Network error. Please check your connection';
         } else if (errorString.contains('email')) {
           errorMessage = 'Invalid email format';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -69,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _handleForgotPassword() async {
     final email = _emailController.text.trim();
-    
+
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -83,7 +84,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await SupabaseConfig.client.auth.resetPasswordForEmail(email);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -154,16 +155,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'Welcome Back',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Sign in to continue to BCA MMAMC',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -245,7 +246,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text('Sign In'),
@@ -255,17 +258,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Expanded(
+                        child: Divider(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'OR',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Expanded(
+                        child: Divider(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

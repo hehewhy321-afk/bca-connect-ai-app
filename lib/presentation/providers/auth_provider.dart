@@ -49,4 +49,3 @@ final userRoleProvider = FutureProvider<String?>((ref) async {
 
   return await ref.watch(userRepositoryProvider).getUserRole(user.id);
 });
-

@@ -21,12 +21,7 @@ class DailyQuote {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'text': text,
-      'category': category,
-      'icon': icon,
-    };
+    return {'id': id, 'text': text, 'category': category, 'icon': icon};
   }
 
   String get categoryLabel {

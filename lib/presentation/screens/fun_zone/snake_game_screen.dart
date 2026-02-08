@@ -16,21 +16,21 @@ class SnakeGameScreen extends StatefulWidget {
 
 class _SnakeGameScreenState extends State<SnakeGameScreen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
   int _score = 0;
   int _bestScore = 0;
-  
+
   // Snake
   List<Point<int>> _snake = [];
   String _direction = 'right';
   String _nextDirection = 'right';
-  
+
   // Food
   Point<int>? _food;
-  
+
   // Grid
   final int _gridSize = 20;
   Timer? _gameTimer;
@@ -61,17 +61,17 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
       _score = 0;
       _direction = 'right';
       _nextDirection = 'right';
-      
+
       // Initialize snake in center
       _snake = [
         Point(_gridSize ~/ 2, _gridSize ~/ 2),
         Point(_gridSize ~/ 2 - 1, _gridSize ~/ 2),
         Point(_gridSize ~/ 2 - 2, _gridSize ~/ 2),
       ];
-      
+
       _spawnFood();
     });
-    
+
     _gameTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
       _updateGame();
     });
@@ -79,13 +79,13 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
 
   void _updateGame() {
     if (!_isPlaying || _isGameOver) return;
-    
+
     _direction = _nextDirection;
-    
+
     // Calculate new head position
     final head = _snake.first;
     Point<int> newHead;
-    
+
     switch (_direction) {
       case 'up':
         newHead = Point(head.x, head.y - 1);
@@ -102,23 +102,25 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
       default:
         newHead = head;
     }
-    
+
     // Check wall collision
-    if (newHead.x < 0 || newHead.x >= _gridSize || 
-        newHead.y < 0 || newHead.y >= _gridSize) {
+    if (newHead.x < 0 ||
+        newHead.x >= _gridSize ||
+        newHead.y < 0 ||
+        newHead.y >= _gridSize) {
       _endGame();
       return;
     }
-    
+
     // Check self collision
     if (_snake.contains(newHead)) {
       _endGame();
       return;
     }
-    
+
     setState(() {
       _snake.insert(0, newHead);
-      
+
       // Check food collision
       if (newHead == _food) {
         _score += 10;
@@ -133,14 +135,11 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
   void _spawnFood() {
     final random = Random();
     Point<int> newFood;
-    
+
     do {
-      newFood = Point(
-        random.nextInt(_gridSize),
-        random.nextInt(_gridSize),
-      );
+      newFood = Point(random.nextInt(_gridSize), random.nextInt(_gridSize));
     } while (_snake.contains(newFood));
-    
+
     setState(() {
       _food = newFood;
     });
@@ -152,11 +151,11 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
     if (_direction == 'down' && newDirection == 'up') return;
     if (_direction == 'left' && newDirection == 'right') return;
     if (_direction == 'right' && newDirection == 'left') return;
-    
+
     setState(() {
       _nextDirection = newDirection;
     });
-    
+
     HapticFeedback.lightImpact();
   }
 
@@ -166,7 +165,7 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -177,12 +176,10 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'snake_game',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(gameId: 'snake_game', score: _score, timestamp: DateTime.now()),
+    );
   }
 
   @override
@@ -193,10 +190,7 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF11998E),
-              const Color(0xFF38EF7D),
-            ],
+            colors: [const Color(0xFF11998E), const Color(0xFF38EF7D)],
           ),
         ),
         child: SafeArea(
@@ -290,25 +284,16 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🐍',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🐍', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 'Snake Classic',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Eat food, grow longer!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -325,17 +310,17 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -343,7 +328,7 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
         ),
       );
     }
-    
+
     return Center(
       child: AspectRatio(
         aspectRatio: 1,
@@ -352,7 +337,10 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 2,
+            ),
           ),
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
@@ -364,21 +352,21 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
               final x = index % _gridSize;
               final y = index ~/ _gridSize;
               final point = Point(x, y);
-              
+
               final isSnakeHead = _snake.isNotEmpty && point == _snake.first;
               final isSnakeBody = _snake.contains(point) && !isSnakeHead;
               final isFood = point == _food;
-              
+
               return Container(
                 margin: const EdgeInsets.all(1),
                 decoration: BoxDecoration(
                   color: isSnakeHead
                       ? Colors.yellow
                       : isSnakeBody
-                          ? Colors.green
-                          : isFood
-                              ? Colors.red
-                              : Colors.transparent,
+                      ? Colors.green
+                      : isFood
+                      ? Colors.red
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(3),
                 ),
               );
@@ -459,10 +447,7 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '💀',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('💀', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Game Over!',
@@ -555,10 +540,7 @@ class _SnakeGameScreenState extends State<SnakeGameScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

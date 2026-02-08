@@ -40,24 +40,24 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
 
   Future<void> _handleTap() async {
     final now = DateTime.now();
-    
+
     // Reset counter if more than 2 seconds since last tap
     if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds > 2) {
       _tapCount = 0;
     }
-    
+
     _lastTapTime = now;
     _tapCount++;
-    
+
     // Easter egg: Trigger after 3-4 taps
     if (_tapCount >= 3 && _tapCount <= 4) {
       HapticFeedback.heavyImpact();
       try {
         await _audioPlayer.play(AssetSource(widget.soundFile));
-        
+
         // Show emoji rainfall
         _showEmojiRainfall();
-        
+
         // Show fun message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -76,12 +76,14 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
               ),
               backgroundColor: widget.messageColor,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               duration: const Duration(seconds: 3),
             ),
           );
         }
-        
+
         // Reset counter after playing
         _tapCount = 0;
       } catch (e) {
@@ -93,7 +95,7 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
   void _showEmojiRainfall() {
     // Remove existing overlay if any
     _emojiRainfallOverlay?.remove();
-    
+
     // Create new overlay
     _emojiRainfallOverlay = OverlayEntry(
       builder: (context) => _EmojiRainfall(
@@ -104,7 +106,7 @@ class _EasterEggWidgetState extends State<EasterEggWidget> {
         },
       ),
     );
-    
+
     // Insert overlay
     Overlay.of(context).insert(_emojiRainfallOverlay!);
   }
@@ -124,10 +126,7 @@ class _EmojiRainfall extends StatefulWidget {
   final String emoji;
   final VoidCallback onComplete;
 
-  const _EmojiRainfall({
-    required this.emoji,
-    required this.onComplete,
-  });
+  const _EmojiRainfall({required this.emoji, required this.onComplete});
 
   @override
   State<_EmojiRainfall> createState() => _EmojiRainfallState();
@@ -155,46 +154,62 @@ class _EmojiRainfallState extends State<_EmojiRainfall> {
       child: Material(
         color: Colors.transparent,
         child: Stack(
-          children: List.generate(35, (index) { // Increased from 20 to 35
+          children: List.generate(35, (index) {
+            // Increased from 20 to 35
             final leftPosition = random.nextDouble() * screenWidth;
-            final duration = 3.5 + random.nextDouble() * 1.5; // 3.5-5 seconds (increased)
+            final duration =
+                3.5 + random.nextDouble() * 1.5; // 3.5-5 seconds (increased)
             final delay = index * 0.12; // Slightly increased delay
             final rotation = random.nextDouble() * 0.6 - 0.3; // More rotation
 
             return Positioned(
               left: leftPosition,
               top: -50,
-              child: Text(
-                widget.emoji,
-                style: const TextStyle(fontSize: 36), // Increased from 32
-              )
-                  .animate()
-                  .moveY(
-                    begin: 0,
-                    end: screenHeight + 50,
-                    duration: Duration(milliseconds: (duration * 1000).toInt()),
-                    delay: Duration(milliseconds: (delay * 1000).toInt()),
-                    curve: Curves.easeIn,
-                  )
-                  .fadeIn(duration: 400.ms) // Increased fade duration
-                  .then()
-                  .fadeOut(duration: 400.ms, delay: Duration(milliseconds: (duration * 800).toInt()))
-                  .rotate(
-                    begin: 0,
-                    end: rotation,
-                    duration: Duration(milliseconds: (duration * 1000).toInt()),
-                  )
-                  .scale(
-                    begin: const Offset(0.7, 0.7),
-                    end: const Offset(1.3, 1.3), // More scale variation
-                    duration: Duration(milliseconds: (duration * 500).toInt()),
-                  )
-                  .then()
-                  .scale(
-                    begin: const Offset(1.3, 1.3),
-                    end: const Offset(0.7, 0.7),
-                    duration: Duration(milliseconds: (duration * 500).toInt()),
-                  ),
+              child:
+                  Text(
+                        widget.emoji,
+                        style: const TextStyle(
+                          fontSize: 36,
+                        ), // Increased from 32
+                      )
+                      .animate()
+                      .moveY(
+                        begin: 0,
+                        end: screenHeight + 50,
+                        duration: Duration(
+                          milliseconds: (duration * 1000).toInt(),
+                        ),
+                        delay: Duration(milliseconds: (delay * 1000).toInt()),
+                        curve: Curves.easeIn,
+                      )
+                      .fadeIn(duration: 400.ms) // Increased fade duration
+                      .then()
+                      .fadeOut(
+                        duration: 400.ms,
+                        delay: Duration(milliseconds: (duration * 800).toInt()),
+                      )
+                      .rotate(
+                        begin: 0,
+                        end: rotation,
+                        duration: Duration(
+                          milliseconds: (duration * 1000).toInt(),
+                        ),
+                      )
+                      .scale(
+                        begin: const Offset(0.7, 0.7),
+                        end: const Offset(1.3, 1.3), // More scale variation
+                        duration: Duration(
+                          milliseconds: (duration * 500).toInt(),
+                        ),
+                      )
+                      .then()
+                      .scale(
+                        begin: const Offset(1.3, 1.3),
+                        end: const Offset(0.7, 0.7),
+                        duration: Duration(
+                          milliseconds: (duration * 500).toInt(),
+                        ),
+                      ),
             );
           }),
         ),

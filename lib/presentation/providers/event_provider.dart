@@ -23,14 +23,15 @@ final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
   try {
     final events = await ref.watch(eventRepositoryProvider).getUpcomingEvents();
     final now = DateTime.now();
-    
+
     // Filter out completed events by status OR if end date has passed
     final upcomingOnly = events.where((event) {
       final isNotCompletedByStatus = event.status.toLowerCase() != 'completed';
-      final isNotCompletedByDate = event.endDate == null || event.endDate!.isAfter(now);
+      final isNotCompletedByDate =
+          event.endDate == null || event.endDate!.isAfter(now);
       return isNotCompletedByStatus && isNotCompletedByDate;
     }).toList();
-    
+
     return upcomingOnly;
   } catch (e) {
     rethrow;
@@ -54,7 +55,10 @@ final eventStreamProvider = StreamProvider<List<Event>>((ref) {
 });
 
 // Event Detail Provider
-final eventDetailProvider = FutureProvider.family<Event?, String>((ref, id) async {
+final eventDetailProvider = FutureProvider.family<Event?, String>((
+  ref,
+  id,
+) async {
   try {
     final event = await ref.watch(eventRepositoryProvider).getEventById(id);
     debugPrint('Event Detail Provider: Loaded event $id');
@@ -66,10 +70,17 @@ final eventDetailProvider = FutureProvider.family<Event?, String>((ref, id) asyn
 });
 
 // User Feedback Provider - Check if user has given feedback
-final userFeedbackProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, eventId) async {
+final userFeedbackProvider = FutureProvider.family<Map<String, dynamic>?, String>((
+  ref,
+  eventId,
+) async {
   try {
-    final feedback = await ref.watch(eventRepositoryProvider).getUserFeedback(eventId);
-    debugPrint('User Feedback Provider: ${feedback != null ? "Has feedback" : "No feedback"} for event $eventId');
+    final feedback = await ref
+        .watch(eventRepositoryProvider)
+        .getUserFeedback(eventId);
+    debugPrint(
+      'User Feedback Provider: ${feedback != null ? "Has feedback" : "No feedback"} for event $eventId',
+    );
     return feedback;
   } catch (e) {
     debugPrint('User Feedback Provider Error: $e');
@@ -78,10 +89,16 @@ final userFeedbackProvider = FutureProvider.family<Map<String, dynamic>?, String
 });
 
 // User Registrations Provider
-final userRegistrationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final userRegistrationsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   try {
-    final registrations = await ref.watch(eventRepositoryProvider).getUserRegistrations();
-    debugPrint('User Registrations Provider: Loaded ${registrations.length} registrations');
+    final registrations = await ref
+        .watch(eventRepositoryProvider)
+        .getUserRegistrations();
+    debugPrint(
+      'User Registrations Provider: Loaded ${registrations.length} registrations',
+    );
     return registrations;
   } catch (e) {
     debugPrint('User Registrations Provider Error: $e');
@@ -90,9 +107,14 @@ final userRegistrationsProvider = FutureProvider<List<Map<String, dynamic>>>((re
 });
 
 // Is User Registered Provider
-final isUserRegisteredProvider = FutureProvider.family<bool, String>((ref, eventId) async {
+final isUserRegisteredProvider = FutureProvider.family<bool, String>((
+  ref,
+  eventId,
+) async {
   try {
-    final isRegistered = await ref.watch(eventRepositoryProvider).isUserRegistered(eventId);
+    final isRegistered = await ref
+        .watch(eventRepositoryProvider)
+        .isUserRegistered(eventId);
     debugPrint('Is User Registered Provider: Event $eventId - $isRegistered');
     return isRegistered;
   } catch (e) {
@@ -100,4 +122,3 @@ final isUserRegisteredProvider = FutureProvider.family<bool, String>((ref, event
     rethrow;
   }
 });
-

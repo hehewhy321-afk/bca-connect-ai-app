@@ -26,17 +26,23 @@ final forumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
 });
 
 // Forum Posts by Category Provider
-final forumPostsByCategoryProvider = FutureProvider.family<List<ForumPost>, String?>((ref, category) async {
-  try {
-    return await ref.watch(forumRepositoryProvider).getPosts(category: category);
-  } catch (e) {
-    debugPrint('Error loading forum posts by category: $e');
-    return MockData.getMockForumPosts();
-  }
-});
+final forumPostsByCategoryProvider =
+    FutureProvider.family<List<ForumPost>, String?>((ref, category) async {
+      try {
+        return await ref
+            .watch(forumRepositoryProvider)
+            .getPosts(category: category);
+      } catch (e) {
+        debugPrint('Error loading forum posts by category: $e');
+        return MockData.getMockForumPosts();
+      }
+    });
 
 // Forum Post Detail Provider
-final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, id) async {
+final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((
+  ref,
+  id,
+) async {
   try {
     return await ref.watch(forumRepositoryProvider).getPostById(id);
   } catch (e) {
@@ -46,12 +52,13 @@ final forumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, 
 });
 
 // Forum Comments Provider
-final forumCommentsProvider = FutureProvider.family<List<ForumComment>, String>((ref, postId) async {
-  try {
-    return await ref.watch(forumRepositoryProvider).getComments(postId);
-  } catch (e) {
-    debugPrint('Error loading forum comments: $e');
-    return [];
-  }
-});
-
+final forumCommentsProvider = FutureProvider.family<List<ForumComment>, String>(
+  (ref, postId) async {
+    try {
+      return await ref.watch(forumRepositoryProvider).getComments(postId);
+    } catch (e) {
+      debugPrint('Error loading forum comments: $e');
+      return [];
+    }
+  },
+);

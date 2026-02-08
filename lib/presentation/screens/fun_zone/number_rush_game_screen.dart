@@ -16,7 +16,7 @@ class NumberRushGameScreen extends StatefulWidget {
 
 class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
@@ -25,7 +25,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
   int _timeLeft = 60;
   int _streak = 0;
   Timer? _timer;
-  
+
   // Question
   String _question = '';
   int _correctAnswer = 0;
@@ -59,14 +59,14 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
       _timeLeft = 60;
       _streak = 0;
     });
-    
+
     _generateQuestion();
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _timeLeft--;
       });
-      
+
       if (_timeLeft <= 0) {
         _endGame();
       }
@@ -77,9 +77,9 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
     final random = Random();
     final operations = ['+', '-', '×', '÷'];
     _operation = operations[random.nextInt(operations.length)];
-    
+
     int num1, num2;
-    
+
     switch (_operation) {
       case '+':
         num1 = random.nextInt(50) + 1;
@@ -105,9 +105,9 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
         num1 = 0;
         num2 = 0;
     }
-    
+
     _question = '$num1 $_operation $num2';
-    
+
     // Generate options
     _options = [_correctAnswer];
     while (_options.length < 4) {
@@ -122,7 +122,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
 
   void _checkAnswer(int answer) {
     if (!_isPlaying) return;
-    
+
     if (answer == _correctAnswer) {
       setState(() {
         _score += 10 + (_streak * 2);
@@ -136,7 +136,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
       });
       HapticFeedback.heavyImpact();
     }
-    
+
     _generateQuestion();
   }
 
@@ -146,7 +146,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -157,12 +157,14 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'number_rush',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(
+        gameId: 'number_rush',
+        score: _score,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -173,10 +175,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFFF6B6B),
-              const Color(0xFFFFE66D),
-            ],
+            colors: [const Color(0xFFFF6B6B), const Color(0xFFFFE66D)],
           ),
         ),
         child: SafeArea(
@@ -270,25 +269,16 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🔢',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🔢', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 'Number Rush',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Solve math problems fast!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -305,17 +295,17 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -323,7 +313,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
         ),
       );
     }
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -350,9 +340,9 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Options
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -381,17 +371,12 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 8,
       ),
       child: Text(
         value.toString(),
-        style: const TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -410,10 +395,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '⏰',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('⏰', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Time\'s Up!',
@@ -506,10 +488,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

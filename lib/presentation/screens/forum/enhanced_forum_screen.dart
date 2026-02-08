@@ -18,7 +18,10 @@ final allForumPostsProvider = FutureProvider<List<ForumPost>>((ref) async {
 });
 
 // Provider to check if user has upvoted a specific post
-final hasUserUpvotedForumPostProvider = FutureProvider.family<bool, String>((ref, postId) async {
+final hasUserUpvotedForumPostProvider = FutureProvider.family<bool, String>((
+  ref,
+  postId,
+) async {
   final repo = ForumRepository();
   return await repo.hasUserUpvoted(postId);
 });
@@ -26,7 +29,9 @@ final hasUserUpvotedForumPostProvider = FutureProvider.family<bool, String>((ref
 // State providers for filters
 final forumSearchQueryProvider = StateProvider<String>((ref) => '');
 final forumSelectedCategoryProvider = StateProvider<String>((ref) => 'all');
-final forumSortByProvider = StateProvider<String>((ref) => 'latest'); // latest, views, comments
+final forumSortByProvider = StateProvider<String>(
+  (ref) => 'latest',
+); // latest, views, comments
 
 // Filtered posts provider
 final filteredForumPostsProvider = Provider<AsyncValue<List<ForumPost>>>((ref) {
@@ -37,11 +42,13 @@ final filteredForumPostsProvider = Provider<AsyncValue<List<ForumPost>>>((ref) {
 
   return postsAsync.whenData((posts) {
     var filtered = posts.where((post) {
-      final matchesSearch = post.title.toLowerCase().contains(searchQuery) ||
+      final matchesSearch =
+          post.title.toLowerCase().contains(searchQuery) ||
           post.content.toLowerCase().contains(searchQuery) ||
           post.tags.any((tag) => tag.toLowerCase().contains(searchQuery));
       final matchesCategory =
-          selectedCategory == 'all' || post.category.toLowerCase() == selectedCategory.toLowerCase();
+          selectedCategory == 'all' ||
+          post.category.toLowerCase() == selectedCategory.toLowerCase();
       return matchesSearch && matchesCategory;
     }).toList();
 
@@ -66,7 +73,11 @@ final filteredForumPostsProvider = Provider<AsyncValue<List<ForumPost>>>((ref) {
 class EnhancedForumScreen extends ConsumerWidget {
   const EnhancedForumScreen({super.key});
 
-  Future<void> _deletePost(BuildContext context, WidgetRef ref, String postId) async {
+  Future<void> _deletePost(
+    BuildContext context,
+    WidgetRef ref,
+    String postId,
+  ) async {
     final user = SupabaseConfig.client.auth.currentUser;
     if (user == null) return;
 
@@ -74,7 +85,9 @@ class EnhancedForumScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Post'),
-        content: const Text('Are you sure you want to delete this post? This will also delete all replies.'),
+        content: const Text(
+          'Are you sure you want to delete this post? This will also delete all replies.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -129,7 +142,7 @@ class EnhancedForumScreen extends ConsumerWidget {
       'networking',
       'projects',
       'career',
-      'exams'
+      'exams',
     ];
 
     // Check if any filter is active
@@ -162,14 +175,22 @@ class EnhancedForumScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: TextField(
-                    onChanged: (value) => ref.read(forumSearchQueryProvider.notifier).state = value,
+                    onChanged: (value) =>
+                        ref.read(forumSearchQueryProvider.notifier).state =
+                            value,
                     decoration: InputDecoration(
                       hintText: 'Search discussions...',
                       prefixIcon: const Icon(Iconsax.search_normal_1),
                       suffixIcon: searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Iconsax.close_circle),
-                              onPressed: () => ref.read(forumSearchQueryProvider.notifier).state = '',
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            forumSearchQueryProvider.notifier,
+                                          )
+                                          .state =
+                                      '',
                             )
                           : null,
                       border: OutlineInputBorder(
@@ -177,8 +198,13 @@ class EnhancedForumScreen extends ConsumerWidget {
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      fillColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -190,16 +216,25 @@ class EnhancedForumScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         gradient: hasActiveFilters
                             ? const LinearGradient(
-                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                colors: [
+                                  ModernTheme.primaryOrange,
+                                  Color(0xFFFF9A3C),
+                                ],
                               )
                             : null,
-                        color: hasActiveFilters ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: hasActiveFilters
+                            ? null
+                            : Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: IconButton(
                         icon: Icon(
                           Iconsax.filter,
-                          color: hasActiveFilters ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                          color: hasActiveFilters
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                         onPressed: () => _showFilterModal(context, ref),
                       ),
@@ -235,16 +270,25 @@ class EnhancedForumScreen extends ConsumerWidget {
                 final category = categories[index];
                 final isSelected = selectedCategory == category;
                 return FilterChip(
-                  label: Text(category == 'all' ? 'All Topics' : _formatCategory(category)),
+                  label: Text(
+                    category == 'all'
+                        ? 'All Topics'
+                        : _formatCategory(category),
+                  ),
                   selected: isSelected,
                   onSelected: (selected) {
-                    ref.read(forumSelectedCategoryProvider.notifier).state = category;
+                    ref.read(forumSelectedCategoryProvider.notifier).state =
+                        category;
                   },
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   selectedColor: ModernTheme.primaryOrange,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
@@ -252,15 +296,22 @@ class EnhancedForumScreen extends ConsumerWidget {
                     side: BorderSide(
                       color: isSelected
                           ? ModernTheme.primaryOrange
-                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? ModernTheme.primaryOrange
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 );
               },
             ),
@@ -280,22 +331,26 @@ class EnhancedForumScreen extends ConsumerWidget {
                         Icon(
                           Iconsax.message_text,
                           size: 64,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No discussions found',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           searchQuery.isNotEmpty
                               ? 'Try adjusting your search'
                               : 'Be the first to start a discussion!',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                         if (searchQuery.isEmpty) ...[
@@ -318,12 +373,14 @@ class EnhancedForumScreen extends ConsumerWidget {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: posts.length,
-                    separatorBuilder: (context, error) => const SizedBox(height: 12),
+                    separatorBuilder: (context, error) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _ForumPostCard(
                         post: posts[index],
                         currentUserId: currentUser?.id,
-                        onDelete: () => _deletePost(context, ref, posts[index].id),
+                        onDelete: () =>
+                            _deletePost(context, ref, posts[index].id),
                       );
                     },
                   ),
@@ -332,12 +389,14 @@ class EnhancedForumScreen extends ConsumerWidget {
               loading: () => ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: 6,
-                separatorBuilder: (context, error) => const SizedBox(height: 12),
+                separatorBuilder: (context, error) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) => const ForumPostSkeleton(),
               ),
               error: (error, stack) {
                 // Check if it's a network error
-                final isNetworkError = error.toString().contains('No internet connection') ||
+                final isNetworkError =
+                    error.toString().contains('No internet connection') ||
                     error.toString().contains('SocketException') ||
                     error.toString().contains('Failed host lookup');
 
@@ -349,15 +408,17 @@ class EnhancedForumScreen extends ConsumerWidget {
                         isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
                         size: 64,
                         color: isNetworkError
-                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.5)
                             : Theme.of(context).colorScheme.error,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isNetworkError ? 'No Internet Connection' : 'Error loading discussions',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        isNetworkError
+                            ? 'No Internet Connection'
+                            : 'Error loading discussions',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Padding(
@@ -366,8 +427,11 @@ class EnhancedForumScreen extends ConsumerWidget {
                           isNetworkError
                               ? 'Please check your internet connection and try again'
                               : 'Something went wrong. Please try again',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           textAlign: TextAlign.center,
                         ),
@@ -412,7 +476,7 @@ class EnhancedForumScreen extends ConsumerWidget {
         // Use local state variables
         String localCategory = ref.read(forumSelectedCategoryProvider);
         String localSortBy = ref.read(forumSortByProvider);
-        
+
         return StatefulBuilder(
           builder: (context, setState) {
             return Container(
@@ -437,18 +501,24 @@ class EnhancedForumScreen extends ConsumerWidget {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                colors: [
+                                  ModernTheme.primaryOrange,
+                                  Color(0xFFFF9A3C),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Iconsax.filter, color: Colors.white, size: 20),
+                            child: const Icon(
+                              Iconsax.filter,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Text(
                             'Filter & Sort',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           IconButton(
@@ -462,9 +532,8 @@ class EnhancedForumScreen extends ConsumerWidget {
                       // Sort By Section
                       Text(
                         'Sort By',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       _FilterOption(
@@ -476,7 +545,8 @@ class EnhancedForumScreen extends ConsumerWidget {
                           setState(() {
                             localSortBy = 'latest';
                           });
-                          ref.read(forumSortByProvider.notifier).state = 'latest';
+                          ref.read(forumSortByProvider.notifier).state =
+                              'latest';
                         },
                       ),
                       const SizedBox(height: 8),
@@ -489,7 +559,8 @@ class EnhancedForumScreen extends ConsumerWidget {
                           setState(() {
                             localSortBy = 'views';
                           });
-                          ref.read(forumSortByProvider.notifier).state = 'views';
+                          ref.read(forumSortByProvider.notifier).state =
+                              'views';
                         },
                       ),
                       const SizedBox(height: 8),
@@ -502,7 +573,8 @@ class EnhancedForumScreen extends ConsumerWidget {
                           setState(() {
                             localSortBy = 'comments';
                           });
-                          ref.read(forumSortByProvider.notifier).state = 'comments';
+                          ref.read(forumSortByProvider.notifier).state =
+                              'comments';
                         },
                       ),
 
@@ -511,60 +583,87 @@ class EnhancedForumScreen extends ConsumerWidget {
                       // Category Section
                       Text(
                         'Category',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [
-                          'all',
-                          'general',
-                          'programming',
-                          'database',
-                          'networking',
-                          'projects',
-                          'career',
-                          'exams'
-                        ].map((category) {
-                          final isSelected = localCategory == category;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                localCategory = category;
-                              });
-                              ref.read(forumSelectedCategoryProvider.notifier).state = category;
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? const LinearGradient(
-                                        colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
-                                      )
-                                    : null,
-                                color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.transparent
-                                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        children:
+                            [
+                              'all',
+                              'general',
+                              'programming',
+                              'database',
+                              'networking',
+                              'projects',
+                              'career',
+                              'exams',
+                            ].map((category) {
+                              final isSelected = localCategory == category;
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    localCategory = category;
+                                  });
+                                  ref
+                                          .read(
+                                            forumSelectedCategoryProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      category;
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: isSelected
+                                        ? const LinearGradient(
+                                            colors: [
+                                              ModernTheme.primaryOrange,
+                                              Color(0xFFFF9A3C),
+                                            ],
+                                          )
+                                        : null,
+                                    color: isSelected
+                                        ? null
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? Colors.transparent
+                                          : Theme.of(context)
+                                                .colorScheme
+                                                .outline
+                                                .withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    category == 'all'
+                                        ? 'All Topics'
+                                        : _formatCategory(category),
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                category == 'all' ? 'All Topics' : _formatCategory(category),
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
                       ),
 
                       const SizedBox(height: 24),
@@ -579,13 +678,22 @@ class EnhancedForumScreen extends ConsumerWidget {
                                   localCategory = 'all';
                                   localSortBy = 'latest';
                                 });
-                                ref.read(forumSelectedCategoryProvider.notifier).state = 'all';
-                                ref.read(forumSortByProvider.notifier).state = 'latest';
+                                ref
+                                        .read(
+                                          forumSelectedCategoryProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    'all';
+                                ref.read(forumSortByProvider.notifier).state =
+                                    'latest';
                               },
                               icon: const Icon(Iconsax.refresh),
                               label: const Text('Clear Filters'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -597,7 +705,10 @@ class EnhancedForumScreen extends ConsumerWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
+                                  colors: [
+                                    ModernTheme.primaryOrange,
+                                    Color(0xFFFF9A3C),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -607,11 +718,18 @@ class EnhancedForumScreen extends ConsumerWidget {
                                   onTap: () => Navigator.pop(context),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
                                     child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+                                        Icon(
+                                          Iconsax.tick_circle,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                         SizedBox(width: 8),
                                         Text(
                                           'Apply',
@@ -690,7 +808,7 @@ class _ForumPostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categoryColor = _getCategoryColor(post.category);
-    
+
     return InkWell(
       onTap: () => context.push('/forum/${post.id}'),
       borderRadius: BorderRadius.circular(24),
@@ -729,13 +847,16 @@ class _ForumPostCard extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 22,
                       backgroundColor: categoryColor.withValues(alpha: 0.1),
-                      backgroundImage: post.userAvatar != null && post.userAvatar!.isNotEmpty
+                      backgroundImage:
+                          post.userAvatar != null && post.userAvatar!.isNotEmpty
                           ? NetworkImage(post.userAvatar!)
                           : null,
                       child: post.userAvatar == null || post.userAvatar!.isEmpty
                           ? Text(
-                              post.authorName.isNotEmpty 
-                                  ? post.authorName.substring(0, 1).toUpperCase() 
+                              post.authorName.isNotEmpty
+                                  ? post.authorName
+                                        .substring(0, 1)
+                                        .toUpperCase()
                                   : 'U',
                               style: TextStyle(
                                 fontSize: 18,
@@ -747,7 +868,7 @@ class _ForumPostCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
+
                   // User info and time
                   Expanded(
                     child: Column(
@@ -758,9 +879,8 @@ class _ForumPostCard extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 post.authorName,
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -789,14 +909,19 @@ class _ForumPostCard extends StatelessWidget {
                             Icon(
                               Iconsax.clock,
                               size: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               _formatTimeAgo(post.createdAt),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
                                     fontSize: 11,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -804,7 +929,7 @@ class _ForumPostCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Delete button for own posts
                   if (currentUserId != null && post.userId == currentUserId)
                     IconButton(
@@ -824,7 +949,10 @@ class _ForumPostCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -868,10 +996,10 @@ class _ForumPostCard extends StatelessWidget {
               child: Text(
                 post.title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      height: 1.3,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  height: 1.3,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -885,9 +1013,9 @@ class _ForumPostCard extends StatelessWidget {
               child: Text(
                 post.content.replaceAll(RegExp(r'[#*`\n]'), ' ').trim(),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -902,35 +1030,49 @@ class _ForumPostCard extends StatelessWidget {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: post.tags.take(3).map((tag) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                  children: post.tags
+                      .take(3)
+                      .map(
+                        (tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Iconsax.hashtag,
+                                size: 12,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Iconsax.hashtag,
-                              size: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )).toList(),
+                      )
+                      .toList(),
                 ),
               ),
 
@@ -941,7 +1083,9 @@ class _ForumPostCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Divider(
                 height: 1,
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.1),
               ),
             ),
 
@@ -959,7 +1103,7 @@ class _ForumPostCard extends StatelessWidget {
                     postId: post.id,
                   ),
                   const SizedBox(width: 12),
-                  
+
                   // Comments
                   _StatItem(
                     icon: Iconsax.message_text_1,
@@ -967,19 +1111,22 @@ class _ForumPostCard extends StatelessWidget {
                     color: Colors.blue,
                   ),
                   const SizedBox(width: 12),
-                  
+
                   // Views
                   _StatItem(
                     icon: Iconsax.eye,
                     value: post.views,
                     color: Colors.orange,
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Read more indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -1051,15 +1198,15 @@ class _StatItem extends ConsumerWidget {
 
   Future<void> _handleUpvote(BuildContext context, WidgetRef ref) async {
     if (postId == null) return;
-    
+
     try {
       final repo = ForumRepository();
       await repo.upvotePost(postId!);
-      
+
       // Refresh the posts list and upvote status
       ref.invalidate(allForumPostsProvider);
       ref.invalidate(hasUserUpvotedForumPostProvider(postId!));
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1086,7 +1233,7 @@ class _StatItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (isUpvote && postId != null) {
       final hasUpvoted = ref.watch(hasUserUpvotedForumPostProvider(postId!));
-      
+
       return hasUpvoted.when(
         data: (upvoted) => InkWell(
           onTap: () => _handleUpvote(context, ref),
@@ -1107,7 +1254,9 @@ class _StatItem extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                  value > 999
+                      ? '${(value / 1000).toStringAsFixed(1)}k'
+                      : value.toString(),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -1130,7 +1279,9 @@ class _StatItem extends ConsumerWidget {
               Icon(icon, size: 18, color: color),
               const SizedBox(width: 4),
               Text(
-                value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                value > 999
+                    ? '${(value / 1000).toStringAsFixed(1)}k'
+                    : value.toString(),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -1152,7 +1303,9 @@ class _StatItem extends ConsumerWidget {
               Icon(icon, size: 18, color: color),
               const SizedBox(width: 4),
               Text(
-                value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+                value > 999
+                    ? '${(value / 1000).toStringAsFixed(1)}k'
+                    : value.toString(),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -1164,7 +1317,7 @@ class _StatItem extends ConsumerWidget {
         ),
       );
     }
-    
+
     // Non-interactive stat item
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1175,14 +1328,12 @@ class _StatItem extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: color,
-          ),
+          Icon(icon, size: 18, color: color),
           const SizedBox(width: 4),
           Text(
-            value > 999 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toString(),
+            value > 999
+                ? '${(value / 1000).toStringAsFixed(1)}k'
+                : value.toString(),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -1227,12 +1378,16 @@ class _FilterOption extends StatelessWidget {
                     colors: [ModernTheme.primaryOrange, Color(0xFFFF9A3C)],
                   )
                 : null,
-            color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: isSelected
+                ? null
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
                   ? Colors.transparent
-                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                  : Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -1261,7 +1416,9 @@ class _FilterOption extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1278,11 +1435,7 @@ class _FilterOption extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                const Icon(
-                  Iconsax.tick_circle5,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                const Icon(Iconsax.tick_circle5, color: Colors.white, size: 24),
             ],
           ),
         ),

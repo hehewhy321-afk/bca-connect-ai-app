@@ -11,12 +11,15 @@ class UserRepository {
   final ConnectivityService _connectivity = ConnectivityService();
 
   // Get user profile with caching
-  Future<UserProfile?> getUserProfile(String userId, {bool forceRefresh = false}) async {
+  Future<UserProfile?> getUserProfile(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
     final cacheKey = '${CacheKeys.profile}_$userId';
-    
+
     // Check connectivity first
     final isOnline = await _connectivity.isOnline();
-    
+
     // If online, always fetch fresh data
     if (isOnline) {
       try {
@@ -27,25 +30,25 @@ class UserRepository {
             .maybeSingle();
 
         if (response == null) return null;
-        
+
         final profile = UserProfile.fromJson(response);
-        
+
         debugPrint('Fetched user profile from database (online)');
-        
+
         // Cache the fresh result
         await CacheService.set(
           cacheKey,
           jsonEncode(profile.toJson()),
           duration: CacheKeys.longCache,
         );
-        
+
         return profile;
       } catch (e) {
         debugPrint('Error fetching user profile: $e');
         // Fall through to cache on error
       }
     }
-    
+
     // If offline or error, use cache
     try {
       final cached = CacheService.get<String>(cacheKey);
@@ -56,7 +59,7 @@ class UserRepository {
     } catch (e) {
       debugPrint('Error loading profile from cache: $e');
     }
-    
+
     return null;
   }
 
@@ -68,11 +71,11 @@ class UserRepository {
   }
 
   // Update user profile
-  Future<void> updateProfile(String userId, Map<String, dynamic> updates) async {
-    await _client
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', userId);
+  Future<void> updateProfile(
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
+    await _client.from('profiles').update(updates).eq('user_id', userId);
   }
 
   // Get user role

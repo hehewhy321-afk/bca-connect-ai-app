@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../data/services/task_storage_service.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../../data/models/task.dart';
 import '../../providers/task_provider.dart';
 import 'add_task_screen.dart';
 import 'task_detail_screen.dart';
+import 'widgets/task_filter_dialog.dart';
 
 class TaskManagerScreen extends ConsumerStatefulWidget {
   const TaskManagerScreen({super.key});
@@ -15,7 +22,8 @@ class TaskManagerScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskManagerScreen> createState() => _TaskManagerScreenState();
 }
 
-class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with TickerProviderStateMixin {
+class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
 
@@ -55,7 +63,10 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
     );
   }
 
-  List<Widget> _buildHeaderSlivers(BuildContext context, bool innerBoxIsScrolled) {
+  List<Widget> _buildHeaderSlivers(
+    BuildContext context,
+    bool innerBoxIsScrolled,
+  ) {
     return [
       SliverAppBar(
         floating: true,
@@ -73,7 +84,7 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
 
   Widget _buildFlexibleSpace() {
     final statsAsync = ref.watch(taskStatisticsProvider);
-    
+
     return FlexibleSpaceBar(
       background: Container(
         decoration: _buildGradientDecoration(),
@@ -148,9 +159,139 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
         _buildHeaderIcon(),
         const SizedBox(width: 16),
         Expanded(child: _buildHeaderText(statsAsync)),
+        _buildMoreMenu(),
+        const SizedBox(width: 8),
         _buildFilterButton(),
       ],
     );
+  }
+
+  Widget _buildMoreMenu() {
+    return PopupMenuButton<String>(
+      onSelected: _handleMenuAction,
+      icon: const Icon(Iconsax.more),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'backup',
+          child: Row(
+            children: [
+              Icon(Iconsax.export, size: 20),
+              SizedBox(width: 12),
+              Text('Backup Tasks'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'restore',
+          child: Row(
+            children: [
+              Icon(Iconsax.import, size: 20),
+              SizedBox(width: 12),
+              Text('Restore Tasks'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleMenuAction(String value) {
+    if (value == 'backup') {
+      _handleBackup();
+    } else if (value == 'restore') {
+      _handleRestore();
+    }
+  }
+
+  Future<void> _handleBackup() async {
+    try {
+      final data = await TaskStorageService.exportData();
+      final jsonString = jsonEncode(data);
+
+      final directory = await getTemporaryDirectory();
+      final file = File(
+        '${directory.path}/bca_tasks_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+      );
+      await file.writeAsString(jsonString);
+
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'BCA Tasks Backup',
+        text: 'Backup of my tasks from BCA Connect AI',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Backup failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleRestore() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final jsonString = await file.readAsString();
+        final Map<String, dynamic> data = jsonDecode(jsonString);
+
+        // Basic validation
+        if (!data.containsKey('tasks') || !data.containsKey('categories')) {
+          throw Exception('Invalid backup file format');
+        }
+
+        if (!mounted) return;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Restore Tasks'),
+            content: const Text(
+              'This will replace ALL existing tasks. Continue?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Restore'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed == true) {
+          await TaskStorageService.importData(data);
+          _refreshTasksAndStats();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tasks restored successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Restore failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildHeaderIcon() {
@@ -178,9 +319,9 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
         Text(
           'Task Manager',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
         _buildStatsText(statsAsync),
       ],
@@ -192,27 +333,27 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       data: (stats) => Text(
         '${stats['total']} tasks • ${stats['pending']} pending',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
       loading: () => Text(
         'Loading...',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
       error: (_, _) => Text(
         'Error loading stats',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ),
+          color: Theme.of(context).colorScheme.error,
+        ),
       ),
     );
   }
 
   Widget _buildFilterButton() {
     final hasActiveFilters = ref.watch(taskFilterProvider).hasActiveFilters;
-    
+
     return IconButton(
       onPressed: _showFilterDialog,
       icon: Icon(
@@ -254,7 +395,9 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
     return InputDecoration(
       hintText: 'Search tasks...',
       prefixIcon: const Icon(Iconsax.search_normal_1),
-      suffixIcon: _searchController.text.isNotEmpty ? _buildClearButton() : null,
+      suffixIcon: _searchController.text.isNotEmpty
+          ? _buildClearButton()
+          : null,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
@@ -273,17 +416,22 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
   }
 
   void _updateSearchQuery(String value) {
-    ref.read(taskFilterProvider.notifier).state = 
-        ref.read(taskFilterProvider).copyWith(searchQuery: value);
+    ref.read(taskFilterProvider.notifier).state = ref
+        .read(taskFilterProvider)
+        .copyWith(searchQuery: value);
   }
 
   void _clearSearch() {
     _searchController.clear();
-    ref.read(taskFilterProvider.notifier).state = 
-        ref.read(taskFilterProvider).copyWith(searchQuery: '');
+    ref.read(taskFilterProvider.notifier).state = ref
+        .read(taskFilterProvider)
+        .copyWith(searchQuery: '');
   }
 
-  Widget _buildTaskList(AsyncValue<List<Task>> tasksAsync, TaskStatus? statusFilter) {
+  Widget _buildTaskList(
+    AsyncValue<List<Task>> tasksAsync,
+    TaskStatus? statusFilter,
+  ) {
     return tasksAsync.when(
       data: (tasks) => _buildTaskListData(tasks, statusFilter),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -309,7 +457,7 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
   }
 
   List<Task> _filterTasksByStatus(List<Task> tasks, TaskStatus? statusFilter) {
-    return statusFilter != null 
+    return statusFilter != null
         ? tasks.where((task) => task.status == statusFilter).toList()
         : tasks;
   }
@@ -386,22 +534,22 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       TaskStatus.pending => (
         'No pending tasks',
         'All caught up! Add a new task to get started.',
-        Iconsax.tick_circle
+        Iconsax.tick_circle,
       ),
       TaskStatus.inProgress => (
         'No tasks in progress',
         'Start working on a pending task to see it here.',
-        Iconsax.clock
+        Iconsax.clock,
       ),
       TaskStatus.completed => (
         'No completed tasks',
         'Complete some tasks to see your achievements here.',
-        Iconsax.medal_star
+        Iconsax.medal_star,
       ),
       _ => (
         'No tasks yet',
         'Create your first task to get organized!',
-        Iconsax.task_square
+        Iconsax.task_square,
       ),
     };
   }
@@ -416,7 +564,9 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       child: Icon(
         icon,
         size: 64,
-        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        color: Theme.of(
+          context,
+        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       ),
     );
   }
@@ -426,17 +576,17 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -468,14 +618,18 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       3 => TaskStatus.completed,
       _ => null,
     };
-    
-    ref.read(taskFilterProvider.notifier).state = 
-        ref.read(taskFilterProvider).copyWith(status: status);
+
+    ref.read(taskFilterProvider.notifier).state = ref
+        .read(taskFilterProvider)
+        .copyWith(status: status);
   }
 
   void _showFilterDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Filter dialog coming soon!')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const TaskFilterDialog(),
     );
   }
 
@@ -484,7 +638,7 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       context,
       MaterialPageRoute(builder: (context) => const AddTaskScreen()),
     );
-    
+
     if (result == true) {
       _refreshTasksAndStats();
     }
@@ -495,7 +649,7 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       context,
       MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
     );
-    
+
     if (result == true) {
       _refreshTasksAndStats();
     }
@@ -529,7 +683,7 @@ class _TaskManagerScreenState extends ConsumerState<TaskManagerScreen> with Tick
       try {
         await ref.read(taskProvider.notifier).deleteTask(task.id);
         ref.read(taskStatisticsProvider.notifier).refresh();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -665,14 +819,14 @@ class _TaskCard extends StatelessWidget {
     return Text(
       task.title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            decoration: task.status == TaskStatus.completed
-                ? TextDecoration.lineThrough
-                : null,
-            color: task.status == TaskStatus.completed
-                ? Theme.of(context).colorScheme.onSurfaceVariant
-                : null,
-          ),
+        fontWeight: FontWeight.bold,
+        decoration: task.status == TaskStatus.completed
+            ? TextDecoration.lineThrough
+            : null,
+        color: task.status == TaskStatus.completed
+            ? Theme.of(context).colorScheme.onSurfaceVariant
+            : null,
+      ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
@@ -685,8 +839,8 @@ class _TaskCard extends StatelessWidget {
         Text(
           task.description!,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -694,7 +848,8 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
-  bool _hasDescription() => task.description != null && task.description!.isNotEmpty;
+  bool _hasDescription() =>
+      task.description != null && task.description!.isNotEmpty;
 
   Widget _buildPriorityBadge() {
     return Container(
@@ -735,7 +890,7 @@ class _TaskCard extends StatelessWidget {
 
   Widget _buildDueDateInfo(BuildContext context) {
     final (color, text) = _getDueDateInfo(context);
-    
+
     return Row(
       children: [
         Icon(Iconsax.calendar, size: 14, color: color),
@@ -764,7 +919,7 @@ class _TaskCard extends StatelessWidget {
     } else {
       return (
         Theme.of(context).colorScheme.onSurfaceVariant,
-        DateFormat('MMM d').format(task.dueDate!)
+        DateFormat('MMM d').format(task.dueDate!),
       );
     }
   }

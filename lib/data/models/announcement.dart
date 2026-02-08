@@ -24,8 +24,8 @@ class Announcement {
       content: json['content'] as String,
       type: json['type'] as String? ?? 'info',
       createdAt: DateTime.parse(json['created_at'] as String),
-      expiresAt: json['expires_at'] != null 
-          ? DateTime.parse(json['expires_at'] as String) 
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'] as String)
           : null,
       isActive: json['is_active'] as bool? ?? true,
     );

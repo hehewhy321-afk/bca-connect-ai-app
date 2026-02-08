@@ -15,7 +15,7 @@ class StudyStorageService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_subjectsKey);
     if (jsonString == null) return [];
-    
+
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => Subject.fromJson(json)).toList();
   }
@@ -31,7 +31,7 @@ class StudyStorageService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_schedulesKey);
     if (jsonString == null) return [];
-    
+
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => ClassSchedule.fromJson(json)).toList();
   }
@@ -47,7 +47,7 @@ class StudyStorageService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_assignmentsKey);
     if (jsonString == null) return [];
-    
+
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => Assignment.fromJson(json)).toList();
   }
@@ -63,7 +63,7 @@ class StudyStorageService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_examsKey);
     if (jsonString == null) return [];
-    
+
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => Exam.fromJson(json)).toList();
   }
@@ -79,7 +79,7 @@ class StudyStorageService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_sessionsKey);
     if (jsonString == null) return [];
-    
+
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => StudySession.fromJson(json)).toList();
   }

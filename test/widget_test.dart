@@ -9,11 +9,7 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text('BCA Connect'),
-            ),
-          ),
+          home: Scaffold(body: Center(child: Text('BCA Connect'))),
         ),
       ),
     );

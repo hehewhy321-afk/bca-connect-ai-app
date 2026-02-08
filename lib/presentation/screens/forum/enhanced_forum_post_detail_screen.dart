@@ -9,19 +9,24 @@ import '../../../core/theme/modern_theme.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/skeleton_loader.dart';
 
-final enhancedForumPostDetailProvider = FutureProvider.family<ForumPost?, String>((ref, postId) async {
-  final repo = ForumRepository();
-  return await repo.getPostById(postId);
-});
+final enhancedForumPostDetailProvider =
+    FutureProvider.family<ForumPost?, String>((ref, postId) async {
+      final repo = ForumRepository();
+      return await repo.getPostById(postId);
+    });
 
-final enhancedForumRepliesProvider = FutureProvider.family<List<ForumComment>, String>((ref, postId) async {
-  final repo = ForumRepository();
-  return await repo.getPostReplies(postId);
-});
+final enhancedForumRepliesProvider =
+    FutureProvider.family<List<ForumComment>, String>((ref, postId) async {
+      final repo = ForumRepository();
+      return await repo.getPostReplies(postId);
+    });
 
 final replyingToProvider = StateProvider<ForumComment?>((ref) => null);
 
-final hasUserUpvotedPostProvider = FutureProvider.family<bool, String>((ref, postId) async {
+final hasUserUpvotedPostProvider = FutureProvider.family<bool, String>((
+  ref,
+  postId,
+) async {
   final repo = ForumRepository();
   return await repo.hasUserUpvoted(postId);
 });
@@ -32,10 +37,12 @@ class EnhancedForumPostDetailScreen extends ConsumerStatefulWidget {
   const EnhancedForumPostDetailScreen({super.key, required this.postId});
 
   @override
-  ConsumerState<EnhancedForumPostDetailScreen> createState() => _EnhancedForumPostDetailScreenState();
+  ConsumerState<EnhancedForumPostDetailScreen> createState() =>
+      _EnhancedForumPostDetailScreenState();
 }
 
-class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPostDetailScreen> {
+class _EnhancedForumPostDetailScreenState
+    extends ConsumerState<EnhancedForumPostDetailScreen> {
   final _replyController = TextEditingController();
   final _scrollController = ScrollController();
   final _replyFocusNode = FocusNode();
@@ -67,11 +74,11 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     try {
       final repo = ForumRepository();
       await repo.upvotePost(widget.postId);
-      
+
       // Refresh both the post data and upvote status
       ref.invalidate(enhancedForumPostDetailProvider(widget.postId));
       ref.invalidate(hasUserUpvotedPostProvider(widget.postId));
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,9 +111,9 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
 
     final user = SupabaseConfig.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to reply')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please login to reply')));
       return;
     }
 
@@ -135,9 +142,9 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post reply: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to post reply: $e')));
       }
     }
   }
@@ -165,7 +172,10 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     if (confirmed != true) return;
 
     try {
-      await SupabaseConfig.client.from('forum_replies').delete().eq('id', replyId);
+      await SupabaseConfig.client
+          .from('forum_replies')
+          .delete()
+          .eq('id', replyId);
       ref.invalidate(enhancedForumRepliesProvider(widget.postId));
       ref.invalidate(enhancedForumPostDetailProvider(widget.postId));
 
@@ -189,38 +199,55 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     }
   }
 
-  List<Widget> _buildThreadedComments(List<ForumComment> allComments, String? currentUserId) {
+  List<Widget> _buildThreadedComments(
+    List<ForumComment> allComments,
+    String? currentUserId,
+  ) {
     final topLevel = allComments.where((c) => c.parentId == null).toList();
-    
+
     List<Widget> widgets = [];
     for (var comment in topLevel) {
-      widgets.add(_CommentCard(
-        comment: comment,
-        currentUserId: currentUserId,
-        onReply: () => _replyToComment(comment),
-        onDelete: () => _deleteReply(comment.id),
-        depth: 0,
-      ));
-      
-      widgets.addAll(_buildNestedReplies(comment, allComments, 1, currentUserId));
+      widgets.add(
+        _CommentCard(
+          comment: comment,
+          currentUserId: currentUserId,
+          onReply: () => _replyToComment(comment),
+          onDelete: () => _deleteReply(comment.id),
+          depth: 0,
+        ),
+      );
+
+      widgets.addAll(
+        _buildNestedReplies(comment, allComments, 1, currentUserId),
+      );
     }
     return widgets;
   }
 
-  List<Widget> _buildNestedReplies(ForumComment parent, List<ForumComment> all, int depth, String? currentUserId) {
+  List<Widget> _buildNestedReplies(
+    ForumComment parent,
+    List<ForumComment> all,
+    int depth,
+    String? currentUserId,
+  ) {
     final children = all.where((c) => c.parentId == parent.id).toList();
     List<Widget> widgets = [];
-    
+
     for (var child in children) {
-      widgets.add(_CommentCard(
-        comment: child,
-        currentUserId: currentUserId,
-        onReply: () => _replyToComment(child),
-        onDelete: () => _deleteReply(child.id),
-        depth: depth,
-      ));
-      if (depth < 5) { // Allow up to 5 levels of nesting
-        widgets.addAll(_buildNestedReplies(child, all, depth + 1, currentUserId));
+      widgets.add(
+        _CommentCard(
+          comment: child,
+          currentUserId: currentUserId,
+          onReply: () => _replyToComment(child),
+          onDelete: () => _deleteReply(child.id),
+          depth: depth,
+        ),
+      );
+      if (depth < 5) {
+        // Allow up to 5 levels of nesting
+        widgets.addAll(
+          _buildNestedReplies(child, all, depth + 1, currentUserId),
+        );
       }
     }
     return widgets;
@@ -234,19 +261,28 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
     if (difference.inHours < 24) return '${difference.inHours}h ago';
     if (difference.inDays < 7) return '${difference.inDays}d ago';
-    if (difference.inDays < 30) return '${(difference.inDays / 7).floor()}w ago';
+    if (difference.inDays < 30) {
+      return '${(difference.inDays / 7).floor()}w ago';
+    }
     return '${(difference.inDays / 30).floor()}mo ago';
   }
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
-      case 'programming': return ModernTheme.primaryOrange;
-      case 'database': return const Color(0xFF8B5CF6);
-      case 'networking': return const Color(0xFF10B981);
-      case 'projects': return const Color(0xFF3B82F6);
-      case 'career': return const Color(0xFFEC4899);
-      case 'exams': return const Color(0xFFF59E0B);
-      default: return Colors.grey;
+      case 'programming':
+        return ModernTheme.primaryOrange;
+      case 'database':
+        return const Color(0xFF8B5CF6);
+      case 'networking':
+        return const Color(0xFF10B981);
+      case 'projects':
+        return const Color(0xFF3B82F6);
+      case 'career':
+        return const Color(0xFFEC4899);
+      case 'exams':
+        return const Color(0xFFF59E0B);
+      default:
+        return Colors.grey;
     }
   }
 
@@ -254,10 +290,8 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: avatarUrl,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: size / 2,
-          backgroundImage: imageProvider,
-        ),
+        imageBuilder: (context, imageProvider) =>
+            CircleAvatar(radius: size / 2, backgroundImage: imageProvider),
         placeholder: (context, url) => CircleAvatar(
           radius: size / 2,
           backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
@@ -336,7 +370,10 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                   // Divider
                   const SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: Divider(height: 1),
                     ),
                   ),
@@ -344,16 +381,18 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                   // Comments Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           const Icon(Iconsax.message_text, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             '${post.replyCount} Comments',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -370,11 +409,21 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                               padding: const EdgeInsets.all(48),
                               child: Column(
                                 children: [
-                                  Icon(Iconsax.message_text, size: 64, color: Colors.grey[400]),
+                                  Icon(
+                                    Iconsax.message_text,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
                                   const SizedBox(height: 16),
-                                  Text('No comments yet', style: TextStyle(color: Colors.grey[600])),
+                                  Text(
+                                    'No comments yet',
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  ),
                                   const SizedBox(height: 8),
-                                  const Text('Be the first to comment!', style: TextStyle(fontSize: 12)),
+                                  const Text(
+                                    'Be the first to comment!',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
                                 ],
                               ),
                             ),
@@ -382,7 +431,10 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                         );
                       }
 
-                      final threadedComments = _buildThreadedComments(replies, currentUser?.id);
+                      final threadedComments = _buildThreadedComments(
+                        replies,
+                        currentUser?.id,
+                      );
                       return SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => threadedComments[index],
@@ -406,7 +458,9 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                       ),
                     ),
                     error: (error, stack) => SliverToBoxAdapter(
-                      child: Center(child: Text('Error loading comments: $error')),
+                      child: Center(
+                        child: Text('Error loading comments: $error'),
+                      ),
                     ),
                   ),
 
@@ -426,7 +480,9 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
                     data: (upvoted) => FloatingActionButton(
                       heroTag: 'upvote',
                       onPressed: _upvotePost,
-                      backgroundColor: upvoted ? Colors.green : ModernTheme.primaryOrange,
+                      backgroundColor: upvoted
+                          ? Colors.green
+                          : ModernTheme.primaryOrange,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -461,15 +517,15 @@ class _EnhancedForumPostDetailScreenState extends ConsumerState<EnhancedForumPos
             ],
           );
         },
-        loading: () => const Center(child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ForumPostSkeleton(),
-            ],
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [ForumPostSkeleton()],
+            ),
           ),
-        )),
+        ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -541,10 +597,7 @@ class _PostContent extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         formatTimeAgo(post.createdAt),
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
                   ),
@@ -559,9 +612,9 @@ class _PostContent extends StatelessWidget {
             child: Text(
               post.title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
           ),
 
@@ -619,7 +672,7 @@ class _PostContent extends StatelessWidget {
 
           const SizedBox(height: 16),
           const Divider(height: 1),
-          
+
           // Content
           Padding(
             padding: const EdgeInsets.all(16),
@@ -627,9 +680,15 @@ class _PostContent extends StatelessWidget {
               data: post.content,
               styleSheet: MarkdownStyleSheet(
                 p: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6),
-                h1: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                h2: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                h3: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                h2: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                h3: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 code: TextStyle(
                   backgroundColor: Colors.grey[900],
                   color: Colors.greenAccent,
@@ -652,21 +711,28 @@ class _PostContent extends StatelessWidget {
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: post.tags.map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '#$tag',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                children: post.tags
+                    .map(
+                      (tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '#$tag',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    )).toList(),
+                    )
+                    .toList(),
               ),
             ),
         ],
@@ -741,14 +807,17 @@ class _CommentCard extends ConsumerWidget {
     return '${(difference.inDays / 7).floor()}w';
   }
 
-  Widget _buildAvatar(String? avatarUrl, String name, double size, BuildContext context) {
+  Widget _buildAvatar(
+    String? avatarUrl,
+    String name,
+    double size,
+    BuildContext context,
+  ) {
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: avatarUrl,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: size / 2,
-          backgroundImage: imageProvider,
-        ),
+        imageBuilder: (context, imageProvider) =>
+            CircleAvatar(radius: size / 2, backgroundImage: imageProvider),
         placeholder: (context, url) => CircleAvatar(
           radius: size / 2,
           backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.2),
@@ -785,13 +854,15 @@ class _CommentCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final leftPadding = 20.0 + (depth * 16.0); // Reduced indent for cleaner look
-    final isOwnComment = currentUserId != null && comment.userId == currentUserId;
-    
+    final leftPadding =
+        20.0 + (depth * 16.0); // Reduced indent for cleaner look
+    final isOwnComment =
+        currentUserId != null && comment.userId == currentUserId;
+
     return Container(
       margin: EdgeInsets.only(left: leftPadding, right: 20, bottom: 0),
       decoration: BoxDecoration(
-        border: depth > 0 
+        border: depth > 0
             ? Border(
                 left: BorderSide(
                   color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
@@ -808,7 +879,12 @@ class _CommentCard extends ConsumerWidget {
             // Author Info Row
             Row(
               children: [
-                _buildAvatar(comment.userAvatar, comment.authorName, 28, context),
+                _buildAvatar(
+                  comment.userAvatar,
+                  comment.authorName,
+                  28,
+                  context,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Row(
@@ -823,10 +899,7 @@ class _CommentCard extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Text(
                         '• ${_formatTimeAgo(comment.createdAt)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
                   ),
@@ -857,10 +930,9 @@ class _CommentCard extends ConsumerWidget {
               child: MarkdownBody(
                 data: comment.content,
                 styleSheet: MarkdownStyleSheet(
-                  p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.5,
-                        fontSize: 14,
-                      ),
+                  p: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.5, fontSize: 14),
                   code: TextStyle(
                     backgroundColor: Colors.grey[200],
                     fontFamily: 'monospace',
@@ -882,7 +954,10 @@ class _CommentCard extends ConsumerWidget {
                     onTap: onReply,
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -904,7 +979,7 @@ class _CommentCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  
+
                   // Delete Button (only for own comments)
                   if (isOwnComment) ...[
                     const SizedBox(width: 8),
@@ -912,7 +987,10 @@ class _CommentCard extends ConsumerWidget {
                       onTap: onDelete,
                       borderRadius: BorderRadius.circular(4),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -1039,19 +1117,23 @@ class _ReplyInputBar extends ConsumerWidget {
                       controller: controller,
                       focusNode: focusNode,
                       decoration: InputDecoration(
-                        hintText: replyingTo != null 
+                        hintText: replyingTo != null
                             ? 'Write a reply...'
                             : 'Add a comment...',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.3),
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.3),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -1066,7 +1148,9 @@ class _ReplyInputBar extends ConsumerWidget {
                           vertical: 12,
                         ),
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                       ),
                       maxLines: null,
                       textInputAction: TextInputAction.send,

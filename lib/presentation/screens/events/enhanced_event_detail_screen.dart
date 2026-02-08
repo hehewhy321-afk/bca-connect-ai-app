@@ -10,12 +10,18 @@ import '../../widgets/cached_image.dart';
 import '../../widgets/event_feedback_dialog.dart';
 import '../../providers/event_provider.dart';
 
-final eventDetailProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
+final eventDetailProvider = FutureProvider.family<Event?, String>((
+  ref,
+  eventId,
+) async {
   final repo = EventRepository();
   return await repo.getEventById(eventId);
 });
 
-final isUserRegisteredProvider = FutureProvider.family<bool, String>((ref, eventId) async {
+final isUserRegisteredProvider = FutureProvider.family<bool, String>((
+  ref,
+  eventId,
+) async {
   final repo = EventRepository();
   return await repo.isUserRegistered(eventId);
 });
@@ -26,10 +32,13 @@ class EnhancedEventDetailScreen extends ConsumerStatefulWidget {
   const EnhancedEventDetailScreen({super.key, required this.eventId});
 
   @override
-  ConsumerState<EnhancedEventDetailScreen> createState() => _EnhancedEventDetailScreenState();
+  ConsumerState<EnhancedEventDetailScreen> createState() =>
+      _EnhancedEventDetailScreenState();
 }
 
-class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailScreen> with SingleTickerProviderStateMixin {
+class _EnhancedEventDetailScreenState
+    extends ConsumerState<EnhancedEventDetailScreen>
+    with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
   late AnimationController _animationController;
   double _scrollOffset = 0.0;
@@ -131,7 +140,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               Container(
@@ -140,7 +151,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                   gradient: ModernTheme.orangeGradient,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Iconsax.people, color: Colors.white, size: 20),
+                child: const Icon(
+                  Iconsax.people,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text('Team Registration'),
@@ -176,11 +191,17 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                     decoration: BoxDecoration(
                       color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Iconsax.info_circle, size: 18, color: Colors.blue),
+                        const Icon(
+                          Iconsax.info_circle,
+                          size: 18,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -194,7 +215,10 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                   const SizedBox(height: 16),
                   Text(
                     'Team Members (${teamMembers.length}/${event.teamSizeMax})',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ...List.generate(teamMembers.length, (index) {
@@ -202,10 +226,14 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -214,7 +242,10 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: ModernTheme.orangeGradient,
                                   borderRadius: BorderRadius.circular(6),
@@ -231,7 +262,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                               const Spacer(),
                               if (index > 0)
                                 IconButton(
-                                  icon: const Icon(Iconsax.trash, size: 18, color: Colors.red),
+                                  icon: const Icon(
+                                    Iconsax.trash,
+                                    size: 18,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () {
                                     setState(() {
                                       teamMembers.removeAt(index);
@@ -252,7 +287,8 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onChanged: (value) => teamMembers[index]['name'] = value,
+                            onChanged: (value) =>
+                                teamMembers[index]['name'] = value,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Required';
@@ -270,7 +306,8 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onChanged: (value) => teamMembers[index]['email'] = value,
+                            onChanged: (value) =>
+                                teamMembers[index]['email'] = value,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Required';
@@ -289,7 +326,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                     OutlinedButton.icon(
                       onPressed: () {
                         setState(() {
-                          teamMembers.add({'name': '', 'email': '', 'phone': ''});
+                          teamMembers.add({
+                            'name': '',
+                            'email': '',
+                            'phone': '',
+                          });
                         });
                       },
                       icon: const Icon(Iconsax.add_circle, size: 18),
@@ -302,7 +343,8 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                       ),
                     ),
                   const SizedBox(height: 16),
-                  if (event.registrationFee != null && event.registrationFee! > 0)
+                  if (event.registrationFee != null &&
+                      event.registrationFee! > 0)
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -345,7 +387,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                   if (teamMembers.length < event.teamSizeMin) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Minimum ${event.teamSizeMin} members required'),
+                        content: Text(
+                          'Minimum ${event.teamSizeMin} members required',
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -436,7 +480,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -448,7 +494,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
             content: Text('Registration failed: ${e.toString()}'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -458,7 +506,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
   @override
   Widget build(BuildContext context) {
     final eventAsync = ref.watch(eventDetailProvider(widget.eventId));
-    final isRegisteredAsync = ref.watch(isUserRegisteredProvider(widget.eventId));
+    final isRegisteredAsync = ref.watch(
+      isUserRegisteredProvider(widget.eventId),
+    );
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -480,7 +530,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                       color: Colors.red.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Iconsax.info_circle, size: 64, color: Colors.red),
+                    child: const Icon(
+                      Iconsax.info_circle,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -494,7 +548,10 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                     label: const Text('Go Back'),
                     style: FilledButton.styleFrom(
                       backgroundColor: ModernTheme.primaryOrange,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -529,7 +586,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                         ),
                         child: event.imageUrl == null
                             ? const Center(
-                                child: Icon(Iconsax.gallery, size: 80, color: Colors.white),
+                                child: Icon(
+                                  Iconsax.gallery,
+                                  size: 80,
+                                  color: Colors.white,
+                                ),
                               )
                             : null,
                       ),
@@ -554,13 +615,18 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                       top: 80,
                       right: 20,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _getStatusColor(event.status),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: _getStatusColor(event.status).withValues(alpha: 0.4),
+                              color: _getStatusColor(
+                                event.status,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -619,46 +685,72 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          event.title,
-                                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                height: 1.2,
-                                              ),
-                                        ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
+                                              event.title,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                    height: 1.2,
+                                                  ),
+                                            )
+                                            .animate()
+                                            .fadeIn(delay: 100.ms)
+                                            .slideX(begin: -0.2),
                                         const SizedBox(height: 12),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                ModernTheme.primaryOrange.withValues(alpha: 0.2),
-                                                ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(
-                                              color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(Iconsax.category, size: 14, color: ModernTheme.primaryOrange),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                event.category,
-                                                style: const TextStyle(
-                                                  color: ModernTheme.primaryOrange,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 12,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    ModernTheme.primaryOrange
+                                                        .withValues(alpha: 0.2),
+                                                    ModernTheme.primaryOrange
+                                                        .withValues(alpha: 0.1),
+                                                  ],
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: ModernTheme
+                                                      .primaryOrange
+                                                      .withValues(alpha: 0.3),
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ).animate().fadeIn(delay: 200.ms).scale(delay: 200.ms),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Iconsax.category,
+                                                    size: 14,
+                                                    color: ModernTheme
+                                                        .primaryOrange,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    event.category,
+                                                    style: const TextStyle(
+                                                      color: ModernTheme
+                                                          .primaryOrange,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                            .animate()
+                                            .fadeIn(delay: 200.ms)
+                                            .scale(delay: 200.ms),
                                       ],
                                     ),
                                   ),
@@ -668,88 +760,114 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
 
                               // Date & Time Info Card (similar to events list)
                               Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: ModernTheme.primaryOrange
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: ModernTheme.primaryOrange
+                                            .withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Column(
                                       children: [
-                                        Icon(
-                                          Iconsax.calendar_1,
-                                          size: 20,
-                                          color: ModernTheme.primaryOrange,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Start',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Iconsax.calendar_1,
+                                              size: 20,
+                                              color: ModernTheme.primaryOrange,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Start',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    DateFormat(
+                                                      'MMM dd, yyyy • hh:mm a',
+                                                    ).format(event.startDate),
+                                                    style: const TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                DateFormat('MMM dd, yyyy • hh:mm a').format(event.startDate),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
+                                            ),
+                                          ],
+                                        ),
+                                        if (event.endDate != null) ...[
+                                          const SizedBox(height: 16),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Iconsax.calendar_tick,
+                                                size: 20,
+                                                color:
+                                                    ModernTheme.primaryOrange,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'End',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                              alpha: 0.6,
+                                                            ),
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      DateFormat(
+                                                        'MMM dd, yyyy • hh:mm a',
+                                                      ).format(event.endDate!),
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
+                                        ],
                                       ],
                                     ),
-                                    if (event.endDate != null) ...[
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Iconsax.calendar_tick,
-                                            size: 20,
-                                            color: ModernTheme.primaryOrange,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'End',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  DateFormat('MMM dd, yyyy • hh:mm a').format(event.endDate!),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
+                                  )
+                                  .animate()
+                                  .fadeIn(delay: 300.ms)
+                                  .slideY(begin: 0.2),
                               const SizedBox(height: 20),
 
                               // Location & Fee Row
@@ -761,10 +879,17 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                       child: Container(
                                         padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(16),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           border: Border.all(
-                                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .outline
+                                                .withValues(alpha: 0.2),
                                           ),
                                         ),
                                         child: Row(
@@ -777,14 +902,21 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                             const SizedBox(width: 12),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     'Location',
                                                     style: TextStyle(
                                                       fontSize: 12,
-                                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                                      fontWeight: FontWeight.w500,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
+                                                      fontWeight:
+                                                          FontWeight.w500,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 4),
@@ -792,10 +924,12 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                                     event.location!,
                                                     style: const TextStyle(
                                                       fontSize: 14,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                     maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ],
                                               ),
@@ -805,16 +939,22 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                       ),
                                     ),
                                   // Fee
-                                  if (event.registrationFee != null && event.registrationFee! > 0) ...[
-                                    if (event.location != null) const SizedBox(width: 12),
+                                  if (event.registrationFee != null &&
+                                      event.registrationFee! > 0) ...[
+                                    if (event.location != null)
+                                      const SizedBox(width: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 16,
+                                      ),
                                       decoration: BoxDecoration(
                                         gradient: ModernTheme.orangeGradient,
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: ModernTheme.primaryOrange.withValues(alpha: 0.3),
+                                            color: ModernTheme.primaryOrange
+                                                .withValues(alpha: 0.3),
                                             blurRadius: 12,
                                             offset: const Offset(0, 4),
                                           ),
@@ -822,7 +962,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                       ),
                                       child: Column(
                                         children: [
-                                          const Icon(Iconsax.wallet, color: Colors.white, size: 20),
+                                          const Icon(
+                                            Iconsax.wallet,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
                                           const SizedBox(height: 8),
                                           Text(
                                             'NPR ${event.registrationFee!.toStringAsFixed(0)}',
@@ -843,77 +987,96 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                               // Team Info (if applicable)
                               if (event.teamType == 'team') ...[
                                 Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.blue.withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue,
-                                          borderRadius: BorderRadius.circular(12),
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withValues(
+                                          alpha: 0.1,
                                         ),
-                                        child: const Icon(Iconsax.people, color: Colors.white, size: 24),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Team Event',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Team size: ${event.teamSizeMin}-${event.teamSizeMax} members',
-                                              style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.blue.withValues(
+                                            alpha: 0.3,
+                                          ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: const Icon(
+                                              Iconsax.people,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Team Event',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Team size: ${event.teamSizeMin}-${event.teamSizeMax} members',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(alpha: 0.7),
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                    .animate()
+                                    .fadeIn(delay: 400.ms)
+                                    .slideX(begin: -0.2),
                                 const SizedBox(height: 24),
                               ],
 
                               // About Section
                               Text(
                                 'About Event',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 event.description ?? 'No description available',
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
                                       height: 1.6,
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.7),
                                     ),
                               ),
                               const SizedBox(height: 24),
 
                               // Gallery Section
-                              if (event.galleryImages.isNotEmpty || event.imageUrl != null) ...[
+                              if (event.galleryImages.isNotEmpty ||
+                                  event.imageUrl != null) ...[
                                 Text(
                                   'Event Gallery',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 16),
                               ],
@@ -922,59 +1085,83 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                         ),
 
                         // Gallery Horizontal Scroll
-                        if (event.galleryImages.isNotEmpty || event.imageUrl != null)
+                        if (event.galleryImages.isNotEmpty ||
+                            event.imageUrl != null)
                           SizedBox(
                             height: 200,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
-                              itemCount: event.galleryImages.isNotEmpty ? event.galleryImages.length : 3,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
+                              itemCount: event.galleryImages.isNotEmpty
+                                  ? event.galleryImages.length
+                                  : 3,
                               itemBuilder: (context, index) {
-                                final imageUrl = event.galleryImages.isNotEmpty 
+                                final imageUrl = event.galleryImages.isNotEmpty
                                     ? event.galleryImages[index]
                                     : event.imageUrl;
-                                
+
                                 return Container(
-                                  width: 280,
-                                  margin: const EdgeInsets.only(right: 16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: imageUrl != null
-                                        ? CachedImage(
-                                            imageUrl: imageUrl,
-                                            width: 200,
-                                            height: 200,
-                                            fit: BoxFit.cover,
-                                            borderRadius: BorderRadius.circular(20),
-                                            errorWidget: Container(
-                                              decoration: const BoxDecoration(
-                                                gradient: ModernTheme.orangeGradient,
-                                              ),
-                                              child: const Center(
-                                                child: Icon(Iconsax.gallery, color: Colors.white, size: 48),
-                                              ),
+                                      width: 280,
+                                      margin: const EdgeInsets.only(right: 16),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.1,
                                             ),
-                                          )
-                                        : Container(
-                                            decoration: const BoxDecoration(
-                                              gradient: ModernTheme.orangeGradient,
-                                            ),
-                                            child: const Center(
-                                              child: Icon(Iconsax.gallery, color: Colors.white, size: 48),
-                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 5),
                                           ),
-                                  ),
-                                ).animate(delay: Duration(milliseconds: 100 * index))
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: imageUrl != null
+                                            ? CachedImage(
+                                                imageUrl: imageUrl,
+                                                width: 200,
+                                                height: 200,
+                                                fit: BoxFit.cover,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                errorWidget: Container(
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        gradient: ModernTheme
+                                                            .orangeGradient,
+                                                      ),
+                                                  child: const Center(
+                                                    child: Icon(
+                                                      Iconsax.gallery,
+                                                      color: Colors.white,
+                                                      size: 48,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Container(
+                                                decoration: const BoxDecoration(
+                                                  gradient: ModernTheme
+                                                      .orangeGradient,
+                                                ),
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Iconsax.gallery,
+                                                    color: Colors.white,
+                                                    size: 48,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                    )
+                                    .animate(
+                                      delay: Duration(
+                                        milliseconds: 100 * index,
+                                      ),
+                                    )
                                     .fadeIn()
                                     .slideX(begin: 0.2);
                               },
@@ -991,18 +1178,20 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                             children: [
                               Text(
                                 'Organized By',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                                    color: Theme.of(context).colorScheme.outline
+                                        .withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Row(
@@ -1014,24 +1203,37 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                         gradient: ModernTheme.orangeGradient,
                                         borderRadius: BorderRadius.circular(16),
                                       ),
-                                      child: const Icon(Iconsax.building, color: Colors.white, size: 28),
+                                      child: const Icon(
+                                        Iconsax.building,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Association Team',
-                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'Event Organizers',
-                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
                                                 ),
                                           ),
                                         ],
@@ -1073,12 +1275,16 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: () => ref.invalidate(eventDetailProvider(widget.eventId)),
+                onPressed: () =>
+                    ref.invalidate(eventDetailProvider(widget.eventId)),
                 icon: const Icon(Iconsax.refresh),
                 label: const Text('Retry'),
                 style: FilledButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                 ),
               ),
             ],
@@ -1088,13 +1294,13 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
       bottomNavigationBar: eventAsync.maybeWhen(
         data: (event) {
           if (event == null) return null;
-          
+
           // Show feedback button for completed events if user is registered
           if (event.status.toLowerCase() == 'completed') {
             return isRegisteredAsync.when(
               data: (isRegistered) {
                 if (!isRegistered) return null;
-                
+
                 // Check if user has given feedback
                 final feedbackAsync = ref.watch(userFeedbackProvider(event.id));
                 return feedbackAsync.when(
@@ -1116,7 +1322,10 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                         decoration: BoxDecoration(
                           gradient: existingFeedback != null
                               ? LinearGradient(
-                                  colors: [Colors.green.shade600, Colors.green.shade700],
+                                  colors: [
+                                    Colors.green.shade600,
+                                    Colors.green.shade700,
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
@@ -1124,8 +1333,11 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: (existingFeedback != null ? Colors.green : ModernTheme.primaryOrange)
-                                  .withValues(alpha: 0.4),
+                              color:
+                                  (existingFeedback != null
+                                          ? Colors.green
+                                          : ModernTheme.primaryOrange)
+                                      .withValues(alpha: 0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -1142,7 +1354,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                   eventTitle: event.title,
                                   existingFeedback: existingFeedback,
                                   onSuccess: () {
-                                    ref.invalidate(userFeedbackProvider(event.id));
+                                    ref.invalidate(
+                                      userFeedbackProvider(event.id),
+                                    );
                                   },
                                 ),
                               );
@@ -1153,7 +1367,9 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    existingFeedback != null ? Iconsax.edit5 : Iconsax.star5,
+                                    existingFeedback != null
+                                        ? Iconsax.edit5
+                                        : Iconsax.star5,
                                     color: Colors.white,
                                     size: 24,
                                   ),
@@ -1172,14 +1388,23 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
                                   if (existingFeedback != null) ...[
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Row(
                                         children: [
-                                          const Icon(Iconsax.star5, color: Colors.white, size: 12),
+                                          const Icon(
+                                            Iconsax.star5,
+                                            color: Colors.white,
+                                            size: 12,
+                                          ),
                                           const SizedBox(width: 4),
                                           Text(
                                             '${existingFeedback['rating']}',
@@ -1212,162 +1437,178 @@ class _EnhancedEventDetailScreenState extends ConsumerState<EnhancedEventDetailS
               error: (error, stackTrace) => null,
             );
           }
-          
+
           // Show register button for non-completed events
           return isRegisteredAsync.when(
-                data: (isRegistered) => Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
+            data: (isRegistered) => Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                  child: SafeArea(
-                    child: isRegistered
-                        ? Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.green, width: 2),
+                ],
+              ),
+              child: SafeArea(
+                child: isRegistered
+                    ? Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.green, width: 2),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Iconsax.tick_circle,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle,
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Already Registered',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: ModernTheme.orangeGradient,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: ModernTheme.primaryOrange.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _handleRegistration(event),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Iconsax.ticket,
+                                    color: Colors.white,
+                                    size: 24,
                                   ),
-                                  child: const Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Already Registered',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Register Now',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Container(
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: ModernTheme.orangeGradient,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: ModernTheme.primaryOrange.withValues(alpha: 0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => _handleRegistration(event),
-                                borderRadius: BorderRadius.circular(16),
-                                child: Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Iconsax.ticket, color: Colors.white, size: 24),
-                                      const SizedBox(width: 12),
-                                      const Text(
-                                        'Register Now',
-                                        style: TextStyle(
+                                  if (event.registrationFee != null &&
+                                      event.registrationFee! > 0) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'NPR ${event.registrationFee!.toStringAsFixed(0)}',
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          letterSpacing: 0.5,
+                                          fontSize: 12,
                                         ),
                                       ),
-                                      if (event.registrationFee != null && event.registrationFee! > 0) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            'NPR ${event.registrationFee!.toStringAsFixed(0)}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ),
-                  ),
-                ),
-                loading: () => Container(
-                  padding: const EdgeInsets.all(20),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-                error: (error, stackTrace) => Container(
-                  padding: const EdgeInsets.all(20),
-                  child: SafeArea(
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: ModernTheme.orangeGradient,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: ModernTheme.primaryOrange.withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        ),
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _handleRegistration(event),
-                          borderRadius: BorderRadius.circular(16),
-                          child: const Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Iconsax.ticket, color: Colors.white, size: 24),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Register Now',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
+              ),
+            ),
+            loading: () => Container(
+              padding: const EdgeInsets.all(20),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stackTrace) => Container(
+              padding: const EdgeInsets.all(20),
+              child: SafeArea(
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: ModernTheme.orangeGradient,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: ModernTheme.primaryOrange.withValues(alpha: 0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _handleRegistration(event),
+                      borderRadius: BorderRadius.circular(16),
+                      child: const Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Iconsax.ticket, color: Colors.white, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Register Now',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
-              );
+              ),
+            ),
+          );
         },
         orElse: () => null,
       ),

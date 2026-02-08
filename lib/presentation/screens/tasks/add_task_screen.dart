@@ -20,14 +20,14 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _tagController = TextEditingController();
-  
+
   TaskPriority _selectedPriority = TaskPriority.medium;
   TaskStatus _selectedStatus = TaskStatus.pending;
   String? _selectedCategoryId;
   DateTime? _selectedDueDate;
   DateTime? _selectedReminderDate;
   List<String> _tags = [];
-  
+
   bool _isLoading = false;
 
   @override
@@ -203,7 +203,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         categoriesAsync.when(
           data: (categories) => _buildCategorySelector(categories),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _buildErrorWidget('Error loading categories: $error'),
+          error: (error, _) =>
+              _buildErrorWidget('Error loading categories: $error'),
         ),
       ],
     );
@@ -254,10 +255,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           const Icon(Iconsax.danger, color: Colors.red, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: Colors.red),
-            ),
+            child: Text(message, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -271,9 +269,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     return InputDecoration(
       hintText: hintText,
       prefixIcon: prefixIcon,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
@@ -282,9 +278,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 
@@ -305,31 +301,27 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? priority.color.withValues(alpha: 0.1) : null,
+                color: isSelected
+                    ? priority.color.withValues(alpha: 0.1)
+                    : null,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    priority.icon,
-                    color: priority.color,
-                    size: 20,
-                  ),
+                  Icon(priority.icon, color: priority.color, size: 20),
                   const SizedBox(width: 12),
                   Text(
                     priority.displayName,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isSelected ? priority.color : null,
                     ),
                   ),
                   const Spacer(),
                   if (isSelected)
-                    Icon(
-                      Iconsax.tick_circle,
-                      color: priority.color,
-                      size: 20,
-                    ),
+                    Icon(Iconsax.tick_circle, color: priority.color, size: 20),
                 ],
               ),
             ),
@@ -373,17 +365,15 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                   Text(
                     status.displayName,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isSelected ? status.color : null,
                     ),
                   ),
                   const Spacer(),
                   if (isSelected)
-                    Icon(
-                      Iconsax.tick_circle,
-                      color: status.color,
-                      size: 20,
-                    ),
+                    Icon(Iconsax.tick_circle, color: status.color, size: 20),
                 ],
               ),
             ),
@@ -410,8 +400,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _selectedCategoryId == null 
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) 
+                color: _selectedCategoryId == null
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1)
                     : null,
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -439,21 +431,21 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? category.color.withValues(alpha: 0.1) : null,
+                  color: isSelected
+                      ? category.color.withValues(alpha: 0.1)
+                      : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      category.icon,
-                      color: category.color,
-                      size: 20,
-                    ),
+                    Icon(category.icon, color: category.color, size: 20),
                     const SizedBox(width: 12),
                     Text(
                       category.name,
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isSelected ? category.color : null,
                       ),
                     ),
@@ -539,7 +531,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                 ),
                 onSubmitted: _addTag,
               ),
@@ -555,9 +549,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Tags display
         if (_tags.isNotEmpty)
           Wrap(
@@ -568,7 +562,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                 label: Text(tag),
                 deleteIcon: const Icon(Iconsax.close_circle, size: 16),
                 onDeleted: () => _removeTag(tag),
-                backgroundColor: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                backgroundColor: ModernTheme.primaryOrange.withValues(
+                  alpha: 0.1,
+                ),
                 labelStyle: const TextStyle(color: ModernTheme.primaryOrange),
                 deleteIconColor: ModernTheme.primaryOrange,
               );
@@ -578,7 +574,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     );
   }
 
-  Future<void> _selectDate(DateTime? currentDate, Function(DateTime?) onDateSelected) async {
+  Future<void> _selectDate(
+    DateTime? currentDate,
+    Function(DateTime?) onDateSelected,
+  ) async {
     final date = await showDatePicker(
       context: context,
       initialDate: currentDate ?? DateTime.now(),
@@ -630,8 +629,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
       final task = Task(
         id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
+        description: _descriptionController.text.trim().isEmpty
+            ? null
             : _descriptionController.text.trim(),
         priority: _selectedPriority,
         status: _selectedStatus,
@@ -641,7 +640,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         tags: _tags,
         createdAt: widget.task?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
-        completedAt: _selectedStatus == TaskStatus.completed 
+        completedAt: _selectedStatus == TaskStatus.completed
             ? (widget.task?.completedAt ?? DateTime.now())
             : null,
       );
@@ -656,9 +655,11 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.task != null 
-                ? 'Task updated successfully!' 
-                : 'Task created successfully!'),
+            content: Text(
+              widget.task != null
+                  ? 'Task updated successfully!'
+                  : 'Task created successfully!',
+            ),
             backgroundColor: Colors.green,
           ),
         );

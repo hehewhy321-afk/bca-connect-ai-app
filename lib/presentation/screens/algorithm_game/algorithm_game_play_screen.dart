@@ -14,15 +14,17 @@ class AlgorithmGamePlayScreen extends StatefulWidget {
   const AlgorithmGamePlayScreen({super.key, required this.algorithm});
 
   @override
-  State<AlgorithmGamePlayScreen> createState() => _AlgorithmGamePlayScreenState();
+  State<AlgorithmGamePlayScreen> createState() =>
+      _AlgorithmGamePlayScreenState();
 }
 
-class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with TickerProviderStateMixin {
+class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen>
+    with TickerProviderStateMixin {
   final _repository = AlgorithmRepository();
-  
+
   List<AlgorithmStep?> _placedSteps = [];
   List<AlgorithmStep> _availableSteps = [];
-  
+
   int _mistakes = 0;
   int _elapsedSeconds = 0;
   Timer? _timer;
@@ -31,7 +33,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
   bool _showVisualizer = false;
   int _hintsUsed = 0;
   final int _maxHints = 3;
-  
+
   late AnimationController _shakeController;
   late AnimationController _successController;
 
@@ -52,10 +54,10 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
   void _initializeGame() {
     // Initialize empty slots
     _placedSteps = List.filled(widget.algorithm.steps.length, null);
-    
+
     // Shuffle available steps
     _availableSteps = List.from(widget.algorithm.steps)..shuffle(Random());
-    
+
     // Start timer
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isCompleted) {
@@ -76,10 +78,10 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
     setState(() {
       // Remove from available
       _availableSteps.remove(step);
-      
+
       // Place in slot
       _placedSteps[targetIndex] = step;
-      
+
       // Check if correct
       if (step.order != targetIndex + 1) {
         _mistakes++;
@@ -88,7 +90,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
       } else {
         HapticFeedback.lightImpact();
       }
-      
+
       // Check if completed
       if (_availableSteps.isEmpty) {
         _checkCompletion();
@@ -114,7 +116,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         break;
       }
     }
-    
+
     if (allCorrect) {
       _timer?.cancel();
       _isCompleted = true;
@@ -134,11 +136,12 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
   Future<void> _saveProgress() async {
     final stars = _calculateStars();
     final existingProgress = await _repository.getProgress(widget.algorithm.id);
-    
+
     // Only save if better than previous
-    if (existingProgress == null || 
+    if (existingProgress == null ||
         stars > existingProgress.stars ||
-        (stars == existingProgress.stars && _elapsedSeconds < existingProgress.bestTime)) {
+        (stars == existingProgress.stars &&
+            _elapsedSeconds < existingProgress.bestTime)) {
       final progress = GameProgress(
         algorithmId: widget.algorithm.id,
         bestTime: _elapsedSeconds,
@@ -224,17 +227,14 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
             Text(label),
           ],
         ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
 
   void _showHint() {
     if (_hintsUsed >= _maxHints) return;
-    
+
     // Find first empty slot
     int? emptySlot;
     for (int i = 0; i < _placedSteps.length; i++) {
@@ -243,16 +243,16 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         break;
       }
     }
-    
+
     if (emptySlot == null) return;
-    
+
     // Find correct step for this slot
     final correctStep = widget.algorithm.steps.firstWhere(
       (step) => step.order == emptySlot! + 1,
     );
-    
+
     setState(() => _hintsUsed++);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -336,7 +336,10 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -373,7 +376,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
       ),
     );
   }
-  
+
   String _getExampleProblem(String algorithmId) {
     switch (algorithmId) {
       // Sorting
@@ -391,19 +394,19 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         return '📊 Example: Sort [4, 10, 3, 5, 1] using heap structure';
       case 'counting_sort':
         return '📊 Example: Sort [1, 4, 1, 2, 7, 5, 2] using counting technique';
-      
+
       // Searching
       case 'binary_search':
         return '🔍 Example: Find 23 in sorted array [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]';
       case 'linear_search':
         return '🔍 Example: Find 31 in array [10, 23, 45, 70, 11, 15, 31, 89]';
-      
+
       // Stack
       case 'stack_push':
         return '📚 Example: Push elements [5, 10, 15, 20] onto an empty stack';
       case 'stack_pop':
         return '📚 Example: Pop 2 elements from stack [5, 10, 15, 20]';
-      
+
       // Queue
       case 'queue_enqueue':
         return '🎫 Example: Enqueue [A, B, C, D] into an empty queue';
@@ -411,17 +414,17 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         return '🎫 Example: Dequeue 2 elements from queue [A, B, C, D]';
       case 'circular_queue':
         return '🔄 Example: Circular queue operations with size 5';
-      
+
       // Linked List
       case 'linked_list_insert':
         return '🔗 Example: Insert 25 at position 2 in list [10→20→30→40]';
-      
+
       // Trees
       case 'bst_insert':
         return '🌳 Example: Insert [50, 30, 70, 20, 40, 60, 80] into BST';
       case 'avl_rotation':
         return '🌳 Example: Balance AVL tree after inserting [10, 20, 30]';
-      
+
       // Graphs
       case 'bfs':
         return '🗺️ Example: BFS traversal starting from node A in graph';
@@ -433,7 +436,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         return '🗺️ Example: Find Minimum Spanning Tree of connected graph';
       case 'topological_sort':
         return '🗺️ Example: Order tasks with dependencies [A→B, B→C, A→D]';
-      
+
       default:
         return '📖 Watch the algorithm in action with a real example';
     }
@@ -444,11 +447,11 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
     if (_showVisualizer) {
       return _buildVisualizerView();
     }
-    
+
     if (_showExplanation) {
       return _buildExplanationView();
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.algorithm.name),
@@ -493,13 +496,25 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatChip(Iconsax.task_square, '${_placedSteps.where((s) => s != null).length}/${widget.algorithm.steps.length}', 'Placed'),
-                _buildStatChip(Iconsax.close_circle, _mistakes.toString(), 'Mistakes'),
-                _buildStatChip(Iconsax.star, _calculateStars().toString(), 'Stars'),
+                _buildStatChip(
+                  Iconsax.task_square,
+                  '${_placedSteps.where((s) => s != null).length}/${widget.algorithm.steps.length}',
+                  'Placed',
+                ),
+                _buildStatChip(
+                  Iconsax.close_circle,
+                  _mistakes.toString(),
+                  'Mistakes',
+                ),
+                _buildStatChip(
+                  Iconsax.star,
+                  _calculateStars().toString(),
+                  'Stars',
+                ),
               ],
             ),
           ),
-          
+
           // Target Slots (Top)
           Expanded(
             child: Container(
@@ -522,24 +537,29 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
               ),
             ),
           ),
-          
+
           // Divider
           Container(
             height: 2,
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
-          
+
           // Available Steps (Bottom) - Dynamic Height
           Container(
             padding: const EdgeInsets.all(16),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Drag Steps Here (${_availableSteps.length} remaining)',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _availableSteps.isEmpty
@@ -548,7 +568,10 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                         child: Center(
                           child: Text(
                             '✅ All steps placed!',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       )
@@ -594,7 +617,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
   Widget _buildTargetSlot(int index) {
     final step = _placedSteps[index];
     final isCorrect = step?.order == index + 1;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: DragTarget<AlgorithmStep>(
@@ -602,12 +625,12 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
         onAcceptWithDetails: (details) => _onStepPlaced(details.data, index),
         builder: (context, candidateData, rejectedData) {
           final isHovering = candidateData.isNotEmpty;
-          
+
           return AnimatedBuilder(
             animation: _shakeController,
             builder: (context, child) {
               final shake = sin(_shakeController.value * pi * 4) * 5;
-              
+
               return Transform.translate(
                 offset: Offset(step != null && !isCorrect ? shake : 0, 0),
                 child: Container(
@@ -616,17 +639,19 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                   decoration: BoxDecoration(
                     color: step == null
                         ? (isHovering
-                            ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
-                            : Theme.of(context).colorScheme.surface)
+                              ? ModernTheme.primaryOrange.withValues(alpha: 0.1)
+                              : Theme.of(context).colorScheme.surface)
                         : (isCorrect
-                            ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.red.withValues(alpha: 0.1)),
+                              ? Colors.green.withValues(alpha: 0.1)
+                              : Colors.red.withValues(alpha: 0.1)),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: step == null
                           ? (isHovering
-                              ? ModernTheme.primaryOrange
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))
+                                ? ModernTheme.primaryOrange
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withValues(alpha: 0.3))
                           : (isCorrect ? Colors.green : Colors.red),
                       width: 2,
                       strokeAlign: BorderSide.strokeAlignInside,
@@ -639,7 +664,9 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                         height: 32,
                         decoration: BoxDecoration(
                           color: step == null
-                              ? Theme.of(context).colorScheme.surfaceContainerHighest
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest
                               : (isCorrect ? Colors.green : Colors.red),
                           shape: BoxShape.circle,
                         ),
@@ -661,7 +688,9 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
                             ? Text(
                                 'Drop step here',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontStyle: FontStyle.italic,
                                 ),
                               )
@@ -712,10 +741,7 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
             ),
           ),
         ),
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: _buildStepCard(step),
-        ),
+        childWhenDragging: Opacity(opacity: 0.3, child: _buildStepCard(step)),
         child: _buildStepCard(step),
       ),
     );
@@ -788,39 +814,44 @@ class _AlgorithmGamePlayScreenState extends State<AlgorithmGamePlayScreen> with 
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ...widget.algorithm.steps.map((step) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: const BoxDecoration(
-                      color: ModernTheme.primaryOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${step.order}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+            ...widget.algorithm.steps.map(
+              (step) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: ModernTheme.primaryOrange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${step.order}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(step.text, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          step.text,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
             if (widget.algorithm.commonMistake != null) ...[
               const SizedBox(height: 24),
               Container(

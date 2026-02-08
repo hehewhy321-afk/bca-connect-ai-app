@@ -7,6 +7,7 @@ import '../../../data/repositories/game_repository.dart';
 import '../../../data/models/game_score.dart';
 
 enum SwipeDirection { up, down, left, right }
+
 enum ArrowType { normal, opposite, any }
 
 class SwipeManiaGameScreen extends StatefulWidget {
@@ -16,27 +17,28 @@ class SwipeManiaGameScreen extends StatefulWidget {
   State<SwipeManiaGameScreen> createState() => _SwipeManiaGameScreenState();
 }
 
-class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with TickerProviderStateMixin {
+class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen>
+    with TickerProviderStateMixin {
   final _repository = GameRepository();
   final _random = Random();
-  
+
   // Game state
   bool _isPlaying = false;
   int _score = 0;
   int _lives = 3;
   int _combo = 0;
   int _level = 1;
-  
+
   // Current arrow
   SwipeDirection _currentDirection = SwipeDirection.up;
   ArrowType _currentType = ArrowType.opposite;
   Color _arrowColor = Colors.blue;
-  
+
   // Animation
   late AnimationController _arrowController;
   late AnimationController _shakeController;
   late AnimationController _pulseController;
-  
+
   // Timing
   Timer? _nextArrowTimer;
   int _arrowDelay = 2000; // milliseconds
@@ -48,12 +50,12 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -78,23 +80,27 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
       _level = 1;
       _arrowDelay = 2000;
     });
-    
+
     _showNextArrow();
   }
 
   void _showNextArrow() {
     if (!_isPlaying) return;
-    
+
     setState(() {
       _currentDirection = SwipeDirection.values[_random.nextInt(4)];
-      
+
       // Determine arrow type based on level
       if (_level < 3) {
         _currentType = ArrowType.opposite;
         _arrowColor = Colors.blue;
       } else if (_level < 6) {
-        _currentType = _random.nextBool() ? ArrowType.opposite : ArrowType.normal;
-        _arrowColor = _currentType == ArrowType.normal ? Colors.red : Colors.blue;
+        _currentType = _random.nextBool()
+            ? ArrowType.opposite
+            : ArrowType.normal;
+        _arrowColor = _currentType == ArrowType.normal
+            ? Colors.red
+            : Colors.blue;
       } else {
         final rand = _random.nextInt(10);
         if (rand < 6) {
@@ -109,9 +115,9 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         }
       }
     });
-    
+
     _arrowController.forward().then((_) => _arrowController.reset());
-    
+
     // Schedule next arrow
     _nextArrowTimer?.cancel();
     _nextArrowTimer = Timer(Duration(milliseconds: _arrowDelay), () {
@@ -124,9 +130,9 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
 
   void _handleSwipe(SwipeDirection swipedDirection) {
     _nextArrowTimer?.cancel();
-    
+
     bool isCorrect = false;
-    
+
     switch (_currentType) {
       case ArrowType.opposite:
         isCorrect = _getOppositeDirection(_currentDirection) == swipedDirection;
@@ -138,14 +144,14 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         isCorrect = true;
         break;
     }
-    
+
     if (isCorrect) {
       HapticFeedback.lightImpact();
       setState(() {
         _combo++;
         final points = 10 + (_combo ~/ 5) * 5; // Bonus for combo
         _score += points;
-        
+
         // Level up every 10 points
         if (_score ~/ 100 > _level - 1) {
           _level++;
@@ -162,7 +168,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
   void _loseLife() {
     HapticFeedback.heavyImpact();
     _shakeController.forward().then((_) => _shakeController.reset());
-    
+
     setState(() {
       _lives--;
       _combo = 0;
@@ -188,13 +194,15 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
   void _endGame() {
     _nextArrowTimer?.cancel();
     setState(() => _isPlaying = false);
-    
-    _repository.saveScore(GameScore(
-      gameId: 'swipe_mania',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
-    
+
+    _repository.saveScore(
+      GameScore(
+        gameId: 'swipe_mania',
+        score: _score,
+        timestamp: DateTime.now(),
+      ),
+    );
+
     _showGameOverDialog();
   }
 
@@ -204,11 +212,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Row(
-          children: [
-            Text('👆'),
-            SizedBox(width: 8),
-            Text('Game Over!'),
-          ],
+          children: [Text('👆'), SizedBox(width: 8), Text('Game Over!')],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -264,10 +268,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
               Text(label),
             ],
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -278,7 +279,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
     if (!_isPlaying) {
       return _buildStartScreen();
     }
-    
+
     return Scaffold(
       body: GestureDetector(
         onVerticalDragEnd: (details) {
@@ -325,9 +326,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
 
   Widget _buildStartScreen() {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Swipe Mania'),
-      ),
+      appBar: AppBar(title: const Text('Swipe Mania')),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -345,17 +344,11 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '👆',
-                  style: TextStyle(fontSize: 80),
-                ),
+                const Text('👆', style: TextStyle(fontSize: 80)),
                 const SizedBox(height: 20),
                 const Text(
                   'Swipe Mania',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -371,7 +364,9 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -385,26 +380,47 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildInstruction('🔵', 'BLUE arrow = Swipe OPPOSITE direction'),
-                      _buildInstruction('🔴', 'RED arrow = Swipe SAME direction'),
-                      _buildInstruction('🟢', 'GREEN arrow = Swipe ANY direction'),
-                      _buildInstruction('⚡', 'React fast before time runs out!'),
+                      _buildInstruction(
+                        '🔵',
+                        'BLUE arrow = Swipe OPPOSITE direction',
+                      ),
+                      _buildInstruction(
+                        '🔴',
+                        'RED arrow = Swipe SAME direction',
+                      ),
+                      _buildInstruction(
+                        '🟢',
+                        'GREEN arrow = Swipe ANY direction',
+                      ),
+                      _buildInstruction(
+                        '⚡',
+                        'React fast before time runs out!',
+                      ),
                       _buildInstruction('❤️', 'You have 3 lives'),
-                      _buildInstruction('📈', 'Game gets faster as you level up!'),
+                      _buildInstruction(
+                        '📈',
+                        'Game gets faster as you level up!',
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 40),
                 ScaleTransition(
                   scale: Tween<double>(begin: 1.0, end: 1.1).animate(
-                    CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+                    CurvedAnimation(
+                      parent: _pulseController,
+                      curve: Curves.easeInOut,
+                    ),
                   ),
                   child: ElevatedButton(
                     onPressed: _startGame,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6366F1),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 60,
+                        vertical: 20,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -442,12 +458,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
@@ -460,14 +471,17 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         children: [
           // Lives
           Row(
-            children: List.generate(3, (index) => Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Icon(
-                index < _lives ? Iconsax.heart5 : Iconsax.heart,
-                color: index < _lives ? Colors.red : Colors.grey,
-                size: 24,
+            children: List.generate(
+              3,
+              (index) => Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  index < _lives ? Iconsax.heart5 : Iconsax.heart,
+                  color: index < _lives ? Colors.red : Colors.grey,
+                  size: 24,
+                ),
               ),
-            )),
+            ),
           ),
           const Spacer(),
           // Level
@@ -526,10 +540,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
       animation: _shakeController,
       builder: (context, child) {
         final shake = sin(_shakeController.value * pi * 4) * 10;
-        return Transform.translate(
-          offset: Offset(shake, 0),
-          child: child,
-        );
+        return Transform.translate(offset: Offset(shake, 0), child: child);
       },
       child: ScaleTransition(
         scale: Tween<double>(begin: 0.8, end: 1.0).animate(
@@ -574,7 +585,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         instruction = 'Swipe ANY direction!';
         break;
     }
-    
+
     return Column(
       children: [
         if (_combo >= 5)
@@ -605,10 +616,7 @@ class _SwipeManiaGameScreenState extends State<SwipeManiaGameScreen> with Ticker
         const SizedBox(height: 16),
         Text(
           instruction,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],
     );

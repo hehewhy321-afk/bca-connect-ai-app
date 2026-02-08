@@ -13,7 +13,8 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
@@ -34,33 +35,37 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       setState(() => _loading = false);
       return;
     }
-    
+
     final cacheKey = '${CacheKeys.notifications}_${user.id}';
-    
+
     // Try to load from cache first
     try {
       final cached = CacheService.get<String>(cacheKey);
       if (cached != null) {
         final List<dynamic> jsonList = jsonDecode(cached);
-        final notificationsList = jsonList.map((e) => Map<String, dynamic>.from(e)).toList();
-        
+        final notificationsList = jsonList
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+
         if (mounted) {
           setState(() {
             _notifications = notificationsList;
             _loading = false;
           });
         }
-        
-        debugPrint('Loaded ${notificationsList.length} notifications from cache');
+
+        debugPrint(
+          'Loaded ${notificationsList.length} notifications from cache',
+        );
       }
     } catch (e) {
       debugPrint('Error loading notifications from cache: $e');
     }
-    
+
     // Check connectivity
     final connectivity = ConnectivityService();
     final isOnline = await connectivity.isOnline();
-    
+
     if (!isOnline) {
       // If offline and we have cached data, we're done
       if (_notifications.isNotEmpty) {
@@ -85,7 +90,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       }
       return;
     }
-    
+
     // Fetch from network
     try {
       final response = await SupabaseConfig.client
@@ -96,20 +101,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
       if (mounted) {
         final notificationsList = List<Map<String, dynamic>>.from(response);
-        
+
         // Cache the results
         await CacheService.set(
           cacheKey,
           jsonEncode(notificationsList),
           duration: CacheKeys.shortCache,
         );
-        
+
         setState(() {
           _notifications = notificationsList;
           _loading = false;
         });
-        
-        debugPrint('Fetched and cached ${notificationsList.length} notifications');
+
+        debugPrint(
+          'Fetched and cached ${notificationsList.length} notifications',
+        );
       }
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
@@ -123,7 +130,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 children: [
                   const Icon(Iconsax.danger, color: Colors.white),
                   const SizedBox(width: 12),
-                  Expanded(child: Text('Error loading notifications: ${e.toString()}')),
+                  Expanded(
+                    child: Text('Error loading notifications: ${e.toString()}'),
+                  ),
                 ],
               ),
               backgroundColor: Colors.red,
@@ -142,7 +151,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .eq('id', notificationId);
 
       setState(() {
-        final index = _notifications.indexWhere((n) => n['id'] == notificationId);
+        final index = _notifications.indexWhere(
+          (n) => n['id'] == notificationId,
+        );
         if (index != -1) {
           _notifications[index]['is_read'] = true;
         }
@@ -168,15 +179,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     try {
       // Add https:// if protocol is missing
       String urlString = link.trim();
-      if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+      if (!urlString.startsWith('http://') &&
+          !urlString.startsWith('https://')) {
         urlString = 'https://$urlString';
       }
-      
+
       final uri = Uri.parse(urlString);
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +250,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }).toList();
   }
 
-  int get _unreadCount => _notifications.where((n) => n['is_read'] != true).length;
+  int get _unreadCount =>
+      _notifications.where((n) => n['is_read'] != true).length;
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +259,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
+      backgroundColor: isDark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF8F9FA),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -259,7 +271,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   expandedHeight: 140,
                   floating: false,
                   pinned: true,
-                  backgroundColor: isDark ? const Color(0xFF000000) : Colors.white,
+                  backgroundColor: isDark
+                      ? const Color(0xFF000000)
+                      : Colors.white,
                   elevation: 0,
                   automaticallyImplyLeading: false,
                   flexibleSpace: FlexibleSpaceBar(
@@ -268,10 +282,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFDA7809),
-                            Color(0xFFFF9500),
-                          ],
+                          colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
                         ),
                       ),
                       child: SafeArea(
@@ -286,7 +297,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(
@@ -309,7 +322,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   ),
                                   if (_unreadCount > 0)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(20),
@@ -344,7 +360,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 // Filter Chips
                 SliverToBoxAdapter(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -353,13 +372,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           final filter = entry.value;
                           final isSelected = selectedFilter == filter;
                           return Padding(
-                            padding: EdgeInsets.only(right: index < filters.length - 1 ? 8 : 0),
-                            child: _FilterChip(
-                              label: filter,
-                              isSelected: isSelected,
-                              onTap: () => setState(() => selectedFilter = filter),
-                            ),
-                          ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: -0.2);
+                                padding: EdgeInsets.only(
+                                  right: index < filters.length - 1 ? 8 : 0,
+                                ),
+                                child: _FilterChip(
+                                  label: filter,
+                                  isSelected: isSelected,
+                                  onTap: () =>
+                                      setState(() => selectedFilter = filter),
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(delay: (index * 50).ms)
+                              .slideX(begin: -0.2);
                         }).toList(),
                       ),
                     ),
@@ -374,25 +399,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     : SliverPadding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final notification = notifications[index];
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: index < notifications.length - 1 ? 12 : 0,
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final notification = notifications[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: index < notifications.length - 1
+                                    ? 12
+                                    : 0,
+                              ),
+                              child: _ModernNotificationCard(
+                                notification: notification,
+                                onTap: () => _markAsRead(
+                                  notification['id'],
+                                  notification['link'],
                                 ),
-                                child: _ModernNotificationCard(
-                                  notification: notification,
-                                  onTap: () => _markAsRead(
-                                    notification['id'],
-                                    notification['link'],
-                                  ),
-                                  index: index,
-                                ),
-                              );
-                            },
-                            childCount: notifications.length,
-                          ),
+                                index: index,
+                              ),
+                            );
+                          }, childCount: notifications.length),
                         ),
                       ),
               ],
@@ -430,15 +457,15 @@ class _FilterChip extends StatelessWidget {
           color: isSelected
               ? null
               : isDark
-                  ? const Color(0xFF1A1A1A)
-                  : Colors.white,
+              ? const Color(0xFF1A1A1A)
+              : Colors.white,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
                 : isDark
-                    ? Colors.grey.withValues(alpha: 0.2)
-                    : Colors.grey.withValues(alpha: 0.15),
+                ? Colors.grey.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.15),
             width: 1.5,
           ),
           boxShadow: isSelected
@@ -457,8 +484,8 @@ class _FilterChip extends StatelessWidget {
             color: isSelected
                 ? Colors.white
                 : isDark
-                    ? Colors.grey[400]
-                    : Colors.grey[700],
+                ? Colors.grey[400]
+                : Colors.grey[700],
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             fontSize: 14,
           ),
@@ -533,182 +560,192 @@ class _ModernNotificationCard extends StatelessWidget {
     final type = notification['type']?.toString() ?? 'info';
     final color = _getColorForType(type);
     final icon = _getIconForType(type);
-    final hasLink = notification['link'] != null && notification['link'].toString().isNotEmpty;
+    final hasLink =
+        notification['link'] != null &&
+        notification['link'].toString().isNotEmpty;
     final createdAt = notification['created_at'] != null
         ? DateTime.parse(notification['created_at'])
         : DateTime.now();
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark
-              ? (isRead ? const Color(0xFF1A1A1A) : const Color(0xFF1F1F1F))
-              : (isRead ? Colors.white : const Color(0xFFFFF8F0)),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isRead
-                ? (isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1))
-                : color.withValues(alpha: 0.3),
-            width: isRead ? 1 : 2,
-          ),
-          boxShadow: [
-            BoxShadow(
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
               color: isDark
-                  ? Colors.black.withValues(alpha: 0.2)
-                  : Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color,
-                      color.withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                  ? (isRead ? const Color(0xFF1A1A1A) : const Color(0xFF1F1F1F))
+                  : (isRead ? Colors.white : const Color(0xFFFFF8F0)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isRead
+                    ? (isDark
+                          ? Colors.grey.withValues(alpha: 0.1)
+                          : Colors.grey.withValues(alpha: 0.1))
+                    : color.withValues(alpha: 0.3),
+                width: isRead ? 1 : 2,
               ),
-              const SizedBox(width: 14),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification['title'] ?? 'Notification',
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [color, color.withValues(alpha: 0.7)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
-                        if (!isRead)
-                          Container(
-                            width: 10,
-                            height: 10,
-                            margin: const EdgeInsets.only(left: 8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [color, color.withValues(alpha: 0.7)],
-                              ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: color.withValues(alpha: 0.5),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                          ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      notification['message'] ?? '',
-                      style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey[700],
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
+                    child: Icon(icon, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Iconsax.clock,
-                          size: 14,
-                          color: isDark ? Colors.grey[600] : Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatTimestamp(createdAt),
-                          style: TextStyle(
-                            color: isDark ? Colors.grey[600] : Colors.grey[500],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (hasLink) ...[
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  color.withValues(alpha: 0.15),
-                                  color.withValues(alpha: 0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: color.withValues(alpha: 0.3),
-                                width: 1,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notification['title'] ?? 'Notification',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Iconsax.link,
-                                  size: 12,
-                                  color: color,
+                            if (!isRead)
+                              Container(
+                                width: 10,
+                                height: 10,
+                                margin: const EdgeInsets.only(left: 8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      color,
+                                      color.withValues(alpha: 0.7),
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.5),
+                                      blurRadius: 4,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Open Link',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: color,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          notification['message'] ?? '',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey[700],
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(
+                              Iconsax.clock,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.grey[600]
+                                  : Colors.grey[500],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatTimestamp(createdAt),
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[600]
+                                    : Colors.grey[500],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (hasLink) ...[
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      color.withValues(alpha: 0.15),
+                                      color.withValues(alpha: 0.1),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: color.withValues(alpha: 0.3),
+                                    width: 1,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Iconsax.link, size: 12, color: color),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Open Link',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: color,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ).animate().fadeIn(delay: (index * 50).ms, duration: 300.ms).slideY(begin: 0.1, end: 0);
+        )
+        .animate()
+        .fadeIn(delay: (index * 50).ms, duration: 300.ms)
+        .slideY(begin: 0.1, end: 0);
   }
 }
 

@@ -10,12 +10,12 @@ class PermissionService {
   // Request all necessary permissions on app start
   Future<void> requestInitialPermissions(BuildContext context) async {
     if (!context.mounted) return;
-    
+
     // Request notification permission
     await requestNotificationPermission(context);
-    
+
     if (!context.mounted) return;
-    
+
     // Request storage permission
     await requestStoragePermission(context);
   }
@@ -25,7 +25,7 @@ class PermissionService {
     if (!Platform.isAndroid) return true;
 
     final status = await Permission.notification.status;
-    
+
     if (status.isGranted) {
       debugPrint('Notification permission already granted');
       return true;
@@ -36,13 +36,14 @@ class PermissionService {
       final shouldRequest = await _showPermissionDialog(
         context,
         title: 'Enable Notifications',
-        message: 'BCA Connect needs notification permission to send you important updates about events, forum replies, and announcements.',
+        message:
+            'BCA Connect needs notification permission to send you important updates about events, forum replies, and announcements.',
         icon: Icons.notifications_active,
       );
 
       if (shouldRequest == true) {
         final result = await Permission.notification.request();
-        
+
         if (result.isGranted) {
           debugPrint('Notification permission granted');
           return true;
@@ -67,32 +68,34 @@ class PermissionService {
     // Try MANAGE_EXTERNAL_STORAGE first, then fallback to regular storage
     var manageStorageStatus = await Permission.manageExternalStorage.status;
     var storageStatus = await Permission.storage.status;
-    
+
     if (manageStorageStatus.isGranted || storageStatus.isGranted) {
       debugPrint('Storage permission already granted');
       return true;
     }
 
-    if ((manageStorageStatus.isDenied || storageStatus.isDenied) && context.mounted) {
+    if ((manageStorageStatus.isDenied || storageStatus.isDenied) &&
+        context.mounted) {
       // Show explanation dialog
       final shouldRequest = await _showPermissionDialog(
         context,
         title: 'Enable Storage Access',
-        message: 'BCA Connect needs storage permission to save and access photos, documents, downloads, and other files for events and resources.',
+        message:
+            'BCA Connect needs storage permission to save and access photos, documents, downloads, and other files for events and resources.',
         icon: Icons.folder_open,
       );
 
       if (shouldRequest == true) {
         // Try MANAGE_EXTERNAL_STORAGE first for better compatibility
         var result = await Permission.manageExternalStorage.request();
-        
+
         if (result.isGranted) {
           debugPrint('Manage external storage permission granted');
           return true;
         } else {
           // Fallback to regular storage permission
           result = await Permission.storage.request();
-          
+
           if (result.isGranted) {
             debugPrint('Storage permission granted');
             return true;
@@ -103,7 +106,9 @@ class PermissionService {
       }
     }
 
-    if ((manageStorageStatus.isPermanentlyDenied || storageStatus.isPermanentlyDenied) && context.mounted) {
+    if ((manageStorageStatus.isPermanentlyDenied ||
+            storageStatus.isPermanentlyDenied) &&
+        context.mounted) {
       await _showSettingsDialog(context, 'Storage');
     }
 
@@ -120,11 +125,11 @@ class PermissionService {
   // Check if storage permission is granted
   Future<bool> hasStoragePermission() async {
     if (!Platform.isAndroid) return true;
-    
+
     // Check both MANAGE_EXTERNAL_STORAGE and regular storage permissions
     final manageStorageStatus = await Permission.manageExternalStorage.status;
     final storageStatus = await Permission.storage.status;
-    
+
     return manageStorageStatus.isGranted || storageStatus.isGranted;
   }
 
@@ -154,7 +159,10 @@ class PermissionService {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -181,16 +189,19 @@ class PermissionService {
   }
 
   // Show settings dialog when permission is permanently denied
-  Future<void> _showSettingsDialog(BuildContext context, String permissionName) async {
+  Future<void> _showSettingsDialog(
+    BuildContext context,
+    String permissionName,
+  ) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('$permissionName Permission Required'),
         content: Text(
-          permissionName == 'Storage' 
-            ? 'Please enable storage permission in app settings:\n\nSettings → Apps → BCA Connect → Permissions → Files and media (or Storage)\n\nThis allows the app to download updates and save files.'
-            : 'Please enable $permissionName permission in app settings to use this feature.',
+          permissionName == 'Storage'
+              ? 'Please enable storage permission in app settings:\n\nSettings → Apps → BCA Connect → Permissions → Files and media (or Storage)\n\nThis allows the app to download updates and save files.'
+              : 'Please enable $permissionName permission in app settings to use this feature.',
           style: const TextStyle(fontSize: 15, height: 1.5),
         ),
         actions: [

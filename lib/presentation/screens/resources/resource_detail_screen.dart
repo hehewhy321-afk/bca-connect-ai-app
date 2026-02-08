@@ -6,7 +6,10 @@ import '../../../data/repositories/resource_repository.dart';
 import '../../../core/theme/modern_theme.dart';
 import '../../widgets/gradient_button.dart';
 
-final resourceDetailProvider = FutureProvider.family<Resource?, String>((ref, resourceId) async {
+final resourceDetailProvider = FutureProvider.family<Resource?, String>((
+  ref,
+  resourceId,
+) async {
   final repo = ResourceRepository();
   return await repo.getResourceById(resourceId);
 });
@@ -24,10 +27,7 @@ class ResourceDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Resource Details'),
         actions: [
-          IconButton(
-            icon: const Icon(Iconsax.share),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Iconsax.share), onPressed: () {}),
         ],
       ),
       body: resourceAsync.when(
@@ -61,8 +61,8 @@ class ResourceDetailScreen extends ConsumerWidget {
                 Text(
                   resource.title,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -108,15 +108,15 @@ class ResourceDetailScreen extends ConsumerWidget {
                   Text(
                     'Description',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     resource.description!,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          height: 1.6,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(height: 1.6),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -126,14 +126,17 @@ class ResourceDetailScreen extends ConsumerWidget {
                   Text(
                     'Details',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (resource.subject != null)
                     _DetailRow(label: 'Subject', value: resource.subject!),
                   if (resource.semester != null)
-                    _DetailRow(label: 'Semester', value: 'Semester ${resource.semester}'),
+                    _DetailRow(
+                      label: 'Semester',
+                      value: 'Semester ${resource.semester}',
+                    ),
                 ],
                 const SizedBox(height: 100),
               ],
@@ -171,7 +174,9 @@ class ResourceDetailScreen extends ConsumerWidget {
                   icon: Iconsax.document_download,
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Download feature coming soon!')),
+                      const SnackBar(
+                        content: Text('Download feature coming soon!'),
+                      ),
                     );
                   },
                 ),
@@ -260,17 +265,11 @@ class _StatItem extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],
         ),
@@ -283,10 +282,7 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -307,9 +303,7 @@ class _DetailRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],

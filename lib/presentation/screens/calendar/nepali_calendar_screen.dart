@@ -7,14 +7,26 @@ import '../../../core/theme/modern_theme.dart';
 import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
 
-final selectedDateProvider = StateProvider<NepaliDateTime>((ref) => NepaliDateTime.now());
-final selectedViewProvider = StateProvider<CalendarView>((ref) => CalendarView.month);
+final selectedDateProvider = StateProvider<NepaliDateTime>(
+  (ref) => NepaliDateTime.now(),
+);
+final selectedViewProvider = StateProvider<CalendarView>(
+  (ref) => CalendarView.month,
+);
 
 enum CalendarView { month, year }
 
 // Helper function to get correct Nepali day name from AD date
 String _getNepaliDayName(DateTime adDate) {
-  const nepaliDays = ['आइतबार', 'सोमबार', 'मंगलबार', 'बुधबार', 'बिहिबार', 'शुक्रबार', 'शनिबार'];
+  const nepaliDays = [
+    'आइतबार',
+    'सोमबार',
+    'मंगलबार',
+    'बुधबार',
+    'बिहिबार',
+    'शुक्रबार',
+    'शनिबार',
+  ];
   // DateTime.weekday: 1=Monday, 2=Tuesday, ..., 7=Sunday
   // We need: 0=Sunday, 1=Monday, ..., 6=Saturday
   final dayIndex = adDate.weekday == 7 ? 0 : adDate.weekday;
@@ -23,7 +35,20 @@ String _getNepaliDayName(DateTime adDate) {
 
 // Helper function to get English month name
 String _getEnglishMonthName(int month) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return months[month - 1];
 }
 
@@ -31,12 +56,14 @@ class NepaliCalendarScreen extends ConsumerStatefulWidget {
   const NepaliCalendarScreen({super.key});
 
   @override
-  ConsumerState<NepaliCalendarScreen> createState() => _NepaliCalendarScreenState();
+  ConsumerState<NepaliCalendarScreen> createState() =>
+      _NepaliCalendarScreenState();
 }
 
 class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
   late PageController _pageController;
-  static const int _initialPageIndex = 1200; // Start from middle to allow backward navigation
+  static const int _initialPageIndex =
+      1200; // Start from middle to allow backward navigation
 
   @override
   void initState() {
@@ -119,7 +146,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                   Text(
                                     'Nepali Calendar',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -146,7 +175,10 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    NepaliDateFormat('MMMM dd, yyyy', Language.nepali).format(today),
+                                    NepaliDateFormat(
+                                      'MMMM dd, yyyy',
+                                      Language.nepali,
+                                    ).format(today),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -157,7 +189,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                   Text(
                                     _getNepaliDayName(today.toDateTime()),
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -165,14 +199,19 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                                   Text(
                                     '${today.toDateTime().day} ${_getEnglishMonthName(today.toDateTime().month)} ${today.toDateTime().year}',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontSize: 12,
                                     ),
                                   ),
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
@@ -207,7 +246,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -231,7 +272,7 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                       ],
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.2),
-                  
+
                   const SizedBox(height: 20),
 
                   // Calendar Navigation
@@ -250,7 +291,8 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                   // Today Button
                   FilledButton.icon(
                     onPressed: () {
-                      ref.read(selectedDateProvider.notifier).state = NepaliDateTime.now();
+                      ref.read(selectedDateProvider.notifier).state =
+                          NepaliDateTime.now();
                     },
                     icon: const Icon(Iconsax.calendar_tick),
                     label: const Text('आज (Today)'),
@@ -276,7 +318,11 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
     );
   }
 
-  Widget _buildNavigationRow(BuildContext context, NepaliDateTime selectedDate, CalendarView selectedView) {
+  Widget _buildNavigationRow(
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    CalendarView selectedView,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -284,31 +330,43 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
           onPressed: () => _navigatePrevious(selectedDate, selectedView),
           icon: const Icon(Iconsax.arrow_left_2),
           style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
           ),
         ),
         Text(
           selectedView == CalendarView.month
-              ? NepaliDateFormat('MMMM yyyy', Language.nepali).format(selectedDate)
+              ? NepaliDateFormat(
+                  'MMMM yyyy',
+                  Language.nepali,
+                ).format(selectedDate)
               : NepaliDateFormat('yyyy', Language.nepali).format(selectedDate),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         IconButton(
           onPressed: () => _navigateNext(selectedDate, selectedView),
           icon: const Icon(Iconsax.arrow_right_3),
           style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
           ),
         ),
       ],
     ).animate().fadeIn(delay: 150.ms);
   }
 
-  void _navigatePrevious(NepaliDateTime selectedDate, CalendarView selectedView) {
+  void _navigatePrevious(
+    NepaliDateTime selectedDate,
+    CalendarView selectedView,
+  ) {
     if (selectedView == CalendarView.month) {
-      final newYear = selectedDate.month == 1 ? selectedDate.year - 1 : selectedDate.year;
+      final newYear = selectedDate.month == 1
+          ? selectedDate.year - 1
+          : selectedDate.year;
       final newMonth = selectedDate.month == 1 ? 12 : selectedDate.month - 1;
       final newDate = NepaliDateTime(newYear, newMonth);
       ref.read(selectedDateProvider.notifier).state = newDate;
@@ -324,7 +382,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
 
   void _navigateNext(NepaliDateTime selectedDate, CalendarView selectedView) {
     if (selectedView == CalendarView.month) {
-      final newYear = selectedDate.month == 12 ? selectedDate.year + 1 : selectedDate.year;
+      final newYear = selectedDate.month == 12
+          ? selectedDate.year + 1
+          : selectedDate.year;
       final newMonth = selectedDate.month == 12 ? 1 : selectedDate.month + 1;
       final newDate = NepaliDateTime(newYear, newMonth);
       ref.read(selectedDateProvider.notifier).state = newDate;
@@ -344,16 +404,11 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
       decoration: BoxDecoration(
         color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Iconsax.info_circle,
-            color: Colors.blue,
-          ),
+          const Icon(Iconsax.info_circle, color: Colors.blue),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -366,7 +421,12 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
     ).animate().fadeIn(delay: 350.ms);
   }
 
-  Widget _buildViewButton(BuildContext context, String label, CalendarView view, bool isSelected) {
+  Widget _buildViewButton(
+    BuildContext context,
+    String label,
+    CalendarView view,
+    bool isSelected,
+  ) {
     return InkWell(
       onTap: () => ref.read(selectedViewProvider.notifier).state = view,
       borderRadius: BorderRadius.circular(8),
@@ -380,7 +440,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -388,55 +450,70 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
     );
   }
 
-  Widget _buildMonthView(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today) {
+  Widget _buildMonthView(
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    NepaliDateTime today,
+  ) {
     final monthData = _getMonthData(selectedDate);
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Weekday Headers
-          _buildWeekdayHeaders(context),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
 
-          // Calendar Days
-          ..._buildCalendarWeeks(context, selectedDate, today, monthData),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms).scale(delay: 200.ms, begin: const Offset(0.95, 0.95));
+    return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Weekday Headers
+              _buildWeekdayHeaders(context),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              // Calendar Days
+              ..._buildCalendarWeeks(context, selectedDate, today, monthData),
+            ],
+          ),
+        )
+        .animate()
+        .fadeIn(delay: 200.ms)
+        .scale(delay: 200.ms, begin: const Offset(0.95, 0.95));
   }
 
-  ({int daysInMonth, int startWeekday}) _getMonthData(NepaliDateTime selectedDate) {
-    final firstDayOfMonth = NepaliDateTime(selectedDate.year, selectedDate.month, 1);
+  ({int daysInMonth, int startWeekday}) _getMonthData(
+    NepaliDateTime selectedDate,
+  ) {
+    final firstDayOfMonth = NepaliDateTime(
+      selectedDate.year,
+      selectedDate.month,
+      1,
+    );
     // Get days in month by checking the last day of the month
-    final nextMonth = selectedDate.month == 12 
+    final nextMonth = selectedDate.month == 12
         ? NepaliDateTime(selectedDate.year + 1, 1, 1)
         : NepaliDateTime(selectedDate.year, selectedDate.month + 1, 1);
     final lastDayOfMonth = nextMonth.subtract(const Duration(days: 1));
     final daysInMonth = lastDayOfMonth.day;
-    
+
     // Convert to AD date to get correct weekday
     final firstDayAD = firstDayOfMonth.toDateTime();
     // weekday: 1=Monday, 2=Tuesday, ..., 7=Sunday
     // We need: 0=Sunday, 1=Monday, ..., 6=Saturday
     final startWeekday = firstDayAD.weekday == 7 ? 0 : firstDayAD.weekday;
-    
+
     return (daysInMonth: daysInMonth, startWeekday: startWeekday);
   }
 
@@ -445,26 +522,28 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: weekdays
-          .map((day) => Expanded(
-                child: Center(
-                  child: Text(
-                    day,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 12,
-                    ),
+          .map(
+            (day) => Expanded(
+              child: Center(
+                child: Text(
+                  day,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 12,
                   ),
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
     );
   }
 
   List<Widget> _buildCalendarWeeks(
-    BuildContext context, 
-    NepaliDateTime selectedDate, 
-    NepaliDateTime today, 
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    NepaliDateTime today,
     ({int daysInMonth, int startWeekday}) monthData,
   ) {
     final weeks = <Widget>[];
@@ -478,8 +557,9 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (dayIndex) {
-              final dayNumber = weekIndex * 7 + dayIndex - monthData.startWeekday + 1;
-              
+              final dayNumber =
+                  weekIndex * 7 + dayIndex - monthData.startWeekday + 1;
+
               if (dayNumber < 1 || dayNumber > monthData.daysInMonth) {
                 return const Expanded(child: SizedBox(height: 44));
               }
@@ -490,19 +570,30 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
         ),
       );
     }
-    
+
     return weeks;
   }
 
-  Widget _buildDayCell(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today, int dayNumber) {
-    final isToday = today.year == selectedDate.year &&
+  Widget _buildDayCell(
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    NepaliDateTime today,
+    int dayNumber,
+  ) {
+    final isToday =
+        today.year == selectedDate.year &&
         today.month == selectedDate.month &&
         today.day == dayNumber;
 
     // Check if this specific date is Saturday by converting to AD
-    final currentDate = NepaliDateTime(selectedDate.year, selectedDate.month, dayNumber);
+    final currentDate = NepaliDateTime(
+      selectedDate.year,
+      selectedDate.month,
+      dayNumber,
+    );
     final currentDateAD = currentDate.toDateTime();
-    final isSaturday = currentDateAD.weekday == 6; // 6 = Saturday in Dart DateTime
+    final isSaturday =
+        currentDateAD.weekday == 6; // 6 = Saturday in Dart DateTime
 
     return Expanded(
       child: InkWell(
@@ -521,13 +612,11 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
             color: isToday
                 ? ModernTheme.primaryOrange
                 : isSaturday
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : Colors.transparent,
+                ? Colors.red.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isToday
-                  ? ModernTheme.primaryOrange
-                  : Colors.transparent,
+              color: isToday ? ModernTheme.primaryOrange : Colors.transparent,
             ),
           ),
           child: Center(
@@ -537,8 +626,8 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
                 color: isToday
                     ? Colors.white
                     : isSaturday
-                        ? Colors.red
-                        : Theme.of(context).colorScheme.onSurface,
+                    ? Colors.red
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
               ),
@@ -549,7 +638,11 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
     );
   }
 
-  Widget _buildYearView(BuildContext context, NepaliDateTime selectedDate, NepaliDateTime today) {
+  Widget _buildYearView(
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    NepaliDateTime today,
+  ) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -562,14 +655,27 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
       itemCount: 12,
       itemBuilder: (context, index) {
         final month = index + 1;
-        final isCurrentMonth = today.year == selectedDate.year && today.month == month;
+        final isCurrentMonth =
+            today.year == selectedDate.year && today.month == month;
 
-        return _buildMonthCard(context, selectedDate, month, isCurrentMonth, index);
+        return _buildMonthCard(
+          context,
+          selectedDate,
+          month,
+          isCurrentMonth,
+          index,
+        );
       },
     );
   }
 
-  Widget _buildMonthCard(BuildContext context, NepaliDateTime selectedDate, int month, bool isCurrentMonth, int index) {
+  Widget _buildMonthCard(
+    BuildContext context,
+    NepaliDateTime selectedDate,
+    int month,
+    bool isCurrentMonth,
+    int index,
+  ) {
     return InkWell(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = NepaliDateTime(
@@ -593,9 +699,10 @@ class _NepaliCalendarScreenState extends ConsumerState<NepaliCalendarScreen> {
         ),
         child: Center(
           child: Text(
-            NepaliDateFormat('MMMM', Language.nepali).format(
-              NepaliDateTime(selectedDate.year, month),
-            ),
+            NepaliDateFormat(
+              'MMMM',
+              Language.nepali,
+            ).format(NepaliDateTime(selectedDate.year, month)),
             style: TextStyle(
               color: isCurrentMonth
                   ? ModernTheme.primaryOrange

@@ -24,13 +24,15 @@ final filteredEventsProvider = Provider<AsyncValue<List<Event>>>((ref) {
   return eventsAsync.whenData((events) {
     return events.where((event) {
       // Search filter
-      final matchesSearch = event.title.toLowerCase().contains(searchQuery) ||
+      final matchesSearch =
+          event.title.toLowerCase().contains(searchQuery) ||
           (event.description?.toLowerCase().contains(searchQuery) ?? false);
-      
+
       // Category filter
       final matchesCategory =
-          selectedCategory == 'all' || event.category.toLowerCase() == selectedCategory.toLowerCase();
-      
+          selectedCategory == 'all' ||
+          event.category.toLowerCase() == selectedCategory.toLowerCase();
+
       return matchesSearch && matchesCategory;
     }).toList();
   });
@@ -71,14 +73,16 @@ class EnhancedEventsScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
-              onChanged: (value) => ref.read(searchQueryProvider.notifier).state = value,
+              onChanged: (value) =>
+                  ref.read(searchQueryProvider.notifier).state = value,
               decoration: InputDecoration(
                 hintText: 'Search events...',
                 prefixIcon: const Icon(Iconsax.search_normal_1),
                 suffixIcon: searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Iconsax.close_circle),
-                        onPressed: () => ref.read(searchQueryProvider.notifier).state = '',
+                        onPressed: () =>
+                            ref.read(searchQueryProvider.notifier).state = '',
                       )
                     : null,
                 border: OutlineInputBorder(
@@ -86,8 +90,13 @@ class EnhancedEventsScreen extends ConsumerWidget {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
@@ -107,13 +116,18 @@ class EnhancedEventsScreen extends ConsumerWidget {
                   label: Text(category == 'all' ? 'All' : category),
                   selected: isSelected,
                   onSelected: (selected) {
-                    ref.read(selectedCategoryProvider.notifier).state = category;
+                    ref.read(selectedCategoryProvider.notifier).state =
+                        category;
                   },
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   selectedColor: ModernTheme.primaryOrange,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
@@ -121,15 +135,22 @@ class EnhancedEventsScreen extends ConsumerWidget {
                     side: BorderSide(
                       color: isSelected
                           ? ModernTheme.primaryOrange
-                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? ModernTheme.primaryOrange
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 );
               },
             ),
@@ -149,20 +170,24 @@ class EnhancedEventsScreen extends ConsumerWidget {
                         Icon(
                           Iconsax.calendar_remove,
                           size: 64,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No events found',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Try adjusting your search or filter',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -177,7 +202,8 @@ class EnhancedEventsScreen extends ConsumerWidget {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: events.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       return _EventCard(event: events[index]);
                     },
@@ -187,12 +213,14 @@ class EnhancedEventsScreen extends ConsumerWidget {
               loading: () => ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: 6,
-                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 16),
                 itemBuilder: (context, index) => const EventCardSkeleton(),
               ),
               error: (error, stack) {
                 // Check if it's a network error
-                final isNetworkError = error.toString().contains('No internet connection') ||
+                final isNetworkError =
+                    error.toString().contains('No internet connection') ||
                     error.toString().contains('SocketException') ||
                     error.toString().contains('Failed host lookup');
 
@@ -204,15 +232,17 @@ class EnhancedEventsScreen extends ConsumerWidget {
                         isNetworkError ? Iconsax.wifi_square : Iconsax.danger,
                         size: 64,
                         color: isNetworkError
-                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.5)
                             : Theme.of(context).colorScheme.error,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isNetworkError ? 'No Internet Connection' : 'Error loading events',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        isNetworkError
+                            ? 'No Internet Connection'
+                            : 'Error loading events',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Padding(
@@ -221,8 +251,11 @@ class EnhancedEventsScreen extends ConsumerWidget {
                           isNetworkError
                               ? 'Please check your internet connection and try again'
                               : 'Something went wrong. Please try again',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           textAlign: TextAlign.center,
                         ),
@@ -353,13 +386,18 @@ class _EventCard extends StatelessWidget {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _getCategoryColor(event.category),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: _getCategoryColor(event.category).withValues(alpha: 0.4),
+                          color: _getCategoryColor(
+                            event.category,
+                          ).withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -380,13 +418,20 @@ class _EventCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(event.status).withValues(alpha: 0.95),
+                      color: _getStatusColor(
+                        event.status,
+                      ).withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: _getStatusColor(event.status).withValues(alpha: 0.4),
+                          color: _getStatusColor(
+                            event.status,
+                          ).withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -422,7 +467,10 @@ class _EventCard extends StatelessWidget {
                     bottom: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -466,9 +514,9 @@ class _EventCard extends StatelessWidget {
                   Text(
                     event.title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -502,11 +550,16 @@ class _EventCard extends StatelessWidget {
                                     'Start',
                                     style: TextStyle(
                                       fontSize: 9,
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
                                     ),
                                   ),
                                   Text(
-                                    DateFormat('MMM dd, yyyy • hh:mm a').format(event.startDate),
+                                    DateFormat(
+                                      'MMM dd, yyyy • hh:mm a',
+                                    ).format(event.startDate),
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -535,11 +588,16 @@ class _EventCard extends StatelessWidget {
                                       'End',
                                       style: TextStyle(
                                         fontSize: 9,
-                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
                                       ),
                                     ),
                                     Text(
-                                      DateFormat('MMM dd, yyyy • hh:mm a').format(event.endDate!),
+                                      DateFormat(
+                                        'MMM dd, yyyy • hh:mm a',
+                                      ).format(event.endDate!),
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -571,9 +629,9 @@ class _EventCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               event.location!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 12,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(fontSize: 12),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -588,7 +646,10 @@ class _EventCard extends StatelessWidget {
                       // Team Type
                       if (event.teamType == 'team')
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -599,7 +660,11 @@ class _EventCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Iconsax.people, size: 11, color: Colors.blue),
+                              const Icon(
+                                Iconsax.people,
+                                size: 11,
+                                color: Colors.blue,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Team ${event.teamSizeMin}-${event.teamSizeMax}',
@@ -614,9 +679,13 @@ class _EventCard extends StatelessWidget {
                         ),
                       const Spacer(),
                       // Registration Fee
-                      if (event.registrationFee != null && event.registrationFee! > 0)
+                      if (event.registrationFee != null &&
+                          event.registrationFee! > 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             gradient: ModernTheme.orangeGradient,
                             borderRadius: BorderRadius.circular(6),
@@ -624,7 +693,11 @@ class _EventCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Iconsax.wallet, size: 11, color: Colors.white),
+                              const Icon(
+                                Iconsax.wallet,
+                                size: 11,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'NPR ${event.registrationFee!.toStringAsFixed(0)}',
@@ -654,7 +727,10 @@ class _EventCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_getCategoryColor(event.category), _getCategoryColor(event.category).withValues(alpha: 0.7)],
+          colors: [
+            _getCategoryColor(event.category),
+            _getCategoryColor(event.category).withValues(alpha: 0.7),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

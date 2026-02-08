@@ -15,21 +15,22 @@ class TapMasterGameScreen extends StatefulWidget {
   State<TapMasterGameScreen> createState() => _TapMasterGameScreenState();
 }
 
-class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerProviderStateMixin {
+class _TapMasterGameScreenState extends State<TapMasterGameScreen>
+    with TickerProviderStateMixin {
   final _repository = GameRepository();
   final _random = Random();
-  
+
   // Game state
   bool _isPlaying = false;
   GameState _state = GameState.waiting;
   int _round = 0;
   final int _totalRounds = 5;
   List<int> _reactionTimes = [];
-  
+
   // Timing
   DateTime? _greenTime;
   Timer? _delayTimer;
-  
+
   // Animation
   late AnimationController _pulseController;
 
@@ -55,7 +56,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
       _round = 0;
       _reactionTimes = [];
     });
-    
+
     _startRound();
   }
 
@@ -64,10 +65,10 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
       _round++;
       _state = GameState.waiting;
     });
-    
+
     // Random delay between 1-4 seconds
     final delay = 1000 + _random.nextInt(3000);
-    
+
     _delayTimer = Timer(Duration(milliseconds: delay), () {
       if (mounted) {
         setState(() {
@@ -84,7 +85,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
       _delayTimer?.cancel();
       HapticFeedback.heavyImpact();
       setState(() => _state = GameState.tooEarly);
-      
+
       Future.delayed(const Duration(seconds: 2), () {
         if (_round < _totalRounds) {
           _startRound();
@@ -94,14 +95,16 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
       });
     } else if (_state == GameState.ready) {
       // Perfect! Calculate reaction time
-      final reactionTime = DateTime.now().difference(_greenTime!).inMilliseconds;
+      final reactionTime = DateTime.now()
+          .difference(_greenTime!)
+          .inMilliseconds;
       HapticFeedback.lightImpact();
-      
+
       setState(() {
         _reactionTimes.add(reactionTime);
         _state = GameState.result;
       });
-      
+
       Future.delayed(const Duration(seconds: 2), () {
         if (_round < _totalRounds) {
           _startRound();
@@ -114,22 +117,25 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
 
   void _endGame() {
     setState(() => _isPlaying = false);
-    
+
     if (_reactionTimes.isNotEmpty) {
-      final avgTime = _reactionTimes.reduce((a, b) => a + b) ~/ _reactionTimes.length;
+      final avgTime =
+          _reactionTimes.reduce((a, b) => a + b) ~/ _reactionTimes.length;
       final bestTime = _reactionTimes.reduce(min);
-      
+
       // Score based on average reaction time (lower is better)
       final score = max(0, 1000 - avgTime);
-      
-      _repository.saveScore(GameScore(
-        gameId: 'tap_master',
-        score: score,
-        timestamp: DateTime.now(),
-        timeMs: bestTime,
-      ));
+
+      _repository.saveScore(
+        GameScore(
+          gameId: 'tap_master',
+          score: score,
+          timestamp: DateTime.now(),
+          timeMs: bestTime,
+        ),
+      );
     }
-    
+
     _showGameOverDialog();
   }
 
@@ -138,11 +144,12 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
       Navigator.pop(context);
       return;
     }
-    
-    final avgTime = _reactionTimes.reduce((a, b) => a + b) ~/ _reactionTimes.length;
+
+    final avgTime =
+        _reactionTimes.reduce((a, b) => a + b) ~/ _reactionTimes.length;
     final bestTime = _reactionTimes.reduce(min);
     final worstTime = _reactionTimes.reduce(max);
-    
+
     String rating = '';
     if (avgTime < 200) {
       rating = '🚀 Lightning Fast!';
@@ -155,17 +162,13 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
     } else {
       rating = '🐌 Keep Practicing!';
     }
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Row(
-          children: [
-            Text('⚡'),
-            SizedBox(width: 8),
-            Text('Results'),
-          ],
+          children: [Text('⚡'), SizedBox(width: 8), Text('Results')],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -182,15 +185,16 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             const SizedBox(height: 8),
             Text(
               rating,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildStatRow('🏆', 'Best', '${bestTime}ms'),
             _buildStatRow('📊', 'Worst', '${worstTime}ms'),
-            _buildStatRow('✅', 'Completed', '${_reactionTimes.length}/$_totalRounds'),
+            _buildStatRow(
+              '✅',
+              'Completed',
+              '${_reactionTimes.length}/$_totalRounds',
+            ),
           ],
         ),
         actions: [
@@ -230,10 +234,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
               Text(label),
             ],
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -244,23 +245,17 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
     if (!_isPlaying) {
       return _buildStartScreen();
     }
-    
+
     return Scaffold(
       body: GestureDetector(
         onTap: _handleTap,
         child: Container(
-          decoration: BoxDecoration(
-            color: _getBackgroundColor(),
-          ),
+          decoration: BoxDecoration(color: _getBackgroundColor()),
           child: SafeArea(
             child: Column(
               children: [
                 _buildGameHeader(),
-                Expanded(
-                  child: Center(
-                    child: _buildGameContent(),
-                  ),
-                ),
+                Expanded(child: Center(child: _buildGameContent())),
               ],
             ),
           ),
@@ -284,9 +279,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
 
   Widget _buildStartScreen() {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tap Master'),
-      ),
+      appBar: AppBar(title: const Text('Tap Master')),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -304,17 +297,11 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '⚡',
-                  style: TextStyle(fontSize: 80),
-                ),
+                const Text('⚡', style: TextStyle(fontSize: 80)),
                 const SizedBox(height: 20),
                 const Text(
                   'Tap Master',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -330,7 +317,9 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -345,7 +334,10 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
                       ),
                       const SizedBox(height: 12),
                       _buildInstruction('🔴', 'Wait for RED screen'),
-                      _buildInstruction('🟢', 'When it turns GREEN, TAP immediately!'),
+                      _buildInstruction(
+                        '🟢',
+                        'When it turns GREEN, TAP immediately!',
+                      ),
                       _buildInstruction('⚠️', 'Tap too early = penalty'),
                       _buildInstruction('📊', '5 rounds to test your reflexes'),
                       _buildInstruction('🏆', 'Lower time = better score!'),
@@ -355,14 +347,20 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
                 const SizedBox(height: 40),
                 ScaleTransition(
                   scale: Tween<double>(begin: 1.0, end: 1.1).animate(
-                    CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+                    CurvedAnimation(
+                      parent: _pulseController,
+                      curve: Curves.easeInOut,
+                    ),
                   ),
                   child: ElevatedButton(
                     onPressed: _startGame,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 60,
+                        vertical: 20,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -400,12 +398,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
         children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
@@ -473,14 +466,11 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             SizedBox(height: 12),
             Text(
               'Get ready to tap!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ],
         );
-      
+
       case GameState.ready:
         return const Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -499,14 +489,11 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             SizedBox(height: 12),
             Text(
               'Tap anywhere!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ],
         );
-      
+
       case GameState.tooEarly:
         return const Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -525,14 +512,11 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             SizedBox(height: 12),
             Text(
               'Wait for green!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ],
         );
-      
+
       case GameState.result:
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -550,10 +534,7 @@ class _TapMasterGameScreenState extends State<TapMasterGameScreen> with TickerPr
             const SizedBox(height: 12),
             Text(
               _getRating(_reactionTimes.last),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
           ],
         );

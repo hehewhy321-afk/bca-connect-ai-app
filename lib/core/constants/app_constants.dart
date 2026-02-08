@@ -2,7 +2,8 @@ class AppConstants {
   // App Info
   static const String appName = 'BCA MMAMC';
   static const String appVersion = '1.0.0';
-  static const String appDescription = 'BCA Association MMAMC - Student Platform';
+  static const String appDescription =
+      'BCA Association MMAMC - Student Platform';
 
   // API Endpoints
   static const String aiChatFunction = 'ai-chat';
@@ -44,7 +45,8 @@ class AppConstants {
   // Notifications
   static const String notificationChannelId = 'bca_notifications';
   static const String notificationChannelName = 'BCA Notifications';
-  static const String notificationChannelDescription = 'Notifications from BCA MMAMC';
+  static const String notificationChannelDescription =
+      'Notifications from BCA MMAMC';
 
   // Local Storage Keys
   static const String keyAuthToken = 'auth_token';

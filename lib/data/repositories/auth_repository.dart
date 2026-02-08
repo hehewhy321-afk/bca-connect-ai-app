@@ -36,7 +36,7 @@ class AuthRepository {
   // Sign out
   Future<void> signOut() async {
     await _client.auth.signOut();
-    
+
     // Clear saved credentials when user manually logs out
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('remember_me');

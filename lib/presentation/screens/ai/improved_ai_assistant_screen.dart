@@ -19,16 +19,20 @@ import '../../../core/constants/easter_eggs.dart';
 import '../../widgets/easter_egg_widget.dart';
 
 enum AIMode { chat, image }
+
 enum ConnectionStatus { idle, connecting, wakingUp, streaming }
 
 class ImprovedAIAssistantScreen extends ConsumerStatefulWidget {
   const ImprovedAIAssistantScreen({super.key});
 
   @override
-  ConsumerState<ImprovedAIAssistantScreen> createState() => _ImprovedAIAssistantScreenState();
+  ConsumerState<ImprovedAIAssistantScreen> createState() =>
+      _ImprovedAIAssistantScreenState();
 }
 
-class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantScreen> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _ImprovedAIAssistantScreenState
+    extends ConsumerState<ImprovedAIAssistantScreen>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -38,7 +42,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   StreamingStatus? _streamingStatus;
   ConnectionStatus _connectionStatus = ConnectionStatus.idle;
   Timer? _wakingUpTimer;
-  
+
   // Enhanced Voice input with real-time transcription
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -61,7 +65,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     // Initialize animation controllers
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -75,41 +79,29 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     // Create animations
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.3,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.easeInOut,
-    ));
-    
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
     // Icon animations
-    _iconRotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 0.1, // Slight rotation
-    ).animate(CurvedAnimation(
-      parent: _iconController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _iconScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _iconController,
-      curve: Curves.elasticOut,
-    ));
-    
+    _iconRotationAnimation =
+        Tween<double>(
+          begin: 0.0,
+          end: 0.1, // Slight rotation
+        ).animate(
+          CurvedAnimation(parent: _iconController, curve: Curves.easeInOut),
+        );
+
+    _iconScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.elasticOut),
+    );
+
     _initSpeech();
     _messageController.addListener(() {
       setState(() {}); // Rebuild to update send button color
@@ -140,7 +132,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
     _speech = stt.SpeechToText();
     try {
       final status = await Permission.microphone.status;
-      
+
       if (status.isGranted) {
         _speechAvailable = await _speech.initialize(
           onError: (error) {
@@ -162,7 +154,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
             }
           },
         );
-        
+
         if (_speechAvailable) {
           final locales = await _speech.locales();
           if (locales.isEmpty) {
@@ -172,7 +164,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       } else {
         _speechAvailable = false;
       }
-      
+
       if (mounted) setState(() {});
     } catch (e) {
       _speechAvailable = false;
@@ -183,11 +175,11 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   Future<void> _toggleListening() async {
     // Check current permission status
     final status = await Permission.microphone.status;
-    
+
     if (status.isDenied) {
       // Request permission directly
       final result = await Permission.microphone.request();
-      
+
       if (result.isGranted) {
         // Permission granted, initialize speech and start listening
         await _initSpeech();
@@ -197,7 +189,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Speech recognition not available on this device'),
+                content: Text(
+                  'Speech recognition not available on this device',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -211,7 +205,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Microphone permission is required for voice input'),
+              content: Text(
+                'Microphone permission is required for voice input',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -279,32 +275,34 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       _interimTranscript = '';
       _finalTranscript = '';
     });
-    
+
     // Start animations
     _pulseController.repeat(reverse: true);
     _scaleController.forward();
     _iconController.repeat(reverse: true);
-    
+
     // Show feedback to user
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('🎤 Listening... Speak in any language! Tap again to stop.'),
+        content: Text(
+          '🎤 Listening... Speak in any language! Tap again to stop.',
+        ),
         backgroundColor: Colors.blue,
         duration: Duration(seconds: 3),
       ),
     );
-    
+
     _startSpeechRecognition();
   }
 
   Future<void> _startSpeechRecognition() async {
     if (!_shouldKeepListening || !mounted) return;
-    
+
     try {
       // Get available locales and find the best one for multi-language support
       final locales = await _speech.locales();
       String? selectedLocale;
-      
+
       // Try to find a locale that supports multiple languages or use system default
       for (final locale in locales) {
         // Look for system default or English as fallback
@@ -313,12 +311,12 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
           break;
         }
       }
-      
+
       // If no English found, use the first available locale
       if (selectedLocale == null && locales.isNotEmpty) {
         selectedLocale = locales.first.localeId;
       }
-      
+
       await _speech.listen(
         onResult: (result) {
           if (mounted && _shouldKeepListening) {
@@ -327,7 +325,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                 // Final result - this is the confirmed transcription
                 _finalTranscript = result.recognizedWords;
                 _interimTranscript = '';
-                
+
                 // Auto-restart listening after getting final result
                 if (_shouldKeepListening) {
                   Future.delayed(const Duration(milliseconds: 500), () {
@@ -370,16 +368,16 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   void _stopListening() {
     _shouldKeepListening = false; // Disable continuous listening
     _speech.stop();
-    
+
     // Stop animations
     _pulseController.stop();
     _scaleController.reverse();
     _iconController.stop();
     _iconController.reset();
-    
+
     setState(() {
       _isListening = false;
-      
+
       // Add both final and interim transcript to input field
       String transcriptToAdd = '';
       if (_finalTranscript.isNotEmpty) {
@@ -387,25 +385,25 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       } else if (_interimTranscript.isNotEmpty) {
         transcriptToAdd = _interimTranscript;
       }
-      
+
       if (transcriptToAdd.isNotEmpty) {
         final currentText = _messageController.text.trim();
         final newText = currentText.isEmpty
             ? transcriptToAdd
             : '$currentText $transcriptToAdd';
         _messageController.text = newText;
-        
+
         // Move cursor to end
         _messageController.selection = TextSelection.fromPosition(
           TextPosition(offset: _messageController.text.length),
         );
       }
-      
+
       // Clear transcripts
       _finalTranscript = '';
       _interimTranscript = '';
     });
-    
+
     // Show feedback to user
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -438,14 +436,14 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       _streamingStatus = null;
       _connectionStatus = ConnectionStatus.idle;
     });
-    
+
     // Remove the last assistant message if it's incomplete
     if (_messages.isNotEmpty && !_messages.last.isUser) {
       setState(() {
         _messages.removeLast();
       });
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generation cancelled'),
@@ -457,50 +455,57 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
 
   String _getUserFriendlyError(dynamic error) {
     final errorString = error.toString().toLowerCase();
-    
-    if (errorString.contains('socketexception') || 
+
+    if (errorString.contains('socketexception') ||
         errorString.contains('failed host lookup') ||
         errorString.contains('no address associated with hostname') ||
         errorString.contains('network is unreachable')) {
       return '🌐 No internet connection. Please check your network and try again.';
     }
-    
+
     if (errorString.contains('timeout') || errorString.contains('timed out')) {
       return '⏱️ Request timed out. The server is taking too long to respond. Please try again.';
     }
-    
-    if (errorString.contains('connection refused') || errorString.contains('connection reset')) {
+
+    if (errorString.contains('connection refused') ||
+        errorString.contains('connection reset')) {
       return '🔌 Unable to connect to the server. Please check your internet connection.';
     }
-    
+
     if (errorString.contains('unauthorized') || errorString.contains('401')) {
       return '🔐 Session expired. Please log out and log in again.';
     }
-    
+
     if (errorString.contains('forbidden') || errorString.contains('403')) {
       return '🚫 Access denied. You don\'t have permission to use this feature.';
     }
-    
-    if (errorString.contains('rate limit') || errorString.contains('too many requests') || errorString.contains('429')) {
+
+    if (errorString.contains('rate limit') ||
+        errorString.contains('too many requests') ||
+        errorString.contains('429')) {
       return '⏳ Too many requests. Please wait a moment and try again.';
     }
-    
-    if (errorString.contains('500') || errorString.contains('internal server error')) {
+
+    if (errorString.contains('500') ||
+        errorString.contains('internal server error')) {
       return '⚠️ Server error. Our team has been notified. Please try again later.';
     }
-    
-    if (errorString.contains('503') || errorString.contains('service unavailable')) {
+
+    if (errorString.contains('503') ||
+        errorString.contains('service unavailable')) {
       return '🔧 Service temporarily unavailable. Please try again in a few minutes.';
     }
-    
-    if (errorString.contains('credits exhausted') || errorString.contains('quota exceeded')) {
+
+    if (errorString.contains('credits exhausted') ||
+        errorString.contains('quota exceeded')) {
       return '💳 AI credits exhausted. Please contact the administrator.';
     }
-    
-    if (errorString.contains('invalid api key') || errorString.contains('api key')) {
+
+    if (errorString.contains('invalid api key') ||
+        errorString.contains('api key')) {
       return '🔑 AI service configuration error. Please contact support.';
     }
-    
+
     return '❌ Unable to process your request. Please try again.';
   }
 
@@ -547,10 +552,12 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
         throw Exception('Please log in to use the AI assistant');
       }
 
-      final supabaseUrl = const String.fromEnvironment('SUPABASE_URL', 
-        defaultValue: 'https://xtpkzqeylypdsxspmbmg.supabase.co');
+      final supabaseUrl = const String.fromEnvironment(
+        'SUPABASE_URL',
+        defaultValue: 'https://xtpkzqeylypdsxspmbmg.supabase.co',
+      );
       final url = '$supabaseUrl/functions/v1/ai-chat';
-      
+
       final dio = Dio();
       final response = await dio.post(
         url,
@@ -562,10 +569,14 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
           validateStatus: (status) => true,
         ),
         data: {
-          'messages': _messages.map((m) => {
-            'role': m.isUser ? 'user' : 'assistant',
-            'content': m.text,
-          }).toList(),
+          'messages': _messages
+              .map(
+                (m) => {
+                  'role': m.isUser ? 'user' : 'assistant',
+                  'content': m.text,
+                },
+              )
+              .toList(),
           'mode': _mode == AIMode.image ? 'image' : 'chat',
         },
       );
@@ -585,28 +596,32 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       if (response.statusCode != 200) {
         final errorData = response.data;
         final errorCode = errorData['code'];
-        
+
         String errorMessage = errorData['error'] ?? 'Failed to get response';
-        
+
         if (errorCode == 'RATE_LIMITED') {
-          errorMessage = 'Rate Limited: Too many requests. Please wait a moment and try again.';
+          errorMessage =
+              'Rate Limited: Too many requests. Please wait a moment and try again.';
         } else if (errorCode == 'CREDITS_EXHAUSTED') {
-          errorMessage = 'Credits Exhausted: AI credits exhausted. Please contact admin.';
+          errorMessage =
+              'Credits Exhausted: AI credits exhausted. Please contact admin.';
         } else if (errorCode == 'INVALID_API_KEY') {
           errorMessage = 'Invalid API Key: Please check AI settings.';
         }
-        
+
         throw Exception(errorMessage);
       }
 
       // Check if it's an image response
       final contentType = response.headers.value('content-type');
       if (contentType?.contains('application/json') == true) {
-        final jsonData = response.data is String ? jsonDecode(response.data) : response.data;
-        
+        final jsonData = response.data is String
+            ? jsonDecode(response.data)
+            : response.data;
+
         if (jsonData['type'] == 'image') {
           String? imageUrl;
-          
+
           if (jsonData['output'] is String) {
             imageUrl = jsonData['output'];
           } else if (jsonData['output']?['url'] != null) {
@@ -614,10 +629,10 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
           } else if (jsonData['output']?['image_url'] != null) {
             imageUrl = jsonData['output']['image_url'];
           }
-          
+
           if (mounted) {
             _wakingUpTimer?.cancel();
-            
+
             // Save image to database
             if (imageUrl != null) {
               await _saveImageToDatabase(
@@ -627,19 +642,21 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                 model: jsonData['model'],
               );
             }
-            
+
             setState(() {
               _connectionStatus = ConnectionStatus.idle;
-              _messages.add(ChatMessage(
-                id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
-                text: 'Generated image for: "${jsonData['prompt']}"',
-                isUser: false,
-                timestamp: DateTime.now(),
-                type: MessageType.image,
-                imageUrl: imageUrl,
-                provider: jsonData['provider'],
-                model: jsonData['model'],
-              ));
+              _messages.add(
+                ChatMessage(
+                  id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+                  text: 'Generated image for: "${jsonData['prompt']}"',
+                  isUser: false,
+                  timestamp: DateTime.now(),
+                  type: MessageType.image,
+                  imageUrl: imageUrl,
+                  provider: jsonData['provider'],
+                  model: jsonData['model'],
+                ),
+              );
               _isLoading = false;
               _streamingStatus = null;
             });
@@ -659,13 +676,15 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
         final friendlyError = _getUserFriendlyError(e);
         setState(() {
           _connectionStatus = ConnectionStatus.idle;
-          _messages.add(ChatMessage(
-            id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
-            text: friendlyError,
-            isUser: false,
-            timestamp: DateTime.now(),
-            type: MessageType.text,
-          ));
+          _messages.add(
+            ChatMessage(
+              id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+              text: friendlyError,
+              isUser: false,
+              timestamp: DateTime.now(),
+              type: MessageType.text,
+            ),
+          );
           _isLoading = false;
           _streamingStatus = null;
         });
@@ -674,44 +693,50 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
     }
   }
 
-  Future<void> _handleStreamingResponse(Response response, String provider, String model) async {
+  Future<void> _handleStreamingResponse(
+    Response response,
+    String provider,
+    String model,
+  ) async {
     final assistantId = (DateTime.now().millisecondsSinceEpoch + 1).toString();
-    
+
     _wakingUpTimer?.cancel();
-    
+
     setState(() {
       _connectionStatus = ConnectionStatus.streaming;
-      _messages.add(ChatMessage(
-        id: assistantId,
-        text: '',
-        isUser: false,
-        timestamp: DateTime.now(),
-        type: MessageType.text,
-        provider: provider,
-        model: model,
-      ));
+      _messages.add(
+        ChatMessage(
+          id: assistantId,
+          text: '',
+          isUser: false,
+          timestamp: DateTime.now(),
+          type: MessageType.text,
+          provider: provider,
+          model: model,
+        ),
+      );
     });
 
     try {
       final lines = (response.data as String).split('\n');
       String fullText = '';
-      
+
       for (final line in lines) {
         if (!mounted || _isCancelled) break;
-        
+
         if (line.startsWith('data: ')) {
           final data = line.substring(6);
           if (data == '[DONE]') break;
-          
+
           try {
             final json = jsonDecode(data);
             final content = json['choices']?[0]?['delta']?['content'];
-            
+
             if (content != null) {
               fullText += content;
-              
+
               if (_isCancelled) break;
-              
+
               setState(() {
                 final index = _messages.indexWhere((m) => m.id == assistantId);
                 if (index != -1) {
@@ -721,7 +746,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                   );
                 }
               });
-              
+
               _scrollToBottom();
               await Future.delayed(const Duration(milliseconds: 10));
             }
@@ -736,7 +761,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
         setState(() {
           final index = _messages.indexWhere((m) => m.id == assistantId);
           if (index != -1) {
-            _messages[index] = _messages[index].copyWith(text: response.data.toString());
+            _messages[index] = _messages[index].copyWith(
+              text: response.data.toString(),
+            );
           }
         });
       }
@@ -763,7 +790,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
       final user = SupabaseConfig.client.auth.currentUser;
       if (user == null) return;
 
-      final modelUsed = provider != null && model != null ? '$provider:$model' : null;
+      final modelUsed = provider != null && model != null
+          ? '$provider:$model'
+          : null;
 
       await SupabaseConfig.client.from('ai_generated_images').insert({
         'user_id': user.id,
@@ -803,27 +832,29 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
 
   Future<void> _downloadChat() async {
     if (_messages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No messages to download')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No messages to download')));
       return;
     }
 
     try {
       final html = _generateChatHTML();
-      final fileName = 'ai-chat-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.html';
-      
+      final fileName =
+          'ai-chat-${DateFormat('yyyy-MM-dd-HHmmss').format(DateTime.now())}.html';
+
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/$fileName');
       await file.writeAsString(html);
-      
+
       // Share the file
       // ignore: deprecated_member_use
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
+        subject:
+            'AI Chat Conversation - ${DateFormat('MMM d, y').format(DateTime.now())}',
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -845,28 +876,31 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
   }
 
   String _generateChatHTML() {
-    final messagesHtml = _messages.map((message) {
-      final isUser = message.isUser;
-      final avatar = isUser ? '👤' : '🤖';
-      final role = isUser ? 'user' : 'assistant';
-      
-      String contentHtml = message.text
-          .replaceAll('&', '&amp;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;')
-          .replaceAll('\n', '<br>');
-      
-      String imageHtml = '';
-      if (message.type == MessageType.image && message.imageUrl != null) {
-        imageHtml = '<img src="${message.imageUrl}" alt="Generated image" class="message-image" />';
-      }
-      
-      String metaHtml = '';
-      if (!isUser && message.provider != null) {
-        metaHtml = '<div class="message-meta"><span class="badge provider">${message.provider}:${message.model}</span></div>';
-      }
-      
-      return '''
+    final messagesHtml = _messages
+        .map((message) {
+          final isUser = message.isUser;
+          final avatar = isUser ? '👤' : '🤖';
+          final role = isUser ? 'user' : 'assistant';
+
+          String contentHtml = message.text
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('\n', '<br>');
+
+          String imageHtml = '';
+          if (message.type == MessageType.image && message.imageUrl != null) {
+            imageHtml =
+                '<img src="${message.imageUrl}" alt="Generated image" class="message-image" />';
+          }
+
+          String metaHtml = '';
+          if (!isUser && message.provider != null) {
+            metaHtml =
+                '<div class="message-meta"><span class="badge provider">${message.provider}:${message.model}</span></div>';
+          }
+
+          return '''
         <div class="message $role">
           <div class="avatar $role">$avatar</div>
           <div class="message-content">
@@ -878,8 +912,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
           </div>
         </div>
       ''';
-    }).join('\n');
-    
+        })
+        .join('\n');
+
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -1052,7 +1087,11 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                   gradient: ModernTheme.orangeGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Iconsax.message_programming, color: Colors.white, size: 20),
+                child: const Icon(
+                  Iconsax.message_programming,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -1062,7 +1101,10 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                     Text('AI Study Assistant', style: TextStyle(fontSize: 16)),
                     Text(
                       'Chat, Voice & Image Generation',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.normal),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.normal,
+                      ),
                     ),
                   ],
                 ),
@@ -1140,38 +1182,46 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                           _connectionStatus == ConnectionStatus.connecting
                               ? 'Connecting...'
                               : _connectionStatus == ConnectionStatus.wakingUp
-                                  ? 'Thinking...'
-                                  : 'Generating response...',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: ModernTheme.primaryOrange,
-                          ),
+                              ? 'Thinking...'
+                              : 'Generating response...',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: ModernTheme.primaryOrange,
+                              ),
                         ),
                         if (_streamingStatus?.provider.isNotEmpty == true)
                           Row(
                             children: [
                               Text(
                                 '${_streamingStatus?.provider} • ${_streamingStatus?.model}',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontSize: 10,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                               if (_streamingStatus!.tokensPerSecond > 0) ...[
                                 Text(
                                   ' • ',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 10,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontSize: 10,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                                 Text(
                                   '~${_streamingStatus!.tokensPerSecond} tokens/sec',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 10,
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontSize: 10,
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                               ],
                             ],
@@ -1186,7 +1236,10 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                       onTap: _cancelGeneration,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -1220,7 +1273,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                 ],
               ),
             ),
-          
+
           // Messages Area
           Expanded(
             child: _messages.isEmpty
@@ -1228,7 +1281,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length + (_isLoading && _messages.last.isUser ? 1 : 0),
+                    itemCount:
+                        _messages.length +
+                        (_isLoading && _messages.last.isUser ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == _messages.length && _isLoading) {
                         return const _TypingIndicator();
@@ -1237,7 +1292,7 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                     },
                   ),
           ),
-          
+
           // Enhanced Input Area with Real-time Voice Feedback
           Container(
             padding: const EdgeInsets.all(16),
@@ -1245,7 +1300,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
               color: Theme.of(context).colorScheme.surface,
               border: Border(
                 top: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
             ),
@@ -1259,28 +1316,38 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                       height: 44,
                       decoration: BoxDecoration(
                         gradient: _mode == AIMode.image
-                            ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)])
+                            ? const LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                              )
                             : ModernTheme.orangeGradient,
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(
-                          _mode == AIMode.image ? Iconsax.gallery5 : Iconsax.message_programming,
+                          _mode == AIMode.image
+                              ? Iconsax.gallery5
+                              : Iconsax.message_programming,
                           color: Colors.white,
                           size: 20,
                         ),
-                        onPressed: _isLoading ? null : () {
-                          setState(() {
-                            _mode = _mode == AIMode.chat ? AIMode.image : AIMode.chat;
-                          });
-                        },
-                        tooltip: _mode == AIMode.chat ? 'Switch to Image Mode' : 'Switch to Chat Mode',
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _mode = _mode == AIMode.chat
+                                      ? AIMode.image
+                                      : AIMode.chat;
+                                });
+                              },
+                        tooltip: _mode == AIMode.chat
+                            ? 'Switch to Image Mode'
+                            : 'Switch to Chat Mode',
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // Enhanced Input Field with Real-time Voice Feedback
                     Expanded(
                       child: Stack(
@@ -1291,8 +1358,8 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                               hintText: _isListening
                                   ? 'Listening... Speak now!'
                                   : _mode == AIMode.image
-                                      ? 'Describe the image you want...'
-                                      : 'Message AI Assistant...',
+                                  ? 'Describe the image you want...'
+                                  : 'Message AI Assistant...',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide.none,
@@ -1300,7 +1367,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                               filled: true,
                               fillColor: _isListening
                                   ? Colors.red.withValues(alpha: 0.1)
-                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
                               contentPadding: const EdgeInsets.only(
                                 left: 20,
                                 right: 60, // Space for voice icon
@@ -1314,7 +1383,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                             enabled: !_isLoading,
                           ),
                           // Real-time transcript overlay
-                          if (_isListening && (_interimTranscript.isNotEmpty || _finalTranscript.isNotEmpty))
+                          if (_isListening &&
+                              (_interimTranscript.isNotEmpty ||
+                                  _finalTranscript.isNotEmpty))
                             Positioned(
                               left: 20,
                               top: 12,
@@ -1322,10 +1393,13 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                               child: Text(
                                 '${_messageController.text}${_messageController.text.isNotEmpty ? ' ' : ''}$_finalTranscript$_interimTranscript',
                                 style: TextStyle(
-                                  color: _interimTranscript.isNotEmpty 
-                                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.7)
+                                  color: _interimTranscript.isNotEmpty
+                                      ? Theme.of(context).colorScheme.primary
+                                            .withValues(alpha: 0.7)
                                       : Theme.of(context).colorScheme.onSurface,
-                                  fontStyle: _interimTranscript.isNotEmpty ? FontStyle.italic : FontStyle.normal,
+                                  fontStyle: _interimTranscript.isNotEmpty
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
                                 ),
                               ),
                             ),
@@ -1335,29 +1409,45 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                             top: 4,
                             bottom: 4,
                             child: AnimatedBuilder(
-                              animation: Listenable.merge([_pulseAnimation, _scaleAnimation, _iconController]),
+                              animation: Listenable.merge([
+                                _pulseAnimation,
+                                _scaleAnimation,
+                                _iconController,
+                              ]),
                               builder: (context, child) {
                                 return Transform.scale(
-                                  scale: _isListening ? _scaleAnimation.value : 1.0,
+                                  scale: _isListening
+                                      ? _scaleAnimation.value
+                                      : 1.0,
                                   child: Container(
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
                                       gradient: _isListening
-                                          ? const LinearGradient(colors: [Colors.red, Colors.pink])
+                                          ? const LinearGradient(
+                                              colors: [Colors.red, Colors.pink],
+                                            )
                                           : LinearGradient(
                                               colors: [
-                                                Colors.grey.withValues(alpha: 0.2),
-                                                Colors.grey.withValues(alpha: 0.1),
+                                                Colors.grey.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                                Colors.grey.withValues(
+                                                  alpha: 0.1,
+                                                ),
                                               ],
                                             ),
                                       shape: BoxShape.circle,
                                       boxShadow: _isListening
                                           ? [
                                               BoxShadow(
-                                                color: Colors.red.withValues(alpha: 0.3),
-                                                blurRadius: 8 * _pulseAnimation.value,
-                                                spreadRadius: 2 * _pulseAnimation.value,
+                                                color: Colors.red.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                                blurRadius:
+                                                    8 * _pulseAnimation.value,
+                                                spreadRadius:
+                                                    2 * _pulseAnimation.value,
                                               ),
                                             ]
                                           : null,
@@ -1365,34 +1455,49 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
                                       icon: Transform.rotate(
-                                        angle: _isListening ? _iconRotationAnimation.value : 0.0,
+                                        angle: _isListening
+                                            ? _iconRotationAnimation.value
+                                            : 0.0,
                                         child: Transform.scale(
-                                          scale: _isListening ? _iconScaleAnimation.value : 1.0,
+                                          scale: _isListening
+                                              ? _iconScaleAnimation.value
+                                              : 1.0,
                                           child: AnimatedSwitcher(
-                                            duration: const Duration(milliseconds: 300),
-                                            transitionBuilder: (child, animation) {
-                                              return ScaleTransition(
-                                                scale: animation,
-                                                child: RotationTransition(
-                                                  turns: animation,
-                                                  child: child,
-                                                ),
-                                              );
-                                            },
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            transitionBuilder:
+                                                (child, animation) {
+                                                  return ScaleTransition(
+                                                    scale: animation,
+                                                    child: RotationTransition(
+                                                      turns: animation,
+                                                      child: child,
+                                                    ),
+                                                  );
+                                                },
                                             child: Icon(
-                                              _isListening ? Iconsax.microphone_slash_1 : Iconsax.microphone,
+                                              _isListening
+                                                  ? Iconsax.microphone_slash_1
+                                                  : Iconsax.microphone,
                                               key: ValueKey(_isListening),
                                               color: _isListening
                                                   ? Colors.white
-                                                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  : Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
                                               size: 20,
                                             ),
                                           ),
                                         ),
                                       ),
-                                      onPressed: _isLoading ? null : _toggleListening,
+                                      onPressed: _isLoading
+                                          ? null
+                                          : _toggleListening,
                                       tooltip: _speechAvailable
-                                          ? (_isListening ? 'Stop Listening' : 'Voice Input')
+                                          ? (_isListening
+                                                ? 'Stop Listening'
+                                                : 'Voice Input')
                                           : 'Voice input unavailable',
                                     ),
                                   ),
@@ -1414,11 +1519,20 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                                       for (int i = 0; i < 3; i++)
                                         Container(
                                           width: 2,
-                                          height: (8 + (i * 3)) * (0.5 + 0.5 * _pulseAnimation.value),
-                                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                                          height:
+                                              (8 + (i * 3)) *
+                                              (0.5 +
+                                                  0.5 * _pulseAnimation.value),
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 1,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.red.withValues(alpha: 0.8),
-                                            borderRadius: BorderRadius.circular(1),
+                                            color: Colors.red.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              1,
+                                            ),
                                           ),
                                         ),
                                     ],
@@ -1429,9 +1543,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // Enhanced Send Button
                     Container(
                       width: 44,
@@ -1456,7 +1570,8 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                               : Colors.grey,
                           size: 20,
                         ),
-                        onPressed: _isLoading || _messageController.text.trim().isEmpty
+                        onPressed:
+                            _isLoading || _messageController.text.trim().isEmpty
                             ? null
                             : _sendMessage,
                       ),
@@ -1470,7 +1585,10 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                   children: [
                     if (_isListening) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -1478,7 +1596,11 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Iconsax.microphone, size: 12, color: Colors.red),
+                            Icon(
+                              Iconsax.microphone,
+                              size: 12,
+                              color: Colors.red,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'LISTENING...',
@@ -1493,7 +1615,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                       ),
                     ] else ...[
                       Icon(
-                        _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
+                        _mode == AIMode.image
+                            ? Iconsax.gallery
+                            : Iconsax.message_programming,
                         size: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -1503,9 +1627,9 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                             ? '🎨 IMAGE MODE • Be specific for better results'
                             : '💬 Chat Mode • Ask anything about BCA studies',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontSize: 10,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ],
@@ -1530,22 +1654,28 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
               height: 80,
               decoration: BoxDecoration(
                 gradient: _mode == AIMode.image
-                    ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)])
+                    ? const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                      )
                     : ModernTheme.orangeGradient,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
-                _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
+                _mode == AIMode.image
+                    ? Iconsax.gallery
+                    : Iconsax.message_programming,
                 size: 40,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              _mode == AIMode.image ? 'Image Generation Mode' : 'How can I help you today?',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              _mode == AIMode.image
+                  ? 'Image Generation Mode'
+                  : 'How can I help you today?',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -1555,24 +1685,30 @@ class _ImprovedAIAssistantScreenState extends ConsumerState<ImprovedAIAssistantS
                   : 'Ask me anything about your BCA curriculum, programming concepts, or toggle Image Mode!',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-            
+
             const SizedBox(height: 32),
             // Suggestion chips
             Wrap(
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: suggestions.map((suggestion) => _SuggestionChip(
-                label: suggestion,
-                icon: _mode == AIMode.image ? Iconsax.gallery : Iconsax.message_programming,
-                onTap: () {
-                  _messageController.text = suggestion;
-                  _sendMessage();
-                },
-              )).toList(),
+              children: suggestions
+                  .map(
+                    (suggestion) => _SuggestionChip(
+                      label: suggestion,
+                      icon: _mode == AIMode.image
+                          ? Iconsax.gallery
+                          : Iconsax.message_programming,
+                      onTap: () {
+                        _messageController.text = suggestion;
+                        _sendMessage();
+                      },
+                    ),
+                  )
+                  .toList(),
             ),
           ],
         ),
@@ -1605,10 +1741,7 @@ class ChatMessage {
     this.model,
   });
 
-  ChatMessage copyWith({
-    String? text,
-    String? imageUrl,
-  }) {
+  ChatMessage copyWith({String? text, String? imageUrl}) {
     return ChatMessage(
       id: id,
       text: text ?? this.text,
@@ -1685,9 +1818,7 @@ class _MessageBubble extends StatelessWidget {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Center(
-                  child: Text('Failed to load image'),
-                ),
+                child: const Center(child: Text('Failed to load image')),
               );
             },
           ),
@@ -1702,13 +1833,11 @@ class _MessageBubble extends StatelessWidget {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Center(
-            child: Text('Invalid image format'),
-          ),
+          child: const Center(child: Text('Invalid image format')),
         );
       }
     }
-    
+
     return CachedImage(
       imageUrl: imageUrl,
       width: 250,
@@ -1723,9 +1852,7 @@ class _MessageBubble extends StatelessWidget {
           color: Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Center(
-          child: Text('Failed to load image'),
-        ),
+        child: const Center(child: Text('Failed to load image')),
       ),
     );
   }
@@ -1735,8 +1862,9 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment:
-            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
@@ -1745,12 +1873,16 @@ class _MessageBubble extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 gradient: message.type == MessageType.image
-                    ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)])
+                    ? const LinearGradient(
+                        colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                      )
                     : ModernTheme.orangeGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                message.type == MessageType.image ? Iconsax.gallery : Iconsax.message_programming,
+                message.type == MessageType.image
+                    ? Iconsax.gallery
+                    : Iconsax.message_programming,
                 size: 18,
                 color: Colors.white,
               ),
@@ -1759,7 +1891,9 @@ class _MessageBubble extends StatelessWidget {
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: message.isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -1771,11 +1905,17 @@ class _MessageBubble extends StatelessWidget {
                         ? null
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20).copyWith(
-                      bottomLeft: message.isUser ? const Radius.circular(20) : const Radius.circular(4),
-                      bottomRight: message.isUser ? const Radius.circular(4) : const Radius.circular(20),
+                      bottomLeft: message.isUser
+                          ? const Radius.circular(20)
+                          : const Radius.circular(4),
+                      bottomRight: message.isUser
+                          ? const Radius.circular(4)
+                          : const Radius.circular(20),
                     ),
                   ),
-                  child: message.type == MessageType.image && message.imageUrl != null
+                  child:
+                      message.type == MessageType.image &&
+                          message.imageUrl != null
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1810,7 +1950,10 @@ class _MessageBubble extends StatelessWidget {
                 if (!message.isUser && message.provider != null) ...[
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -1818,10 +1961,10 @@ class _MessageBubble extends StatelessWidget {
                     child: Text(
                       'via ${message.provider}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.blue,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Colors.blue,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -1877,9 +2020,9 @@ class _TypingIndicator extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(20).copyWith(
-                bottomLeft: const Radius.circular(4),
-              ),
+              borderRadius: BorderRadius.circular(
+                20,
+              ).copyWith(bottomLeft: const Radius.circular(4)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -1907,7 +2050,8 @@ class _TypingDot extends StatefulWidget {
   State<_TypingDot> createState() => _TypingDotState();
 }
 
-class _TypingDotState extends State<_TypingDot> with SingleTickerProviderStateMixin {
+class _TypingDotState extends State<_TypingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -1979,9 +2123,9 @@ class _SuggestionChip extends StatelessWidget {
             Flexible(
               child: Text(
                 label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ],

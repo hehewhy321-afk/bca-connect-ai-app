@@ -40,7 +40,9 @@ class EventsScreen extends ConsumerWidget {
                   Icon(
                     Icons.event_busy,
                     size: 64,
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -51,8 +53,8 @@ class EventsScreen extends ConsumerWidget {
                   Text(
                     'Check back later for upcoming events',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -144,7 +146,10 @@ class EventCard extends StatelessWidget {
                 children: [
                   // Category Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(20),
@@ -152,9 +157,9 @@ class EventCard extends StatelessWidget {
                     child: Text(
                       event.category.toUpperCase(),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -163,8 +168,8 @@ class EventCard extends StatelessWidget {
                   Text(
                     event.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -175,8 +180,8 @@ class EventCard extends StatelessWidget {
                     Text(
                       event.description!,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -225,7 +230,8 @@ class EventCard extends StatelessWidget {
                   ],
 
                   // Registration Fee
-                  if (event.registrationFee != null && event.registrationFee! > 0) ...[
+                  if (event.registrationFee != null &&
+                      event.registrationFee! > 0) ...[
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -237,7 +243,8 @@ class EventCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'NPR ${event.registrationFee!.toStringAsFixed(0)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.tertiary,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -278,4 +285,3 @@ class EventCard extends StatelessWidget {
     );
   }
 }
-

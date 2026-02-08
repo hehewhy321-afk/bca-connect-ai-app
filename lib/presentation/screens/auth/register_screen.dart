@@ -50,15 +50,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await SupabaseConfig.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        data: {
-          'full_name': _fullNameController.text.trim(),
-        },
+        data: {'full_name': _fullNameController.text.trim()},
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Registration successful! Please check your email to verify your account.'),
+            content: const Text(
+              'Registration successful! Please check your email to verify your account.',
+            ),
             backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 5),
@@ -70,19 +70,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         // Show simple, user-friendly error message
         String errorMessage = 'Registration failed. Please try again';
-        
+
         // Check for specific error types
         final errorString = e.toString().toLowerCase();
         if (errorString.contains('already') || errorString.contains('exists')) {
           errorMessage = 'This email is already registered';
-        } else if (errorString.contains('network') || errorString.contains('connection')) {
+        } else if (errorString.contains('network') ||
+            errorString.contains('connection')) {
           errorMessage = 'Network error. Please check your connection';
         } else if (errorString.contains('email')) {
           errorMessage = 'Invalid email format';
         } else if (errorString.contains('password')) {
           errorMessage = 'Password does not meet requirements';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -121,16 +122,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Text(
                     'Create Account',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Join BCA MMAMC community',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -228,7 +229,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               : Icons.visibility_off_outlined,
                         ),
                         onPressed: () {
-                          setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                          setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          );
                         },
                       ),
                     ),
@@ -266,7 +270,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 TextSpan(
                                   text: 'Terms and Conditions',
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -291,7 +297,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text('Create Account'),

@@ -7,23 +7,30 @@ final announcementRepositoryProvider = Provider<AnnouncementRepository>((ref) {
   return AnnouncementRepository();
 });
 
-final activeAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) async {
+final activeAnnouncementsProvider = FutureProvider<List<Announcement>>((
+  ref,
+) async {
   try {
     // Force refresh on first load to ensure we get fresh data
-    return await ref.watch(announcementRepositoryProvider).getActiveAnnouncements(forceRefresh: true);
+    return await ref
+        .watch(announcementRepositoryProvider)
+        .getActiveAnnouncements(forceRefresh: true);
   } catch (e) {
     debugPrint('Error loading announcements: $e');
     return [];
   }
 });
 
-final allAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) async {
+final allAnnouncementsProvider = FutureProvider<List<Announcement>>((
+  ref,
+) async {
   try {
     // Force refresh on first load to ensure we get fresh data
-    return await ref.watch(announcementRepositoryProvider).getAllAnnouncements(forceRefresh: true);
+    return await ref
+        .watch(announcementRepositoryProvider)
+        .getAllAnnouncements(forceRefresh: true);
   } catch (e) {
     debugPrint('Error loading all announcements: $e');
     return [];
   }
 });
-

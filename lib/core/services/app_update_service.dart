@@ -8,8 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 class AppUpdateService {
   static const String githubRepo = 'hehewhy321-afk/bca-connect-ai-app';
-  static const String githubApiUrl = 'https://api.github.com/repos/$githubRepo/releases/latest';
-  
+  static const String githubApiUrl =
+      'https://api.github.com/repos/$githubRepo/releases/latest';
+
   // Set to false if you haven't set up GitHub releases yet
   static const bool isUpdateCheckEnabled = true;
 
@@ -19,7 +20,7 @@ class AppUpdateService {
     if (!isUpdateCheckEnabled) {
       throw Exception('UPDATE_DISABLED');
     }
-    
+
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
@@ -38,7 +39,8 @@ class AppUpdateService {
       if (response.statusCode == 200) {
         final data = response.data;
         final latestVersion = (data['tag_name'] as String).replaceAll('v', '');
-        final releaseNotes = data['body'] as String? ?? 'No release notes available';
+        final releaseNotes =
+            data['body'] as String? ?? 'No release notes available';
         final publishedAt = DateTime.parse(data['published_at']);
 
         // Find APK assets
@@ -60,7 +62,8 @@ class AppUpdateService {
         }
 
         // Compare versions
-        final isUpdateAvailable = _compareVersions(latestVersion, currentVersion) > 0;
+        final isUpdateAvailable =
+            _compareVersions(latestVersion, currentVersion) > 0;
 
         if (isUpdateAvailable) {
           return UpdateInfo(
@@ -105,20 +108,23 @@ class AppUpdateService {
   }
 
   /// Download and install APK
-  static Future<void> downloadAndInstall(BuildContext context, String apkUrl) async {
+  static Future<void> downloadAndInstall(
+    BuildContext context,
+    String apkUrl,
+  ) async {
     try {
       // Check and request storage permission based on Android version
       bool hasPermission = false;
-      
+
       if (Platform.isAndroid) {
         // For Android 13+ (API 33+), we need different permissions
         // For downloading files, we can use the Downloads folder without special permissions
         // But we still need to handle the permission properly
-        
+
         // First try to check if we have storage permission
         var storageStatus = await Permission.storage.status;
         var manageStorageStatus = await Permission.manageExternalStorage.status;
-        
+
         // For Android 11+ (API 30+), try MANAGE_EXTERNAL_STORAGE first
         if (manageStorageStatus.isGranted) {
           hasPermission = true;
@@ -126,17 +132,19 @@ class AppUpdateService {
           hasPermission = true;
         } else {
           // Try to request MANAGE_EXTERNAL_STORAGE first for better compatibility
-          var requestedStatus = await Permission.manageExternalStorage.request();
-          
+          var requestedStatus = await Permission.manageExternalStorage
+              .request();
+
           if (requestedStatus.isGranted) {
             hasPermission = true;
           } else {
             // Fallback to regular storage permission
             requestedStatus = await Permission.storage.request();
-            
+
             if (requestedStatus.isGranted) {
               hasPermission = true;
-            } else if (requestedStatus.isPermanentlyDenied || manageStorageStatus.isPermanentlyDenied) {
+            } else if (requestedStatus.isPermanentlyDenied ||
+                manageStorageStatus.isPermanentlyDenied) {
               // Permission permanently denied, show dialog to open settings
               if (context.mounted) {
                 final shouldOpenSettings = await showDialog<bool>(
@@ -166,7 +174,7 @@ class AppUpdateService {
                     ],
                   ),
                 );
-                
+
                 if (shouldOpenSettings == true) {
                   await openAppSettings();
                 }
@@ -182,7 +190,9 @@ class AppUpdateService {
                         Icon(Icons.warning, color: Colors.white),
                         SizedBox(width: 12),
                         Expanded(
-                          child: Text('Storage permission is required to download updates'),
+                          child: Text(
+                            'Storage permission is required to download updates',
+                          ),
                         ),
                       ],
                     ),
@@ -198,7 +208,7 @@ class AppUpdateService {
       } else {
         hasPermission = true; // For non-Android platforms
       }
-      
+
       if (!hasPermission) {
         return;
       }
@@ -227,16 +237,19 @@ class AppUpdateService {
         apkUrl,
         options: Options(
           responseType: ResponseType.bytes,
-          receiveTimeout: const Duration(minutes: 5), // Increase timeout for large files
+          receiveTimeout: const Duration(
+            minutes: 5,
+          ), // Increase timeout for large files
           sendTimeout: const Duration(minutes: 5),
         ),
       );
-      
+
       if (response.statusCode == 200) {
         // Try multiple download locations
         Directory? directory;
-        String fileName = 'BCA-Association-Update-${DateTime.now().millisecondsSinceEpoch}.apk';
-        
+        String fileName =
+            'BCA-Association-Update-${DateTime.now().millisecondsSinceEpoch}.apk';
+
         // Try Downloads folder first
         try {
           directory = Directory('/storage/emulated/0/Download');
@@ -245,7 +258,9 @@ class AppUpdateService {
           }
           if (!await directory.exists()) {
             // Fallback to app's external directory
-            directory = Directory('/storage/emulated/0/Android/data/com.bcaconnect.app/files/Downloads');
+            directory = Directory(
+              '/storage/emulated/0/Android/data/com.bcaconnect.app/files/Downloads',
+            );
             await directory.create(recursive: true);
           }
         } catch (e) {
@@ -256,7 +271,7 @@ class AppUpdateService {
             directory = Directory('/storage/emulated/0');
           }
         }
-        
+
         final file = File('${directory.path}/$fileName');
         await file.writeAsBytes(response.data as List<int>);
 
@@ -274,7 +289,9 @@ class AppUpdateService {
                   Text('Download Complete'),
                 ],
               ),
-              content: Text('APK saved to:\n${file.path}\n\nTap "Install" to proceed.'),
+              content: Text(
+                'APK saved to:\n${file.path}\n\nTap "Install" to proceed.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -287,19 +304,29 @@ class AppUpdateService {
                     try {
                       final uri = Uri.parse('file://${file.path}');
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
                       } else {
                         // Fallback: try to open file manager
-                        final fileUri = Uri.parse('content://com.android.externalstorage.documents/document/primary:${file.path.split('/').last}');
+                        final fileUri = Uri.parse(
+                          'content://com.android.externalstorage.documents/document/primary:${file.path.split('/').last}',
+                        );
                         if (await canLaunchUrl(fileUri)) {
-                          await launchUrl(fileUri, mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            fileUri,
+                            mode: LaunchMode.externalApplication,
+                          );
                         }
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Please manually install the APK from: ${file.path}'),
+                            content: Text(
+                              'Please manually install the APK from: ${file.path}',
+                            ),
                             duration: const Duration(seconds: 6),
                           ),
                         );
@@ -321,7 +348,9 @@ class AppUpdateService {
         Navigator.pop(context); // Close downloading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Download failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Download failed: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),

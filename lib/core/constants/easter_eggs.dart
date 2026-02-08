@@ -93,7 +93,8 @@ class EasterEggs {
   );
 
   static const home = EasterEggConfig(
-    soundFile: 'sounds/twinkle-twinkle-little-star_-indian-version-made-with-Voicemod.mp3',
+    soundFile:
+        'sounds/twinkle-twinkle-little-star_-indian-version-made-with-Voicemod.mp3',
     emoji: '🏠',
     message: 'Welcome home!',
   );

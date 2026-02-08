@@ -53,14 +53,14 @@ class Certificate {
         templateId: json['template_id'] as String?,
         signatureId: json['signature_id'] as String?,
         eventDate: DateTime.parse(json['event_date'] as String),
-        issueDate: json['issue_date'] != null 
+        issueDate: json['issue_date'] != null
             ? DateTime.parse(json['issue_date'] as String)
             : DateTime.now(),
         verificationCode: json['verification_code'] as String,
         certificateData: json['certificate_data'] as Map<String, dynamic>?,
         certificateUrl: json['certificate_url'] as String?,
         imageUrl: json['image_url'] as String?,
-        createdAt: json['created_at'] != null 
+        createdAt: json['created_at'] != null
             ? DateTime.parse(json['created_at'] as String)
             : DateTime.now(),
       );

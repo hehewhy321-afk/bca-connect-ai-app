@@ -84,7 +84,9 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         widget.onSuccess?.call();
@@ -160,15 +162,17 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                           widget.existingFeedback != null
                               ? 'Update Your Feedback'
                               : 'Rate This Event',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           widget.eventTitle,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -197,7 +201,9 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       final star = index + 1;
-                      final isActive = star <= (_hoveredRating > 0 ? _hoveredRating : _rating);
+                      final isActive =
+                          star <=
+                          (_hoveredRating > 0 ? _hoveredRating : _rating);
                       return MouseRegion(
                         onEnter: (_) => setState(() => _hoveredRating = star),
                         onExit: (_) => setState(() => _hoveredRating = 0),
@@ -210,7 +216,10 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                               size: 40,
                               color: isActive
                                   ? const Color(0xFFFBBF24)
-                                  : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                                  : Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                        .withValues(alpha: 0.3),
                             ),
                           ),
                         ),
@@ -222,9 +231,9 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                     Text(
                       _getRatingLabel(_rating),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFDA7809),
-                          ),
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFDA7809),
+                      ),
                     ),
                 ],
               ),
@@ -238,8 +247,8 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                   Text(
                     'Your Feedback (Optional)',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -247,13 +256,16 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                     maxLines: 4,
                     maxLength: 1000,
                     decoration: InputDecoration(
-                      hintText: 'Share your experience, suggestions, or comments...',
+                      hintText:
+                          'Share your experience, suggestions, or comments...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
                       fillColor: isDark
-                          ? Theme.of(context).colorScheme.surfaceContainerHighest
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest
                           : Colors.grey[100],
                     ),
                   ),
@@ -279,15 +291,17 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                         children: [
                           Text(
                             'Submit Anonymously',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Your name won\'t be shown to others',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -295,7 +309,8 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                     ),
                     Switch(
                       value: _isAnonymous,
-                      onChanged: (value) => setState(() => _isAnonymous = value),
+                      onChanged: (value) =>
+                          setState(() => _isAnonymous = value),
                       activeTrackColor: const Color(0xFFDA7809),
                     ),
                   ],
@@ -324,7 +339,9 @@ class _EventFeedbackDialogState extends State<EventFeedbackDialog> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Row(

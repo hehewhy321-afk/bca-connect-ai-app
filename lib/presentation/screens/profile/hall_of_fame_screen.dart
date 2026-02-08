@@ -46,16 +46,21 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
 
       // Try to load from cache first
       final cacheKey = 'hall_of_fame_${user.id}';
-      if (CacheService.has(cacheKey) && CacheService.isCacheValid(cacheKey, maxAge: const Duration(hours: 1))) {
+      if (CacheService.has(cacheKey) &&
+          CacheService.isCacheValid(
+            cacheKey,
+            maxAge: const Duration(hours: 1),
+          )) {
         final cachedData = CacheService.get<String>(cacheKey);
         if (cachedData != null) {
           final data = jsonDecode(cachedData);
           setState(() {
             _stats = Map<String, dynamic>.from(data['stats']);
-            _recentAchievements = (data['achievements'] as List).cast<Map<String, dynamic>>();
+            _recentAchievements = (data['achievements'] as List)
+                .cast<Map<String, dynamic>>();
             _isLoading = false;
           });
-          
+
           // If online, refresh in background
           if (isOnline) {
             _fetchFreshData(user.id, cacheKey);
@@ -74,15 +79,18 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       // User-friendly error messages
       String errorMessage;
       if (e.toString().contains('NO_INTERNET')) {
-        errorMessage = 'No internet connection. Please check your network and try again.';
+        errorMessage =
+            'No internet connection. Please check your network and try again.';
       } else if (e.toString().contains('User not authenticated')) {
         errorMessage = 'Please log in to view your achievements.';
-      } else if (e.toString().contains('relation') || e.toString().contains('does not exist')) {
-        errorMessage = 'Achievements feature is not yet configured. Please check back later.';
+      } else if (e.toString().contains('relation') ||
+          e.toString().contains('does not exist')) {
+        errorMessage =
+            'Achievements feature is not yet configured. Please check back later.';
       } else {
         errorMessage = 'Unable to load achievements. Please try again later.';
       }
-      
+
       setState(() {
         _error = errorMessage;
         _isLoading = false;
@@ -135,15 +143,13 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
         'earned_count': (achievementsCountResponse as List).length,
         'total_count': (totalAchievementsResponse as List).length,
       };
-      final achievements = (recentResponse as List).cast<Map<String, dynamic>>();
+      final achievements = (recentResponse as List)
+          .cast<Map<String, dynamic>>();
 
       // Cache the data
       await CacheService.set(
         cacheKey,
-        jsonEncode({
-          'stats': stats,
-          'achievements': achievements,
-        }),
+        jsonEncode({'stats': stats, 'achievements': achievements}),
         duration: const Duration(hours: 1),
       );
 
@@ -267,8 +273,8 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                     Text(
                       'Loading your achievements...',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -281,13 +287,19 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      _error!.contains('internet') ? Iconsax.wifi_square : Iconsax.warning_2,
+                      _error!.contains('internet')
+                          ? Iconsax.wifi_square
+                          : Iconsax.warning_2,
                       size: 64,
-                      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _error!.contains('internet') ? 'No Internet Connection' : 'Error Loading',
+                      _error!.contains('internet')
+                          ? 'No Internet Connection'
+                          : 'Error Loading',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
@@ -296,8 +308,8 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                       child: Text(
                         _error!,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -323,34 +335,46 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _StatCard(
-                          icon: Iconsax.cup,
-                          label: 'Level',
-                          value: '${_stats!['level']}',
-                          color: ModernTheme.primaryOrange,
-                        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
+                        child:
+                            _StatCard(
+                                  icon: Iconsax.cup,
+                                  label: 'Level',
+                                  value: '${_stats!['level']}',
+                                  color: ModernTheme.primaryOrange,
+                                )
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideX(begin: -0.2),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _StatCard(
-                          icon: Iconsax.star5,
-                          label: 'Total XP',
-                          value: '${_stats!['xp_points']}',
-                          color: const Color(0xFFFFD700),
-                        ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.2),
+                        child:
+                            _StatCard(
+                                  icon: Iconsax.star5,
+                                  label: 'Total XP',
+                                  value: '${_stats!['xp_points']}',
+                                  color: const Color(0xFFFFD700),
+                                )
+                                .animate()
+                                .fadeIn(duration: 400.ms, delay: 100.ms)
+                                .slideX(begin: -0.2),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   _StatCard(
-                    icon: Iconsax.medal_star,
-                    label: 'Achievements',
-                    value: '${_stats!['earned_count']}/${_stats!['total_count']}',
-                    color: const Color(0xFF8B5CF6),
-                    progress: _stats!['total_count'] > 0
-                        ? (_stats!['earned_count'] / _stats!['total_count'])
-                        : 0.0,
-                  ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.2),
+                        icon: Iconsax.medal_star,
+                        label: 'Achievements',
+                        value:
+                            '${_stats!['earned_count']}/${_stats!['total_count']}',
+                        color: const Color(0xFF8B5CF6),
+                        progress: _stats!['total_count'] > 0
+                            ? (_stats!['earned_count'] / _stats!['total_count'])
+                            : 0.0,
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 200.ms)
+                      .slideX(begin: -0.2),
 
                   const SizedBox(height: 32),
 
@@ -382,7 +406,9 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -390,20 +416,25 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                           Icon(
                             Iconsax.medal_star,
                             size: 48,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'No Achievements Yet',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Start participating in activities to earn achievements',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -415,33 +446,36 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                       final index = entry.key;
                       final achievement = entry.value;
                       return _AchievementCard(
-                        achievement: achievement,
-                        index: index,
-                      ).animate().fadeIn(
-                            duration: 400.ms,
-                            delay: (index * 100).ms,
-                          ).slideX(begin: 0.2);
+                            achievement: achievement,
+                            index: index,
+                          )
+                          .animate()
+                          .fadeIn(duration: 400.ms, delay: (index * 100).ms)
+                          .slideX(begin: 0.2);
                     }),
 
                   const SizedBox(height: 24),
 
                   // View All Button
                   SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.push('/achievements'),
-                      icon: const Icon(Iconsax.cup),
-                      label: const Text('View All Achievements'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ModernTheme.primaryOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push('/achievements'),
+                          icon: const Icon(Iconsax.cup),
+                          label: const Text('View All Achievements'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ModernTheme.primaryOrange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ).animate().fadeIn(duration: 400.ms, delay: 600.ms).scale(begin: const Offset(0.95, 0.95)),
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 600.ms)
+                      .scale(begin: const Offset(0.95, 0.95)),
                 ]),
               ),
             ),
@@ -474,16 +508,10 @@ class _StatCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,11 +524,7 @@ class _StatCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: color,
-                ),
+                child: Icon(icon, size: 20, color: color),
               ),
               const Spacer(),
               Text(
@@ -544,14 +568,11 @@ class _AchievementCard extends StatelessWidget {
   final Map<String, dynamic> achievement;
   final int index;
 
-  const _AchievementCard({
-    required this.achievement,
-    required this.index,
-  });
+  const _AchievementCard({required this.achievement, required this.index});
 
   Color _getCategoryColor(String? category) {
     if (category == null) return const Color(0xFF8B5CF6);
-    
+
     switch (category.toLowerCase()) {
       case 'social':
         return const Color(0xFF3B82F6);
@@ -568,7 +589,8 @@ class _AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final achievementData = achievement['achievements'] as Map<String, dynamic>?;
+    final achievementData =
+        achievement['achievements'] as Map<String, dynamic>?;
     if (achievementData == null) return const SizedBox.shrink();
 
     final color = _getCategoryColor(achievementData['category'] as String?);
@@ -580,16 +602,10 @@ class _AchievementCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -636,18 +652,17 @@ class _AchievementCard extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Iconsax.star5,
-                              size: 12,
-                              color: color,
-                            ),
+                            Icon(Iconsax.star5, size: 12, color: color),
                             const SizedBox(width: 4),
                             Text(
                               '+${achievementData['xp_reward']} XP',
@@ -690,7 +705,20 @@ class _AchievementCard extends StatelessWidget {
     } else if (difference.inDays < 7) {
       return '${difference.inDays} days ago';
     } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     }
   }

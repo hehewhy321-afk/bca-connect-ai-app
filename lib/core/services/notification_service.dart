@@ -3,13 +3,17 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   FirebaseMessaging? _firebaseMessaging;
   bool _initialized = false;
 
@@ -17,9 +21,16 @@ class NotificationService {
     if (_initialized) return;
 
     try {
+      // Initialize timezone
+      tz.initializeTimeZones();
+      final timezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timezone.identifier));
+
       // Android initialization settings
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
+
       // iOS initialization settings
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
@@ -50,12 +61,32 @@ class NotificationService {
         );
 
         await _localNotifications
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
             ?.createNotificationChannel(androidChannel);
 
+        const reminderChannel = AndroidNotificationChannel(
+          'bca_reminders',
+          'BCA Reminders',
+          description: 'Task reminders and Pomodoro alerts',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          enableLights: true,
+        );
+
+        await _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.createNotificationChannel(reminderChannel);
+
         // Request notification permission for Android 13+
-        final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+        final androidImplementation = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
         await androidImplementation?.requestNotificationsPermission();
       }
 
@@ -64,34 +95,30 @@ class NotificationService {
         _firebaseMessaging = FirebaseMessaging.instance;
 
         // Request permission
-        NotificationSettings settings = await _firebaseMessaging!.requestPermission(
+        await _firebaseMessaging!.requestPermission(
           alert: true,
           badge: true,
           sound: true,
           provisional: false,
         );
 
-        debugPrint('Notification permission status: ${settings.authorizationStatus}');
-
         // Handle foreground messages
         FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
         // Get FCM token
-        final token = await _firebaseMessaging!.getToken();
-        debugPrint('FCM Token: $token');
+        await _firebaseMessaging!.getToken();
+        // debugPrint('FCM Token: token');
       } catch (e) {
         debugPrint('Firebase messaging initialization error: $e');
       }
 
       _initialized = true;
-      debugPrint('Notification service initialized successfully');
     } catch (e) {
       debugPrint('Notification service initialization error: $e');
     }
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('Foreground message received: ${message.messageId}');
     final notification = message.notification;
     final data = message.data;
 
@@ -109,8 +136,6 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    debugPrint('Showing notification: $title - $body');
-
     final androidDetails = AndroidNotificationDetails(
       'bca_notifications',
       'BCA Notifications',
@@ -123,10 +148,7 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
       color: const Color(0xFFDA7809),
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      styleInformation: BigTextStyleInformation(
-        body,
-        contentTitle: title,
-      ),
+      styleInformation: BigTextStyleInformation(body, contentTitle: title),
       ticker: 'New notification',
     );
 
@@ -150,10 +172,68 @@ class NotificationService {
         details,
         payload: payload,
       );
-      debugPrint('Notification shown successfully with ID: $id');
     } catch (e) {
       debugPrint('Error showing notification: $e');
     }
+  }
+
+  Future<void> scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
+  }) async {
+    final androidDetails = AndroidNotificationDetails(
+      'bca_reminders',
+      'BCA Reminders',
+      channelDescription: 'Task reminders and Pomodoro alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    try {
+      final now = DateTime.now();
+      if (scheduledDate.isBefore(now)) return;
+
+      // Note: This requires timezone initialization (handled in main.dart)
+      // For now we use the basic show if it's within a few seconds,
+      // but proper scheduling will be added once timezone is initialized.
+
+      await _localNotifications.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling notification: $e');
+    }
+  }
+
+  Future<void> cancelNotification(int id) async {
+    await _localNotifications.cancel(id);
+  }
+
+  Future<void> cancelAllNotifications() async {
+    await _localNotifications.cancelAll();
+    debugPrint('All notifications cancelled');
   }
 
   void _onNotificationTapped(NotificationResponse response) async {
@@ -162,10 +242,11 @@ class NotificationService {
     if (payload != null && payload.isNotEmpty) {
       // Add https:// if protocol is missing
       String urlString = payload.trim();
-      if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+      if (!urlString.startsWith('http://') &&
+          !urlString.startsWith('https://')) {
         urlString = 'https://$urlString';
       }
-      
+
       // Try to open as URL
       try {
         final uri = Uri.parse(urlString);
@@ -182,9 +263,12 @@ class NotificationService {
 
   Future<bool> checkPermissions() async {
     if (Platform.isAndroid) {
-      final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-      final granted = await androidImplementation?.areNotificationsEnabled() ?? false;
+      final androidImplementation = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final granted =
+          await androidImplementation?.areNotificationsEnabled() ?? false;
       debugPrint('Android notifications enabled: $granted');
       return granted;
     }
@@ -196,7 +280,7 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Background message received: ${message.messageId}');
-  
+
   // Show notification even when app is in background
   final notification = message.notification;
   if (notification != null) {

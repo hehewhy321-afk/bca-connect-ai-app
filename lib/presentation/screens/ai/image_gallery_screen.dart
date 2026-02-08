@@ -64,7 +64,7 @@ class SmartImageWidget extends StatelessWidget {
         );
       }
     }
-    
+
     // It's a URL, use CachedImage
     return CachedImage(
       imageUrl: imageUrl,
@@ -140,8 +140,12 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
 
   void _applyFilters() {
     var filtered = _images.where((image) {
-      final matchesSearch = image.prompt.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesModel = _selectedModel == 'all' || image.modelUsed?.contains(_selectedModel) == true;
+      final matchesSearch = image.prompt.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
+      final matchesModel =
+          _selectedModel == 'all' ||
+          image.modelUsed?.contains(_selectedModel) == true;
       return matchesSearch && matchesModel;
     }).toList();
 
@@ -179,7 +183,7 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
     try {
       // Check current permission status
       var status = await Permission.storage.status;
-      
+
       // For Android 13+ (API 33+), we need different permissions
       if (Platform.isAndroid) {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
@@ -188,11 +192,11 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
           status = PermissionStatus.granted;
         }
       }
-      
+
       // If permission is denied, request it with explanation
       if (status.isDenied || status.isPermanentlyDenied) {
         if (!mounted) return;
-        
+
         // Show explanation dialog first
         final shouldRequest = await showDialog<bool>(
           context: context,
@@ -221,9 +225,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
             ],
           ),
         );
-        
+
         if (shouldRequest != true || !mounted) return;
-        
+
         // Request permission
         if (status.isPermanentlyDenied) {
           // If permanently denied, open app settings
@@ -231,7 +235,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
           if (!opened && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Please enable storage permission in app settings'),
+                content: Text(
+                  'Please enable storage permission in app settings',
+                ),
                 duration: Duration(seconds: 3),
               ),
             );
@@ -240,12 +246,14 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
         } else {
           // Request permission
           status = await Permission.storage.request();
-          
+
           if (!status.isGranted) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Storage permission is required to download images'),
+                  content: Text(
+                    'Storage permission is required to download images',
+                  ),
                   duration: Duration(seconds: 2),
                 ),
               );
@@ -264,7 +272,10 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                 SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Text('Downloading image...'),
@@ -328,17 +339,17 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
       String sanitizedPrompt = prompt
           .replaceAll(RegExp(r'[^\w\s]'), '')
           .replaceAll(RegExp(r'\s+'), '_');
-      
+
       // Ensure we don't exceed the string length
       if (sanitizedPrompt.length > 30) {
         sanitizedPrompt = sanitizedPrompt.substring(0, 30);
       }
-      
+
       // Fallback if sanitization removed everything
       if (sanitizedPrompt.isEmpty) {
         sanitizedPrompt = 'image';
       }
-      
+
       final filename = 'ai_image_${sanitizedPrompt}_$timestamp.png';
       final file = File('${directory.path}/$filename');
 
@@ -414,15 +425,15 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image deleted')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
       }
     }
   }
@@ -466,7 +477,7 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                   ],
                 ),
               ),
-              
+
               // Content
               Flexible(
                 child: SingleChildScrollView(
@@ -482,9 +493,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                           fit: BoxFit.contain,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Prompt
                       Text(
                         'Prompt',
@@ -498,7 +509,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -506,9 +519,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                           style: const TextStyle(fontSize: 14),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Model Info
                       Row(
                         children: [
@@ -520,19 +533,30 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                                   'Provider',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.secondaryContainer,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondaryContainer,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    image.modelUsed?.split(':').first ?? 'Unknown',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                    image.modelUsed?.split(':').first ??
+                                        'Unknown',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -547,15 +571,23 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                                   'Model',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withValues(alpha: 0.3),
                                     ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -571,30 +603,36 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Date
                       Row(
                         children: [
                           Icon(
                             Iconsax.calendar,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            DateFormat('MMM d, y \'at\' h:mm a').format(image.createdAt),
+                            DateFormat(
+                              'MMM d, y \'at\' h:mm a',
+                            ).format(image.createdAt),
                             style: TextStyle(
                               fontSize: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Actions
                       Row(
                         children: [
@@ -604,7 +642,10 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                                 Navigator.pop(context);
                                 _downloadImage(image.imageUrl, image.prompt);
                               },
-                              icon: const Icon(Iconsax.document_download, size: 18),
+                              icon: const Icon(
+                                Iconsax.document_download,
+                                size: 18,
+                              ),
                               label: const Text('Download'),
                             ),
                           ),
@@ -615,7 +656,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                                 context: context,
                                 builder: (ctx) => AlertDialog(
                                   title: const Text('Delete Image?'),
-                                  content: const Text('This action cannot be undone.'),
+                                  content: const Text(
+                                    'This action cannot be undone.',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(ctx),
@@ -638,7 +681,7 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -654,7 +697,7 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
   @override
   Widget build(BuildContext context) {
     final uniqueModels = _getUniqueModels();
-    
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false, // Remove back button
@@ -679,7 +722,10 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                   const Text('Image Gallery', style: TextStyle(fontSize: 16)),
                   Text(
                     '${_filteredImages.length} images',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ],
               ),
@@ -705,8 +751,13 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -715,9 +766,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                     });
                   },
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Filters Row
                 Row(
                   children: [
@@ -726,7 +777,9 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: DropdownButtonHideUnderline(
@@ -741,18 +794,23 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                                   children: [
                                     Icon(Iconsax.filter, size: 16),
                                     SizedBox(width: 8),
-                                    Text('All Models', style: TextStyle(fontSize: 13)),
+                                    Text(
+                                      'All Models',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ],
                                 ),
                               ),
-                              ...uniqueModels.map((model) => DropdownMenuItem(
-                                value: model,
-                                child: Text(
-                                  _parseModelName(model),
-                                  style: const TextStyle(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
+                              ...uniqueModels.map(
+                                (model) => DropdownMenuItem(
+                                  value: model,
+                                  child: Text(
+                                    _parseModelName(model),
+                                    style: const TextStyle(fontSize: 13),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              )),
+                              ),
                             ],
                             onChanged: (value) {
                               setState(() {
@@ -764,14 +822,16 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // Sort
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -781,11 +841,17 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
                           items: const [
                             DropdownMenuItem(
                               value: 'newest',
-                              child: Text('Newest', style: TextStyle(fontSize: 13)),
+                              child: Text(
+                                'Newest',
+                                style: TextStyle(fontSize: 13),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'oldest',
-                              child: Text('Oldest', style: TextStyle(fontSize: 13)),
+                              child: Text(
+                                'Oldest',
+                                style: TextStyle(fontSize: 13),
+                              ),
                             ),
                           ],
                           onChanged: (value) {
@@ -802,83 +868,87 @@ class _ImageGalleryScreenState extends ConsumerState<ImageGalleryScreen> {
               ],
             ),
           ),
-          
+
           // Gallery
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredImages.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-                                ),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: const Icon(
-                                Iconsax.gallery,
-                                size: 40,
-                                color: Colors.white,
-                              ),
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
                             ),
-                            const SizedBox(height: 20),
-                            Text(
-                              _searchQuery.isNotEmpty || _selectedModel != 'all'
-                                  ? 'No matching images'
-                                  : 'No images yet',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _searchQuery.isNotEmpty || _selectedModel != 'all'
-                                  ? 'Try adjusting your search or filters'
-                                  : 'Generate images using the AI Assistant',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_searchQuery.isEmpty && _selectedModel == 'all') ...[
-                              const SizedBox(height: 24),
-                              FilledButton.icon(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Iconsax.message_programming),
-                                label: const Text('Go to AI Assistant'),
-                              ),
-                            ],
-                          ],
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: const Icon(
+                            Iconsax.gallery,
+                            size: 40,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadImages,
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        const SizedBox(height: 20),
+                        Text(
+                          _searchQuery.isNotEmpty || _selectedModel != 'all'
+                              ? 'No matching images'
+                              : 'No images yet',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _searchQuery.isNotEmpty || _selectedModel != 'all'
+                              ? 'Try adjusting your search or filters'
+                              : 'Generate images using the AI Assistant',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_searchQuery.isEmpty &&
+                            _selectedModel == 'all') ...[
+                          const SizedBox(height: 24),
+                          FilledButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Iconsax.message_programming),
+                            label: const Text('Go to AI Assistant'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadImages,
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                             childAspectRatio: 0.75,
                           ),
-                          itemCount: _filteredImages.length,
-                          itemBuilder: (context, index) {
-                            final image = _filteredImages[index];
-                            return _ImageCard(
-                              image: image,
-                              onTap: () => _showImageDetail(image),
-                              onDelete: () => _deleteImage(image.id),
-                              modelName: _parseModelName(image.modelUsed),
-                            );
-                          },
-                        ),
-                      ),
+                      itemCount: _filteredImages.length,
+                      itemBuilder: (context, index) {
+                        final image = _filteredImages[index];
+                        return _ImageCard(
+                          image: image,
+                          onTap: () => _showImageDetail(image),
+                          onDelete: () => _deleteImage(image.id),
+                          modelName: _parseModelName(image.modelUsed),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -916,7 +986,9 @@ class _ImageCard extends StatelessWidget {
             // Image
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -948,7 +1020,9 @@ class _ImageCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(16),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,20 +1044,29 @@ class _ImageCard extends StatelessWidget {
                           DateFormat('MMM d, y').format(image.createdAt),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outline.withValues(alpha: 0.3),
                           ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          modelName.length > 12 ? '${modelName.substring(0, 12)}...' : modelName,
+                          modelName.length > 12
+                              ? '${modelName.substring(0, 12)}...'
+                              : modelName,
                           style: const TextStyle(fontSize: 10),
                         ),
                       ),

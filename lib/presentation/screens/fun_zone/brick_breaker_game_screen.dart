@@ -15,29 +15,29 @@ class BrickBreakerGameScreen extends StatefulWidget {
 
 class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
   int _score = 0;
   int _bestScore = 0;
   int _lives = 3;
-  
+
   // Ball
   double _ballX = 0.0;
   double _ballY = 0.0;
   double _ballVelocityX = 0.02;
   double _ballVelocityY = -0.02;
-  
+
   // Paddle
   double _paddleX = 0.0;
   final double _paddleWidth = 0.3;
-  
+
   // Bricks
   final List<Brick> _bricks = [];
   final int _brickRows = 5;
   final int _brickCols = 6;
-  
+
   Timer? _gameTimer;
 
   @override
@@ -72,7 +72,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
       _paddleX = 0.0;
       _initializeBricks();
     });
-    
+
     _gameTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       _updateGame();
     });
@@ -87,40 +87,42 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
       Colors.green,
       Colors.blue,
     ];
-    
+
     for (int i = 0; i < _brickRows; i++) {
       for (int j = 0; j < _brickCols; j++) {
-        _bricks.add(Brick(
-          x: -0.9 + (j * 0.32),
-          y: -0.9 + (i * 0.12),
-          width: 0.28,
-          height: 0.08,
-          color: colors[i],
-          isDestroyed: false,
-        ));
+        _bricks.add(
+          Brick(
+            x: -0.9 + (j * 0.32),
+            y: -0.9 + (i * 0.12),
+            width: 0.28,
+            height: 0.08,
+            color: colors[i],
+            isDestroyed: false,
+          ),
+        );
       }
     }
   }
 
   void _updateGame() {
     if (!_isPlaying || _isGameOver) return;
-    
+
     setState(() {
       // Update ball position
       _ballX += _ballVelocityX;
       _ballY += _ballVelocityY;
-      
+
       // Wall collision
       if (_ballX <= -1.0 || _ballX >= 1.0) {
         _ballVelocityX = -_ballVelocityX;
         HapticFeedback.lightImpact();
       }
-      
+
       if (_ballY <= -1.0) {
         _ballVelocityY = -_ballVelocityY;
         HapticFeedback.lightImpact();
       }
-      
+
       // Bottom boundary (lose life)
       if (_ballY >= 1.0) {
         _lives--;
@@ -135,20 +137,21 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
         }
         return;
       }
-      
+
       // Paddle collision
-      if (_ballY >= 0.8 && _ballY <= 0.85 &&
+      if (_ballY >= 0.8 &&
+          _ballY <= 0.85 &&
           _ballX >= _paddleX - _paddleWidth / 2 &&
           _ballX <= _paddleX + _paddleWidth / 2) {
         _ballVelocityY = -_ballVelocityY.abs();
-        
+
         // Add spin based on where ball hits paddle
         final hitPosition = (_ballX - _paddleX) / (_paddleWidth / 2);
         _ballVelocityX = hitPosition * 0.03;
-        
+
         HapticFeedback.mediumImpact();
       }
-      
+
       // Brick collision
       for (var brick in _bricks) {
         if (!brick.isDestroyed && _checkBrickCollision(brick)) {
@@ -156,7 +159,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
           _score += 10;
           _ballVelocityY = -_ballVelocityY;
           HapticFeedback.mediumImpact();
-          
+
           // Check win condition
           if (_bricks.every((b) => b.isDestroyed)) {
             _endGame(won: true);
@@ -169,9 +172,9 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
 
   bool _checkBrickCollision(Brick brick) {
     return _ballX >= brick.x - brick.width / 2 &&
-           _ballX <= brick.x + brick.width / 2 &&
-           _ballY >= brick.y - brick.height / 2 &&
-           _ballY <= brick.y + brick.height / 2;
+        _ballX <= brick.x + brick.width / 2 &&
+        _ballY >= brick.y - brick.height / 2 &&
+        _ballY <= brick.y + brick.height / 2;
   }
 
   void _movePaddle(double delta) {
@@ -187,7 +190,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -198,12 +201,14 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
         _bestScore = _score;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'brick_breaker',
-      score: _score,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(
+        gameId: 'brick_breaker',
+        score: _score,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -212,7 +217,9 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
       body: GestureDetector(
         onHorizontalDragUpdate: (details) {
           if (_isPlaying) {
-            _movePaddle(details.delta.dx / MediaQuery.of(context).size.width * 2);
+            _movePaddle(
+              details.delta.dx / MediaQuery.of(context).size.width * 2,
+            );
           }
         },
         child: Container(
@@ -220,10 +227,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                const Color(0xFF1A2980),
-                const Color(0xFF26D0CE),
-              ],
+              colors: [const Color(0xFF1A2980), const Color(0xFF26D0CE)],
             ),
           ),
           child: SafeArea(
@@ -318,25 +322,16 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🧱',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🧱', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 'Brick Breaker',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Break all the bricks!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -353,17 +348,17 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -371,7 +366,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
         ),
       );
     }
-    
+
     return Stack(
       children: [
         // Bricks
@@ -389,7 +384,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
             ),
           );
         }),
-        
+
         // Ball
         Align(
           alignment: Alignment(_ballX, _ballY),
@@ -409,7 +404,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
             ),
           ),
         ),
-        
+
         // Paddle
         Align(
           alignment: Alignment(_paddleX, 0.9),
@@ -439,7 +434,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
 
   Widget _buildGameOverDialog() {
     final won = _bricks.every((b) => b.isDestroyed);
-    
+
     return Container(
       color: Colors.black.withValues(alpha: 0.7),
       child: Center(
@@ -453,10 +448,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                won ? '🎉' : '💔',
-                style: const TextStyle(fontSize: 60),
-              ),
+              Text(won ? '🎉' : '💔', style: const TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               Text(
                 won ? 'You Won!' : 'Game Over!',
@@ -549,10 +541,7 @@ class _BrickBreakerGameScreenState extends State<BrickBreakerGameScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

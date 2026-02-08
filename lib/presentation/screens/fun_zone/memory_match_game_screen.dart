@@ -16,7 +16,7 @@ class MemoryMatchGameScreen extends StatefulWidget {
 
 class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   final _repository = GameRepository();
-  
+
   // Game state
   bool _isPlaying = false;
   bool _isGameOver = false;
@@ -25,7 +25,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   int _bestScore = 999;
   int _timeElapsed = 0;
   Timer? _timer;
-  
+
   // Cards
   final List<String> _emojis = ['🎮', '🎯', '🎨', '🎭', '🎪', '🎸', '🎺', '🎻'];
   List<CardItem> _cards = [];
@@ -55,7 +55,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   void _initializeCards() {
     final allEmojis = [..._emojis, ..._emojis];
     allEmojis.shuffle(Random());
-    
+
     _cards = allEmojis.asMap().entries.map((entry) {
       return CardItem(
         id: entry.key,
@@ -76,7 +76,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
       _flippedIndices.clear();
       _initializeCards();
     });
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _timeElapsed++;
@@ -85,21 +85,24 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   }
 
   void _onCardTap(int index) {
-    if (!_isPlaying || _isChecking || _cards[index].isFlipped || _cards[index].isMatched) {
+    if (!_isPlaying ||
+        _isChecking ||
+        _cards[index].isFlipped ||
+        _cards[index].isMatched) {
       return;
     }
-    
+
     setState(() {
       _cards[index].isFlipped = true;
       _flippedIndices.add(index);
     });
-    
+
     HapticFeedback.lightImpact();
-    
+
     if (_flippedIndices.length == 2) {
       _isChecking = true;
       _moves++;
-      
+
       Future.delayed(const Duration(milliseconds: 800), () {
         _checkMatch();
       });
@@ -109,7 +112,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   void _checkMatch() {
     final first = _flippedIndices[0];
     final second = _flippedIndices[1];
-    
+
     if (_cards[first].emoji == _cards[second].emoji) {
       // Match found
       setState(() {
@@ -117,9 +120,9 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         _cards[second].isMatched = true;
         _matches++;
       });
-      
+
       HapticFeedback.mediumImpact();
-      
+
       if (_matches == _emojis.length) {
         _endGame();
       }
@@ -129,10 +132,10 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         _cards[first].isFlipped = false;
         _cards[second].isFlipped = false;
       });
-      
+
       HapticFeedback.lightImpact();
     }
-    
+
     setState(() {
       _flippedIndices.clear();
       _isChecking = false;
@@ -145,7 +148,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
       _isGameOver = true;
       _isPlaying = false;
     });
-    
+
     HapticFeedback.heavyImpact();
     _saveScore();
   }
@@ -156,12 +159,14 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         _bestScore = _moves;
       });
     }
-    
-    await _repository.saveScore(GameScore(
-      gameId: 'memory_match',
-      score: _moves,
-      timestamp: DateTime.now(),
-    ));
+
+    await _repository.saveScore(
+      GameScore(
+        gameId: 'memory_match',
+        score: _moves,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -172,10 +177,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF667EEA),
-              const Color(0xFF764BA2),
-            ],
+            colors: [const Color(0xFF667EEA), const Color(0xFF764BA2)],
           ),
         ),
         child: SafeArea(
@@ -278,25 +280,16 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🧠',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🧠', style: TextStyle(fontSize: 80)),
               const SizedBox(height: 20),
               const Text(
                 'Memory Match',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 'Find all matching pairs!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -313,17 +306,17 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ModernTheme.primaryOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
                   'START GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -331,7 +324,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         ),
       );
     }
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: GridView.builder(
@@ -350,17 +343,17 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
 
   Widget _buildCard(CardItem card, int index) {
     final isRevealed = card.isFlipped || card.isMatched;
-    
+
     return GestureDetector(
       onTap: () => _onCardTap(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: card.isMatched 
+          color: card.isMatched
               ? Colors.green.withValues(alpha: 0.3)
-              : isRevealed 
-                  ? Colors.white 
-                  : ModernTheme.primaryOrange,
+              : isRevealed
+              ? Colors.white
+              : ModernTheme.primaryOrange,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
@@ -397,10 +390,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🎉',
-                style: TextStyle(fontSize: 60),
-              ),
+              const Text('🎉', style: TextStyle(fontSize: 60)),
               const SizedBox(height: 16),
               const Text(
                 'Completed!',
@@ -493,10 +483,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

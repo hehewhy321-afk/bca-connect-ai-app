@@ -18,10 +18,7 @@ class ModernForumScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Community Forum'),
         actions: [
-          IconButton(
-            icon: const Icon(Iconsax.search_normal),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Iconsax.search_normal), onPressed: () {}),
         ],
       ),
       body: postsAsync.when(
@@ -134,7 +131,9 @@ class ForumPostCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
                     child: Text(
                       post.userName?.substring(0, 1).toUpperCase() ?? 'U',
                       style: TextStyle(
@@ -150,9 +149,7 @@ class ForumPostCard extends StatelessWidget {
                       children: [
                         Text(
                           post.userName ?? 'Anonymous',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           dateFormat.format(post.createdAt),
@@ -165,7 +162,10 @@ class ForumPostCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
@@ -175,7 +175,9 @@ class ForumPostCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
                       ),
                     ),
                   ),
@@ -186,9 +188,9 @@ class ForumPostCard extends StatelessWidget {
               // Title
               Text(
                 post.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -222,14 +224,21 @@ class ForumPostCard extends StatelessWidget {
                   const Spacer(),
                   if (post.isPinned)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.amber[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(Iconsax.location, size: 12, color: Colors.amber[900]),
+                          Icon(
+                            Iconsax.location,
+                            size: 12,
+                            color: Colors.amber[900],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Pinned',

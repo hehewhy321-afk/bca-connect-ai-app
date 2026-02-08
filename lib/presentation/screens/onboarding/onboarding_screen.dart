@@ -113,11 +113,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: (index) =>
-                    setState(() => _currentPage = index),
+                onPageChanged: (index) => setState(() => _currentPage = index),
                 itemCount: _pages.length,
-                itemBuilder: (context, index) =>
-                    _buildPage(_pages[index]),
+                itemBuilder: (context, index) => _buildPage(_pages[index]),
               ),
             ),
 
@@ -160,11 +158,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _currentPage == _pages.length - 1
-                        ? 'Get Started'
-                        : 'Next',
+                    _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -183,27 +181,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           // Icon Circle
           Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              gradient: page.gradient,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: page.gradient.colors.first.withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  gradient: page.gradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: page.gradient.colors.first.withValues(alpha: 0.3),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                page.icon,
-                size: 96,
-                color: Colors.white,
-              ),
-            ),
-          )
+                child: Center(
+                  child: Icon(page.icon, size: 96, color: Colors.white),
+                ),
+              )
               .animate()
               .scale(duration: 600.ms, curve: Curves.elasticOut)
               .then()
@@ -214,10 +208,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Text(
             page.title,
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 16),
@@ -225,10 +218,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Text(
             page.description,
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(color: Colors.grey[600], height: 1.5),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.grey[600],
+              height: 1.5,
+            ),
           ),
         ],
       ),

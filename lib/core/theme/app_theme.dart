@@ -14,7 +14,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       textTheme: GoogleFonts.interTextTheme(),
-      
+
       // AppBar Theme
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -28,7 +28,7 @@ class AppTheme {
           color: colorScheme.onSurface,
         ),
       ),
-      
+
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 0,
@@ -38,7 +38,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -53,7 +53,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Filled Button Theme
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -67,7 +67,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
@@ -81,7 +81,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -92,7 +92,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -117,17 +117,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
-      
+
       // Floating Action Button Theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      
+
       // Navigation Bar Theme (Light)
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
@@ -155,7 +156,7 @@ class AppTheme {
           );
         }),
       ),
-      
+
       // Bottom Sheet Theme
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
@@ -163,23 +164,19 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // Dialog Theme
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         elevation: 3,
       ),
-      
+
       // Chip Theme
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         labelStyle: GoogleFonts.inter(fontSize: 14),
       ),
-      
+
       // Divider Theme
       dividerTheme: DividerThemeData(
         color: colorScheme.outlineVariant,
@@ -200,7 +197,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-      
+
       // AppBar Theme
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -214,7 +211,7 @@ class AppTheme {
           color: colorScheme.onSurface,
         ),
       ),
-      
+
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 0,
@@ -224,7 +221,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -239,7 +236,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Filled Button Theme
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -253,7 +250,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
@@ -267,7 +264,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -278,7 +275,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -303,17 +300,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
-      
+
       // Floating Action Button Theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      
+
       // Navigation Bar Theme (Dark)
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
@@ -341,7 +339,7 @@ class AppTheme {
           );
         }),
       ),
-      
+
       // Bottom Sheet Theme
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
@@ -349,23 +347,19 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // Dialog Theme
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         elevation: 3,
       ),
-      
+
       // Chip Theme
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         labelStyle: GoogleFonts.inter(fontSize: 14),
       ),
-      
+
       // Divider Theme
       dividerTheme: DividerThemeData(
         color: colorScheme.outlineVariant,
@@ -375,4 +369,3 @@ class AppTheme {
     );
   }
 }
-

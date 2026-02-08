@@ -12,16 +12,16 @@ import '../../widgets/cached_image.dart';
 final myEventsProvider = FutureProvider<List<Event>>((ref) async {
   final repo = EventRepository();
   final registrations = await repo.getUserRegistrations();
-  
+
   // Extract events from registrations
   final events = registrations
       .where((r) => r['events'] != null)
       .map((r) => Event.fromJson(r['events'] as Map<String, dynamic>))
       .toList();
-  
+
   // Sort by start date
   events.sort((a, b) => a.startDate.compareTo(b.startDate));
-  
+
   return events;
 });
 
@@ -68,8 +68,8 @@ class MyEventsScreen extends ConsumerWidget {
                   Text(
                     'No Registered Events',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -77,8 +77,8 @@ class MyEventsScreen extends ConsumerWidget {
                     child: Text(
                       'You haven\'t registered for any events yet. Browse available events and register now!',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -89,7 +89,10 @@ class MyEventsScreen extends ConsumerWidget {
                     label: const Text('Browse Events'),
                     style: FilledButton.styleFrom(
                       backgroundColor: ModernTheme.primaryOrange,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -98,13 +101,17 @@ class MyEventsScreen extends ConsumerWidget {
           }
 
           // Separate events by status
-          final upcomingEvents = events.where((e) => 
-            e.status.toLowerCase() == 'upcoming' || e.status.toLowerCase() == 'ongoing'
-          ).toList();
-          
-          final completedEvents = events.where((e) => 
-            e.status.toLowerCase() == 'completed'
-          ).toList();
+          final upcomingEvents = events
+              .where(
+                (e) =>
+                    e.status.toLowerCase() == 'upcoming' ||
+                    e.status.toLowerCase() == 'ongoing',
+              )
+              .toList();
+
+          final completedEvents = events
+              .where((e) => e.status.toLowerCase() == 'completed')
+              .toList();
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -123,20 +130,29 @@ class MyEventsScreen extends ConsumerWidget {
                           gradient: ModernTheme.orangeGradient,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Iconsax.calendar_tick, color: Colors.white, size: 20),
+                        child: const Icon(
+                          Iconsax.calendar_tick,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         'Upcoming Events',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: ModernTheme.primaryOrange.withValues(alpha: 0.2),
+                          color: ModernTheme.primaryOrange.withValues(
+                            alpha: 0.2,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -151,10 +167,12 @@ class MyEventsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ...upcomingEvents.map((event) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _MyEventCard(event: event),
-                      )),
+                  ...upcomingEvents.map(
+                    (event) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _MyEventCard(event: event),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                 ],
 
@@ -168,18 +186,25 @@ class MyEventsScreen extends ConsumerWidget {
                           color: Colors.grey.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Iconsax.tick_circle, color: Colors.grey, size: 20),
+                        child: const Icon(
+                          Iconsax.tick_circle,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         'Completed Events',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -196,10 +221,12 @@ class MyEventsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ...completedEvents.map((event) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _MyEventCard(event: event, isCompleted: true),
-                      )),
+                  ...completedEvents.map(
+                    (event) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _MyEventCard(event: event, isCompleted: true),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -221,9 +248,9 @@ class MyEventsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 'Error loading events',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Padding(
@@ -255,10 +282,7 @@ class _MyEventCard extends StatelessWidget {
   final Event event;
   final bool isCompleted;
 
-  const _MyEventCard({
-    required this.event,
-    this.isCompleted = false,
-  });
+  const _MyEventCard({required this.event, this.isCompleted = false});
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
@@ -301,8 +325,10 @@ class _MyEventCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: isCompleted 
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+          color: isCompleted
+              ? Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
               : Theme.of(context).colorScheme.surface,
           border: Border.all(
             color: isCompleted
@@ -311,13 +337,15 @@ class _MyEventCard extends StatelessWidget {
             width: isCompleted ? 1 : 2,
           ),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: isCompleted ? null : [
-            BoxShadow(
-              color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: isCompleted
+              ? null
+              : [
+                  BoxShadow(
+                    color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,15 +384,21 @@ class _MyEventCard extends StatelessWidget {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       gradient: isCompleted ? null : ModernTheme.orangeGradient,
                       color: isCompleted ? Colors.grey : null,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: (isCompleted ? Colors.grey : ModernTheme.primaryOrange)
-                              .withValues(alpha: 0.3),
+                          color:
+                              (isCompleted
+                                      ? Colors.grey
+                                      : ModernTheme.primaryOrange)
+                                  .withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -373,7 +407,11 @@ class _MyEventCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Iconsax.tick_circle5, size: 14, color: Colors.white),
+                        const Icon(
+                          Iconsax.tick_circle5,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           isCompleted ? 'Completed' : 'Registered',
@@ -392,9 +430,14 @@ class _MyEventCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(event.status).withValues(alpha: 0.9),
+                      color: _getStatusColor(
+                        event.status,
+                      ).withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -418,18 +461,27 @@ class _MyEventCard extends StatelessWidget {
                 children: [
                   // Category Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getCategoryColor(event.category).withValues(alpha: isCompleted ? 0.3 : 0.2),
+                      color: _getCategoryColor(
+                        event.category,
+                      ).withValues(alpha: isCompleted ? 0.3 : 0.2),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _getCategoryColor(event.category).withValues(alpha: isCompleted ? 0.3 : 0.5),
+                        color: _getCategoryColor(
+                          event.category,
+                        ).withValues(alpha: isCompleted ? 0.3 : 0.5),
                       ),
                     ),
                     child: Text(
                       event.category,
                       style: TextStyle(
-                        color: isCompleted ? Colors.grey : _getCategoryColor(event.category),
+                        color: isCompleted
+                            ? Colors.grey
+                            : _getCategoryColor(event.category),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -441,11 +493,13 @@ class _MyEventCard extends StatelessWidget {
                   Text(
                     event.title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isCompleted 
-                              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
-                              : null,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: isCompleted
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5)
+                          : null,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -457,15 +511,18 @@ class _MyEventCard extends StatelessWidget {
                       Icon(
                         Iconsax.clock,
                         size: 16,
-                        color: isCompleted ? Colors.grey : ModernTheme.primaryOrange,
+                        color: isCompleted
+                            ? Colors.grey
+                            : ModernTheme.primaryOrange,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _formatDate(event.startDate),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 fontSize: 13,
-                                color: isCompleted 
+                                color: isCompleted
                                     ? Colors.grey
                                     : Theme.of(context).colorScheme.onSurface,
                               ),
@@ -484,15 +541,18 @@ class _MyEventCard extends StatelessWidget {
                         Icon(
                           Iconsax.location,
                           size: 16,
-                          color: isCompleted ? Colors.grey : ModernTheme.primaryOrange,
+                          color: isCompleted
+                              ? Colors.grey
+                              : ModernTheme.primaryOrange,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             event.location!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   fontSize: 13,
-                                  color: isCompleted 
+                                  color: isCompleted
                                       ? Colors.grey
                                       : Theme.of(context).colorScheme.onSurface,
                                 ),
@@ -519,7 +579,10 @@ class _MyEventCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: isCompleted
               ? [Colors.grey, Colors.grey.withValues(alpha: 0.7)]
-              : [_getCategoryColor(event.category), _getCategoryColor(event.category).withValues(alpha: 0.7)],
+              : [
+                  _getCategoryColor(event.category),
+                  _getCategoryColor(event.category).withValues(alpha: 0.7),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

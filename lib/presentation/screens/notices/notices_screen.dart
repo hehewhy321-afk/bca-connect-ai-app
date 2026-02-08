@@ -79,8 +79,8 @@ class NoticesScreen extends ConsumerWidget {
                   Text(
                     'No Notices Available',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -106,13 +106,17 @@ class NoticesScreen extends ConsumerWidget {
                 if (pinnedNotices.isNotEmpty) ...[
                   Row(
                     children: [
-                      Icon(Iconsax.bookmark, size: 20, color: ModernTheme.primaryOrange),
+                      Icon(
+                        Iconsax.bookmark,
+                        size: 20,
+                        color: ModernTheme.primaryOrange,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Pinned Notices',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ).animate().fadeIn(duration: 300.ms),
@@ -136,8 +140,8 @@ class NoticesScreen extends ConsumerWidget {
                   Text(
                     'All Notices',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
                   const SizedBox(height: 16),
                   ...regularNotices.asMap().entries.map((entry) {
@@ -161,11 +165,7 @@ class NoticesScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Iconsax.close_circle,
-                size: 64,
-                color: Colors.red.shade300,
-              ),
+              Icon(Iconsax.close_circle, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
               Text(
                 'Error loading notices',
@@ -210,168 +210,184 @@ class _NoticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = getPriorityColor(notice.type);
     final icon = getPriorityIcon(notice.type);
-    final isExpired = notice.expiresAt != null && notice.expiresAt!.isBefore(DateTime.now());
+    final isExpired =
+        notice.expiresAt != null && notice.expiresAt!.isBefore(DateTime.now());
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isPinned
-              ? ModernTheme.primaryOrange.withValues(alpha: 0.5)
-              : Theme.of(context).dividerColor,
-          width: isPinned ? 2 : 1,
-        ),
-        boxShadow: isPinned
-            ? [
-                BoxShadow(
-                  color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isPinned
+                  ? ModernTheme.primaryOrange.withValues(alpha: 0.5)
+                  : Theme.of(context).dividerColor,
+              width: isPinned ? 2 : 1,
+            ),
+            boxShadow: isPinned
+                ? [
+                    BoxShadow(
+                      color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Badges
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+              // Header
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: color, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isPinned)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              gradient: ModernTheme.orangeGradient,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Iconsax.bookmark, size: 12, color: Colors.white),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Pinned',
+                        // Badges
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (isPinned)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: ModernTheme.orangeGradient,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Iconsax.bookmark,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Pinned',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            if (notice.type.toLowerCase() != 'info')
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  notice.type.toUpperCase(),
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: color,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        if (notice.type.toLowerCase() != 'info')
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              notice.type.toUpperCase(),
-                              style: TextStyle(
-                                color: color,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ),
-                        if (isExpired)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'EXPIRED',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                            if (isExpired)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'EXPIRED',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Title
+                        Text(
+                          notice.title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    // Title
-                    Text(
-                      notice.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
 
-          const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-          // Content
-          Text(
-            notice.content,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Footer
-          Row(
-            children: [
-              Icon(
-                Iconsax.calendar,
-                size: 14,
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
-              const SizedBox(width: 4),
+              // Content
               Text(
-                DateFormat('MMM dd, yyyy').format(notice.createdAt),
-                style: Theme.of(context).textTheme.bodySmall,
+                notice.content,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              if (notice.expiresAt != null) ...[
-                const SizedBox(width: 16),
-                Icon(
-                  Iconsax.clock,
-                  size: 14,
-                  color: isExpired ? Colors.red : Colors.orange,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Expires: ${DateFormat('MMM dd').format(notice.expiresAt!)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+
+              const SizedBox(height: 12),
+
+              // Footer
+              Row(
+                children: [
+                  Icon(
+                    Iconsax.calendar,
+                    size: 14,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat('MMM dd, yyyy').format(notice.createdAt),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (notice.expiresAt != null) ...[
+                    const SizedBox(width: 16),
+                    Icon(
+                      Iconsax.clock,
+                      size: 14,
+                      color: isExpired ? Colors.red : Colors.orange,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Expires: ${DateFormat('MMM dd').format(notice.expiresAt!)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: isExpired ? Colors.red : Colors.orange,
                       ),
-                ),
-              ],
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).slideX(begin: 0.2);
+        )
+        .animate()
+        .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+        .slideX(begin: 0.2);
   }
 }

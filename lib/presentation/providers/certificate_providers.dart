@@ -11,10 +11,14 @@ final allCertificatesProvider = FutureProvider<List<Certificate>>((ref) async {
 // State providers for search and filters
 final certificateSearchQueryProvider = StateProvider<String>((ref) => '');
 final certificateSelectedYearProvider = StateProvider<String>((ref) => 'all');
-final certificateSelectedCategoryProvider = StateProvider<String>((ref) => 'all');
+final certificateSelectedCategoryProvider = StateProvider<String>(
+  (ref) => 'all',
+);
 
 // Filtered certificates provider
-final filteredCertificatesProvider = Provider<AsyncValue<List<Certificate>>>((ref) {
+final filteredCertificatesProvider = Provider<AsyncValue<List<Certificate>>>((
+  ref,
+) {
   final certificatesAsync = ref.watch(allCertificatesProvider);
   final searchQuery = ref.watch(certificateSearchQueryProvider).toLowerCase();
   final selectedYear = ref.watch(certificateSelectedYearProvider);
@@ -22,18 +26,21 @@ final filteredCertificatesProvider = Provider<AsyncValue<List<Certificate>>>((re
 
   return certificatesAsync.whenData((certificates) {
     return certificates.where((certificate) {
-      final matchesSearch = certificate.title.toLowerCase().contains(searchQuery) ||
-          (certificate.description?.toLowerCase().contains(searchQuery) ?? false) ||
+      final matchesSearch =
+          certificate.title.toLowerCase().contains(searchQuery) ||
+          (certificate.description?.toLowerCase().contains(searchQuery) ??
+              false) ||
           certificate.verificationCode.toLowerCase().contains(searchQuery);
-      
-      final matchesYear = selectedYear == 'all' ||
+
+      final matchesYear =
+          selectedYear == 'all' ||
           certificate.issueDate.year.toString() == selectedYear;
-      
+
       // Category matching - use the categoryName from the joined data
       final certificateCategory = certificate.categoryName?.toLowerCase() ?? '';
-      final matchesCategory = selectedCategory == 'all' ||
-          certificateCategory == selectedCategory;
-      
+      final matchesCategory =
+          selectedCategory == 'all' || certificateCategory == selectedCategory;
+
       return matchesSearch && matchesYear && matchesCategory;
     }).toList();
   });

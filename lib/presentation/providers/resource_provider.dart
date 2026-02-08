@@ -12,7 +12,9 @@ final resourceRepositoryProvider = Provider<ResourceRepository>((ref) {
 // All Resources Provider with Mock Data Fallback
 final resourcesProvider = FutureProvider<List<Resource>>((ref) async {
   try {
-    final resources = await ref.watch(resourceRepositoryProvider).getResources();
+    final resources = await ref
+        .watch(resourceRepositoryProvider)
+        .getResources();
     // If no resources from backend, use mock data
     if (resources.isEmpty) {
       return MockData.getMockResources();
@@ -26,17 +28,23 @@ final resourcesProvider = FutureProvider<List<Resource>>((ref) async {
 });
 
 // Resources by Category Provider
-final resourcesByCategoryProvider = FutureProvider.family<List<Resource>, String?>((ref, category) async {
-  try {
-    return await ref.watch(resourceRepositoryProvider).getResources(category: category);
-  } catch (e) {
-    debugPrint('Error loading resources by category: $e');
-    return MockData.getMockResources();
-  }
-});
+final resourcesByCategoryProvider =
+    FutureProvider.family<List<Resource>, String?>((ref, category) async {
+      try {
+        return await ref
+            .watch(resourceRepositoryProvider)
+            .getResources(category: category);
+      } catch (e) {
+        debugPrint('Error loading resources by category: $e');
+        return MockData.getMockResources();
+      }
+    });
 
 // Resource Detail Provider
-final resourceDetailProvider = FutureProvider.family<Resource?, String>((ref, id) async {
+final resourceDetailProvider = FutureProvider.family<Resource?, String>((
+  ref,
+  id,
+) async {
   try {
     return await ref.watch(resourceRepositoryProvider).getResourceById(id);
   } catch (e) {
@@ -44,4 +52,3 @@ final resourceDetailProvider = FutureProvider.family<Resource?, String>((ref, id
     return null;
   }
 });
-

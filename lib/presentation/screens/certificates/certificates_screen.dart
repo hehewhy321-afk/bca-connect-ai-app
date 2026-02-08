@@ -26,7 +26,9 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   }
 
   Future<void> _viewCertificate() async {
-    final url = Uri.parse('https://mmamc-bca.vercel.app/dashboard/certificates');
+    final url = Uri.parse(
+      'https://mmamc-bca.vercel.app/dashboard/certificates',
+    );
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
@@ -51,13 +53,13 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         children: [
           // Purple Gradient Header
           _buildGradientHeader(context),
-          
+
           // Search Bar
           _buildSearchBar(),
-          
+
           // Filter Chips
           _buildFilterChips(),
-          
+
           // Certificates List
           Expanded(
             child: filteredCertificatesAsync.when(
@@ -96,11 +98,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Iconsax.award,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Iconsax.award, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -118,10 +116,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Your achievements & awards',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -135,7 +130,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
 
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -164,7 +159,9 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
               style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search certificates...',
-                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -172,7 +169,11 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
           ),
           if (_searchController.text.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.close, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 20),
+              icon: Icon(
+                Icons.close,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                size: 20,
+              ),
               onPressed: () {
                 setState(() {
                   _searchController.clear();
@@ -204,13 +205,20 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                   final allCerts = ref.watch(allCertificatesProvider);
                   return allCerts.when(
                     data: (certs) {
-                      final years = certs.map((c) => c.issueDate.year.toString()).toSet().toList();
+                      final years = certs
+                          .map((c) => c.issueDate.year.toString())
+                          .toSet()
+                          .toList();
                       years.sort((a, b) => b.compareTo(a));
                       return Row(
-                        children: years.map((year) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _buildChip(year, year, true),
-                        )).toList(),
+                        children: years
+                            .map(
+                              (year) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: _buildChip(year, year, true),
+                              ),
+                            )
+                            .toList(),
                       );
                     },
                     loading: () => const SizedBox.shrink(),
@@ -253,10 +261,10 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   }
 
   Widget _buildChip(String label, String value, bool isYear) {
-    final isSelected = isYear 
-      ? _selectedYear == value 
-      : _selectedCategory == value;
-    
+    final isSelected = isYear
+        ? _selectedYear == value
+        : _selectedCategory == value;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -265,7 +273,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             ref.read(certificateSelectedYearProvider.notifier).state = value;
           } else {
             _selectedCategory = value;
-            ref.read(certificateSelectedCategoryProvider.notifier).state = value;
+            ref.read(certificateSelectedCategoryProvider.notifier).state =
+                value;
           }
         });
       },
@@ -273,22 +282,26 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected
-            ? const LinearGradient(
-                colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
-              )
-            : null,
-          color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
+              ? const LinearGradient(
+                  colors: [Color(0xFFDA7809), Color(0xFFFF9500)],
+                )
+              : null,
+          color: isSelected
+              ? null
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
-            color: isSelected 
-              ? Colors.transparent 
-              : Colors.grey.withValues(alpha: 0.3),
+            color: isSelected
+                ? Colors.transparent
+                : Colors.grey.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 14,
           ),
@@ -394,7 +407,9 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
             child: Text(
               error.toString(),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -421,10 +436,7 @@ class _CertificateCard extends StatelessWidget {
   final Certificate certificate;
   final VoidCallback onView;
 
-  const _CertificateCard({
-    required this.certificate,
-    required this.onView,
-  });
+  const _CertificateCard({required this.certificate, required this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -467,7 +479,10 @@ class _CertificateCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(6),
@@ -505,7 +520,7 @@ class _CertificateCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Content section
           Container(
             width: double.infinity,
@@ -531,7 +546,7 @@ class _CertificateCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 if (certificate.description != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -544,19 +559,26 @@ class _CertificateCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Info chips
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Row(
@@ -569,7 +591,9 @@ class _CertificateCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            DateFormat('MMM dd, yyyy').format(certificate.issueDate),
+                            DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(certificate.issueDate),
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 12,
@@ -581,9 +605,14 @@ class _CertificateCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: Colors.grey.withValues(alpha: 0.2),
@@ -602,7 +631,9 @@ class _CertificateCard extends StatelessWidget {
                               child: Text(
                                 certificate.verificationCode,
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   fontSize: 12,
                                 ),
                                 maxLines: 1,
@@ -615,9 +646,9 @@ class _CertificateCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // View Certificate button
                 SizedBox(
                   width: double.infinity,

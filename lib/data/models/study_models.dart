@@ -67,7 +67,7 @@ class Subject {
   factory Subject.fromJson(Map<String, dynamic> json) {
     final colorValue = json['color'];
     Color color;
-    
+
     if (colorValue is String) {
       // Handle both "0xff4caf50" and "ff4caf50" formats
       String hexString = colorValue;
@@ -78,7 +78,7 @@ class Subject {
     } else {
       color = Color(colorValue as int);
     }
-    
+
     return Subject(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -126,7 +126,7 @@ class ClassSchedule {
   factory ClassSchedule.fromJson(Map<String, dynamic> json) {
     final startParts = (json['startTime'] as String).split(':');
     final endParts = (json['endTime'] as String).split(':');
-    
+
     return ClassSchedule(
       id: json['id'] as String,
       subjectId: json['subjectId'] as String,

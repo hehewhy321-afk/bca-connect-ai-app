@@ -64,7 +64,9 @@ class GameStats {
       gameId: json['gameId'],
       highScore: json['highScore'],
       timesPlayed: json['timesPlayed'],
-      lastPlayed: json['lastPlayed'] != null ? DateTime.parse(json['lastPlayed']) : null,
+      lastPlayed: json['lastPlayed'] != null
+          ? DateTime.parse(json['lastPlayed'])
+          : null,
       bestTimeMs: json['bestTimeMs'],
     );
   }

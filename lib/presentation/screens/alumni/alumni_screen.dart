@@ -42,7 +42,8 @@ class _AlumniScreenState extends ConsumerState<AlumniScreen> {
             years.add(a['graduation_year'] as int);
           }
         }
-        final uniqueYears = years.toSet().toList()..sort((a, b) => b.compareTo(a));
+        final uniqueYears = years.toSet().toList()
+          ..sort((a, b) => b.compareTo(a));
 
         setState(() {
           _alumni = alumniList;
@@ -61,10 +62,12 @@ class _AlumniScreenState extends ConsumerState<AlumniScreen> {
     return _alumni.where((member) {
       final fullName = member['full_name']?.toString() ?? '';
       final company = member['current_company']?.toString() ?? '';
-      final matchesSearch = fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch =
+          fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           company.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      final matchesYear = _graduationYearFilter == 'all' ||
+      final matchesYear =
+          _graduationYearFilter == 'all' ||
           member['graduation_year']?.toString() == _graduationYearFilter;
 
       return matchesSearch && matchesYear;
@@ -143,7 +146,8 @@ class _AlumniScreenState extends ConsumerState<AlumniScreen> {
 
                     // Search Bar
                     TextField(
-                      onChanged: (value) => setState(() => _searchQuery = value),
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
                       decoration: InputDecoration(
                         hintText: 'Search alumni by name or company...',
                         prefixIcon: const Icon(Iconsax.search_normal),
@@ -163,18 +167,23 @@ class _AlumniScreenState extends ConsumerState<AlumniScreen> {
                           _FilterChip(
                             label: 'All Years',
                             selected: _graduationYearFilter == 'all',
-                            onTap: () => setState(() => _graduationYearFilter = 'all'),
+                            onTap: () =>
+                                setState(() => _graduationYearFilter = 'all'),
                           ),
                           const SizedBox(width: 8),
-                          ..._graduationYears.map((year) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: _FilterChip(
-                                  label: 'Class of $year',
-                                  selected: _graduationYearFilter == year.toString(),
-                                  onTap: () =>
-                                      setState(() => _graduationYearFilter = year.toString()),
+                          ..._graduationYears.map(
+                            (year) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _FilterChip(
+                                label: 'Class of $year',
+                                selected:
+                                    _graduationYearFilter == year.toString(),
+                                onTap: () => setState(
+                                  () => _graduationYearFilter = year.toString(),
                                 ),
-                              )),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ).animate().fadeIn(duration: 300.ms, delay: 200.ms),
@@ -198,7 +207,9 @@ class _AlumniScreenState extends ConsumerState<AlumniScreen> {
                             Icon(
                               Iconsax.medal_star,
                               size: 64,
-                              color: Theme.of(context).textTheme.bodySmall?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -258,7 +269,9 @@ class _FilterChip extends StatelessWidget {
           color: selected ? null : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
-            color: selected ? Colors.transparent : Theme.of(context).dividerColor,
+            color: selected
+                ? Colors.transparent
+                : Theme.of(context).dividerColor,
           ),
         ),
         child: Text(
@@ -303,9 +316,9 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           Text(
             label,
@@ -345,202 +358,213 @@ class _AlumniCard extends StatelessWidget {
     final linkedinUrl = alumni['linkedin_url'];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: ModernTheme.orangeGradient,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: avatarUrl != null
-                    ? CachedImage(
-                        imageUrl: avatarUrl,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                        borderRadius: BorderRadius.circular(14),
-                        errorWidget: Center(
-                          child: Text(
-                            getInitials(fullName),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Text(
-                          getInitials(fullName),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fullName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+              // Header
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: ModernTheme.orangeGradient,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    if (jobTitle != null)
-                      Text(
-                        jobTitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: ModernTheme.primaryOrange,
-                              fontWeight: FontWeight.w600,
+                    child: avatarUrl != null
+                        ? CachedImage(
+                            imageUrl: avatarUrl,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            borderRadius: BorderRadius.circular(14),
+                            errorWidget: Center(
+                              child: Text(
+                                getInitials(fullName),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
                             ),
-                      ),
-                    if (currentCompany != null)
-                      Row(
-                        children: [
-                          Icon(
-                            Iconsax.building,
-                            size: 14,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
+                          )
+                        : Center(
                             child: Text(
-                              currentCompany,
-                              style: Theme.of(context).textTheme.bodySmall,
-                              overflow: TextOverflow.ellipsis,
+                              getInitials(fullName),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
                           ),
-                        ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullName,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        if (jobTitle != null)
+                          Text(
+                            jobTitle,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: ModernTheme.primaryOrange,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        if (currentCompany != null)
+                          Row(
+                            children: [
+                              Icon(
+                                Iconsax.building,
+                                size: 14,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  currentCompany,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Info
+              Row(
+                children: [
+                  if (graduationYear != null) ...[
+                    Icon(
+                      Iconsax.calendar,
+                      size: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Class of $graduationYear',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  if (batch != null) ...[
+                    const SizedBox(width: 16),
+                    Text(
+                      'Batch: $batch',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+
+              if (bio != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  bio,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+
+              if (skills != null && skills.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    ...skills
+                        .take(3)
+                        .map(
+                          (skill) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ModernTheme.primaryOrange.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              skill,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: ModernTheme.primaryOrange,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    if (skills.length > 3)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).dividerColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '+${skills.length - 3}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Info
-          Row(
-            children: [
-              if (graduationYear != null) ...[
-                Icon(
-                  Iconsax.calendar,
-                  size: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Class of $graduationYear',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
               ],
-              if (batch != null) ...[
-                const SizedBox(width: 16),
-                Text(
-                  'Batch: $batch',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ],
-          ),
 
-          if (bio != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              bio,
-              style: Theme.of(context).textTheme.bodySmall,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+              const SizedBox(height: 12),
 
-          if (skills != null && skills.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                ...skills.take(3).map((skill) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: ModernTheme.primaryOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        skill,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: ModernTheme.primaryOrange,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )),
-                if (skills.length > 3)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '+${skills.length - 3}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+              // Footer
+              Row(
+                children: [
+                  if (githubUrl != null)
+                    _SocialButton(icon: Iconsax.code, onTap: () {}),
+                  if (linkedinUrl != null) ...[
+                    const SizedBox(width: 8),
+                    _SocialButton(icon: Iconsax.link, onTap: () {}),
+                  ],
+                  const Spacer(),
+                  Text(
+                    'Level $level • $xpPoints XP',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-              ],
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // Footer
-          Row(
-            children: [
-              if (githubUrl != null)
-                _SocialButton(
-                  icon: Iconsax.code,
-                  onTap: () {},
-                ),
-              if (linkedinUrl != null) ...[
-                const SizedBox(width: 8),
-                _SocialButton(
-                  icon: Iconsax.link,
-                  onTap: () {},
-                ),
-              ],
-              const Spacer(),
-              Text(
-                'Level $level • $xpPoints XP',
-                style: Theme.of(context).textTheme.bodySmall,
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).slideX(begin: 0.2);
+        )
+        .animate()
+        .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+        .slideX(begin: 0.2);
   }
 }
 
@@ -548,10 +572,7 @@ class _SocialButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _SocialButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _SocialButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
